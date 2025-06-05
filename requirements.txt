@@ -1,0 +1,7 @@
+streamlit~=1.45.1
+PyYAML~=6.0.2
+tabulate~=0.9.0
+pandas~=2.2.3
+matplotlib~=3.10.3
+numpy~=2.2.6
+toml~=0.10.2
