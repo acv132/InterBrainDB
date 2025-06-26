@@ -1,3 +1,6 @@
+import re
+
+import requests
 import streamlit as st
 import pandas as pd
 import os
@@ -42,6 +45,23 @@ st.markdown("Fill in the fields below to suggest a new article for inclusion in 
 st.subheader("🔒 Required Information")
 # todo add validation check for doi
 doi = st.text_input("DOI", placeholder="10.1234/example.doi")
+def validate_doi(doi):
+    '''
+    Tests if the provided DOI is valid.
+    '''
+    def is_valid_doi(doi):
+        pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
+        return bool(re.match(pattern, doi, re.IGNORECASE))
+
+    def doi_exists(doi):
+        url = f"https://doi.org/{doi}"
+        response = requests.head(url, allow_redirects=True)
+        return response.status_code == 200
+    return is_valid_doi(doi) and doi_exists(doi)
+
+if not validate_doi(doi) and doi != "":
+    st.error("Invalid DOI. Please ensure it is in the correct format and exists.")
+
 year = st.number_input("Year", min_value=1900, max_value=datetime.now().year, value=datetime.now().year, step=1)
 authors = st.text_area("Authors", placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3")
 title = st.text_area("Title")
