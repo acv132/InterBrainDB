@@ -9,7 +9,6 @@ import os
 
 import streamlit as st
 
-
 # todo implement frontend
 #  sidebar navigation: filters
 #       Include/exclude specific studies

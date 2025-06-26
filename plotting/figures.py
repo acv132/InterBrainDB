@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
-import yaml
 from matplotlib.font_manager import FontProperties
 from matplotlib.legend import Legend
 from matplotlib.patches import Rectangle, PathPatch
@@ -59,11 +58,28 @@ def generate_category_counts_figure(df, tab):
     category_columns = {k: v for k, v in category_columns.items() if v}
 
     # Determine layout height
-    max_labels = max(len(cols) for cols in category_columns.values())
-    subplot_height = max(4, max_labels * 0.4)
+    # Example input
     n_categories = len(category_columns)
-    n_rows = 3
-    n_cols = -(-n_categories // n_rows)  # ceiling division to fit all plots
+    max_labels = max(len(cols) for cols in category_columns.values())
+
+    # User chooses layout style
+    layout_option = st.radio(
+        "Choose plot layout:", ["Auto", "Single Column", "Grid (3 columns)"], horizontal=True
+        )
+
+    # Determine layout
+    if layout_option == "Single Column":
+        n_cols = 1
+    elif layout_option == "Grid (3 columns)":
+        n_cols = 3
+    else:  # Auto layout
+        n_cols = min(4, n_categories)
+    n_rows = int(-(-n_categories / n_cols))
+
+    # Set dynamic height
+    subplot_height = max(4, max_labels * 0.4)
+
+    # Create figure
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, subplot_height * n_rows))
     axes = axes.flatten()
 
