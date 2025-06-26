@@ -8,8 +8,7 @@ import streamlit as st
 import yaml
 
 import data.config
-from plotting.figures import generate_interaction_figure, generate_category_counts_figure, \
-    generate_interaction_figure_streamlit
+from plotting.figures import generate_interaction_figure, generate_category_counts_figure
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table)
 
@@ -17,6 +16,7 @@ from utils.data_loader import (load_database, create_article_handle, generate_bi
 # 💅 UI Configuration
 # ========================
 st.set_page_config(page_title="Living Literature Review", layout="wide")
+
 st.title("📖 Database")
 st.markdown(
     """
@@ -41,7 +41,8 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID', # 'exclusion_reasons',
+    columns=['rayyan_ID',
+         # 'exclusion_reasons',
         # 'user_notes',
         # 'other_labels',
         "sample"]
@@ -64,27 +65,16 @@ with st.sidebar:
     st.title("🔍 Filters")
 
     # --- Paper Filter ---
-    # todo at some point change to binary
     st.markdown("**Included in Paper Review**")
-    paper_options = display_df['included in paper review'].unique()
-    included_multiselect_key = "included_select"
 
-    # Button to select all articles
-    if st.button("Select all articles", key="included_selectall"):
-        st.session_state[included_multiselect_key] = paper_options
+    # Checkbox: default is True (only included)
+    include_only = st.checkbox("Show only included papers", value=True)
 
-    # Set default to empty unless session state holds selected articles
-    included_defaults = st.session_state.get(included_multiselect_key, [])
-    included_defaults = [a for a in included_defaults if a in paper_options]
-
-    selected_inclusion = st.multiselect(
-        "Choose articles based on paper review",
-        options=paper_options,
-        default=included_defaults,
-        key=included_multiselect_key,
-        label_visibility="collapsed",
-        placeholder="Choose a label"
-        )
+    # Apply filter
+    if include_only:
+        filtered_df = display_df[display_df['included in paper review'] == True]
+    else:
+        filtered_df = display_df
 
     # --- Year Filter ---
     st.markdown("**Publication Year**")
@@ -178,10 +168,8 @@ with st.sidebar:
 filtered_df = display_df[(display_df["year"] >= selected_years[0]) & (display_df["year"] <= selected_years[1])].copy()
 
 # 2. Filter by article selection
-if selected_inclusion:
-    filtered_df = filtered_df[filtered_df['included in paper review'].apply(
-        lambda x: any(tag in normalize_cell(x) for tag in selected_inclusion)
-        )]
+if include_only:
+    filtered_df = filtered_df[filtered_df['included in paper review'] == True]
 
 # 3. Filter by article selection
 if selected_articles:
@@ -273,32 +261,32 @@ with data_overview_tab:
 # ========================
 # todo: create plots with streamlit functions for cleaner lines etc. https://docs.streamlit.io/develop/api-reference/charts/st.bar_chart
 # todo add line plot depicting publication "year" titled "### Publication development"
+
 with data_plots_tab:
     try:
         # ▶️ Interaction figure
         fig1 = generate_interaction_figure(display_df, data_plots_tab)
-        fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
+        # fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
         buf = io.BytesIO()
-        fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True)
+        fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
         buf.seek(0)
         st.markdown("### Interaction Conditions")
         st.image(buf, use_container_width=True)
         st.download_button(
-            "📥 Download Interaction Figure (PNG)",
+            "📥 Download Interaction Figure (JPG)",
             data=buf.getvalue(),
-            file_name="interaction_figure.png",
-            mime="image/png"
+            file_name="interaction_figure.jpg",
+            mime="image/jpg"
             )
-
         # ▶️ Category counts
         fig2 = generate_category_counts_figure(display_df, data_plots_tab)
         buf = io.BytesIO()
-        fig2.savefig(buf, format="png", bbox_inches="tight", transparent=True)
+        fig2.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
         buf.seek(0)
         st.markdown("### Category Counts")
         st.image(buf, use_container_width=True)
         st.download_button(
-            "📥 Download Category Figure (PNG)", data=buf.getvalue(), file_name="categories_figure.png", mime="image/png"
+            "📥 Download Category Figure (JPG)", data=buf.getvalue(), file_name="categories_figure.jpg", mime="image/jpg"
             )
 
     except Exception as e:

@@ -5,32 +5,35 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import streamlit as st
+import yaml
+from matplotlib.font_manager import FontProperties
 from matplotlib.legend import Legend
 from matplotlib.patches import Rectangle, PathPatch
 from matplotlib.path import Path
 
 from data.config import ColorMap
 from plotting.plot_utils import *
-import streamlit as st
-from matplotlib.font_manager import FontProperties
 
-import matplotlib.pyplot as plt
-import streamlit as st
-import yaml
-import matplotlib.pyplot as plt
-import yaml
-import streamlit as st
 
 def generate_category_counts_figure(df, tab):
-
-    if len(df) == 0:
+    """
+    Generate a horizontal bar plot showing the counts for each category in the DataFrame.
+    Each one-hot encoded column is grouped by its category and summed.
+    """
+    # Check if DataFrame has any rows
+    if df is None or df.empty:
         tab.warning("No data found; make sure that at least some data is passing the selected filters.")
         return None
 
     # Theme-aware font color
     figure_background_color = st.get_option('theme.backgroundColor')
-    font_color = "white" if is_dark_color(figure_background_color) else "black"
-    bar_color = "white" if is_dark_color(figure_background_color) else "black"
+    font_color = "#ffffff" if is_dark_color(figure_background_color) else "#000000"
+    bar_color = st.get_option('theme.primaryColor')
+
+    # Set the font properties for the figure
+    font_properties = FontProperties(size=14)
+    plt.rcParams['font.size'] = font_properties.get_size()
 
     # Decode one-hot columns
     prefix = "_"
@@ -64,6 +67,7 @@ def generate_category_counts_figure(df, tab):
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, subplot_height * n_rows))
     axes = axes.flatten()
 
+    # If there's only one category, ensure axes is a list
     if len(category_columns) == 1:
         axes = [axes]
 
@@ -86,7 +90,9 @@ def generate_category_counts_figure(df, tab):
 
 
 def generate_interaction_figure(df, tab):
+    """Generate a confusion matrix-like figure showing the interaction conditions across studies."""
 
+    # Check if DataFrame has any rows
     if len(df) == 0:
         tab.warning("No data found; make sure that at least some data is passing the selected filters.")
         return None
@@ -119,7 +125,7 @@ def generate_interaction_figure(df, tab):
 
     figure_background_color = st.get_option('theme.backgroundColor')
     color_rect = "#43454a" if is_dark_color(figure_background_color) else "#e9e9e9"
-    font_color = "white" if is_dark_color(figure_background_color) else "black"
+    font_color = "#ffffff" if is_dark_color(figure_background_color) else "#000000"
 
     # Legend configs
     legend_title_props = FontProperties(size=16)
@@ -375,56 +381,73 @@ def generate_interaction_figure(df, tab):
     area_handle = {
         'digital component': mpatches.Patch(color=color_rect, label='digital component')
         }
+    # Get only modalities actually used
+    used_modalities = connection_df['modality'].unique()
+    filtered_modality_handles = {label: handle for label, handle in modality_handles.items() if
+        label in used_modalities}
 
-    # Add the first legend for measurement modality
+    # Get only counts actually used
+    used_counts = connection_df['count'].unique()
+    filtered_style_handles = {
+        f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=count_to_style[count]) for count in
+        used_counts}
+
+    # Only add digital component if it's actually highlighted
+    filtered_area_handle = {}
+    if digital_im_column_indices:  # non-empty list
+        filtered_area_handle = {
+            'digital component': mpatches.Patch(color=color_rect, label='digital component')
+            }
+
+    # 1. Modality Legend (Fixed at top)
     mod_legend = ax.legend(
-        handles=list(modality_handles.values()),
-        labels=list(modality_handles.keys()),
+        handles=list(filtered_modality_handles.values()),
+        labels=list(filtered_modality_handles.keys()),
         title="measurement modality",
         loc="center left",
-        bbox_to_anchor=(1., y_axis_legend_start),
+        bbox_to_anchor=(1.0, 0.7),
         fontsize=14,
         alignment="left",
         framealpha=0,
         facecolor=facecolor_legend,
         labelcolor=font_color,
-        title_fontproperties=legend_title_props,
-        )
+        title_fontproperties=legend_title_props, )
     plt.setp(mod_legend.get_title(), color=font_color)
-    # Create and add the second legend for comparisons
+
+    # 2. Comparison Legend (middle)
     comparison_legend = Legend(
         ax,
-        handles=list(style_handles.values()),
-        labels=list(style_handles.keys()),
+        handles=list(filtered_style_handles.values()),
+        labels=list(filtered_style_handles.keys()),
         title="comparisons",
         loc="center left",
-        bbox_to_anchor=(1., y_axis_legend_start - .026*len(modality_handles)),
+        bbox_to_anchor=(1.0, 0.45),
         fontsize=14,
         alignment="left",
         framealpha=0,
         facecolor=facecolor_legend,
         labelcolor=font_color,
-        title_fontproperties=legend_title_props,
-        )
+        title_fontproperties=legend_title_props, )
     plt.setp(comparison_legend.get_title(), color=font_color)
     ax.add_artist(comparison_legend)
 
-    # Create and add the third legend for study designs
-    study_design_legend = Legend(
-        ax,
-        handles=list(area_handle.values()),
-        labels=list(area_handle.keys()),
-        title="study design",
-        loc="center left",
-        bbox_to_anchor=(1., y_axis_legend_start - .026*sum([len(modality_handles), len(style_handles), 1])),
-        fontsize=14, alignment="left",
-        framealpha=0,
-        facecolor=facecolor_legend,
-        labelcolor=font_color,
-        title_fontproperties=legend_title_props,
-        )
-    plt.setp(study_design_legend.get_title(), color=font_color)
-    ax.add_artist(study_design_legend)
+    # 3. Study Design Legend (bottom, only if used)
+    if filtered_area_handle:
+        study_design_legend = Legend(
+            ax,
+            handles=list(filtered_area_handle.values()),
+            labels=list(filtered_area_handle.keys()),
+            title="study design",
+            loc="center left",
+            bbox_to_anchor=(1.0, 0.30),
+            fontsize=14,
+            alignment="left",
+            framealpha=0,
+            facecolor=facecolor_legend,
+            labelcolor=font_color,
+            title_fontproperties=legend_title_props, )
+        plt.setp(study_design_legend.get_title(), color=font_color)
+        ax.add_artist(study_design_legend)
 
     plt.tight_layout()
 
@@ -465,7 +488,7 @@ def generate_interaction_figure_backup(df):
 
         figure_background_color = st.get_option('theme.backgroundColor')
         color_rect = "#43454a" if is_dark_color(figure_background_color) else "#e9e9e9"
-        font_color = "white" if is_dark_color(figure_background_color) else "black"
+        font_color = "#ffffff" if is_dark_color(figure_background_color) else "#000000"
 
         # Legend configs
         legend_title_props = FontProperties(size=16)
@@ -785,7 +808,6 @@ def generate_interaction_figure_streamlit(df, tab):
     import plotly.graph_objects as go
     import yaml
     import numpy as np
-    import pandas as pd
 
     if len(df) == 0:
         tab.warning("No data found; make sure that at least some data is passing the selected filters.")
