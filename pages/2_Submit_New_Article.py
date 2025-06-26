@@ -1,11 +1,11 @@
+import os
 import re
+from datetime import datetime
 
+import pandas as pd
 import requests
 import streamlit as st
-import pandas as pd
-import os
 import yaml
-from datetime import datetime
 
 from data.config import data_dir, file
 from utils.data_loader import load_database
@@ -43,7 +43,6 @@ st.markdown("Fill in the fields below to suggest a new article for inclusion in 
 
 # === Mandatory Fields ===
 st.subheader("🔒 Required Information")
-# todo add validation check for doi
 doi = st.text_input("DOI", placeholder="10.1234/example.doi")
 def validate_doi(doi):
     '''
