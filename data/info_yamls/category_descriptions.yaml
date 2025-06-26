@@ -1,0 +1,29 @@
+measurement modality: Describes the type of physiological or behavioral data collected
+  during the study (e.g., EEG, eye-tracking).
+pairing configuration: Specifies the grouping size and structure of participants (e.g.,
+  dyads, triads).
+pairing setup: Defines the gender-based setup of participant pairs or groups (e.g.,
+  female-female, male-male).
+relationship pair: Describes the prior relationship between participants (e.g., parent-child,
+  unfamiliar individuals).
+# todo add reference
+interaction scenario: The physical or virtual arrangement in which participants interact
+  (e.g., face-to-face, virtual).
+# todo add reference
+interaction manipulative: Specifies how participants interact with physical or digital
+  elements and the modality of communication involved.
+# todo add reference
+type of communication: Defines the communication goal or openness in the interaction
+  (e.g., goal-driven vs. open-ended).
+# todo add reference
+transfer of information: Describes the medium through which information is exchanged
+  between participants (e.g., analog, digital).
+cognitive function: Indicates the cognitive processes targeted or measured by the
+  study (e.g., attention, memory).
+# todo add reference
+paradigm: Refers to the experimental task or framework used to study social interaction
+  (e.g., imitation, cooperation).
+task symmetry: Pertains to whether participants had the same or different roles/tasks
+  during the paradigm.
+analysis method: Describes the analytical techniques used to interpret the data collected
+  in hyperscanning studies.

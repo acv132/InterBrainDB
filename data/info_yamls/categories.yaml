@@ -1,0 +1,81 @@
+measurement modality:
+  EEG: Electroencephalography
+  fNIRS: Functional Near-Infrared Spectroscopy
+  ECG: Electrocardiography
+  Eye-tracking: Measurement of eye movement and gaze
+  EDA: Electrodermal Activity
+  EMG: Electromyography
+  PPG: Photoplethysmography
+  camera-based tracking: Motion tracking using video/camera
+  other: Any other measurement modality not listed
+pairing configuration:
+  dyad: Two participants
+  triad: Three participants
+  tetrad: Four participants
+  more (n group = x): More than four; group size indicated by n
+pairing setup:
+  ff: female-female
+  mm: male-male
+  fm: female-male
+  n/a: not available
+relationship pair:
+  parent-child: Parent and child relationship
+  instructor-student: Instructor and student relationship
+  familiar: Participants are familiar with each other
+  unfamiliar: Participants do not know each other
+  n/a: not available
+interaction scenario:
+  FTF: Face-to-face
+  SBS: Side-by-side
+  FTB: Face-to-back
+  BTB: Back-to-back
+  FTF v-b: Face-to-face with visual barriers
+  SBS v-b: Side-by-side with visual barriers
+  virtual: Interaction via a virtual environment
+interaction manipulative:
+  shared physical IM and verbal IM: Shared physical objects and verbal interaction
+  physical IM w/out verbal IM: Non-verbal interaction with physical objects
+  verbal IM: Verbal interaction only
+  non-verbal IM: Non-verbal interaction (e.g., gaze, limb sync)
+  shared digital IM and verbal IM: Shared digital interface with verbal interaction
+  separate digital IM and verbal IM: Separate digital interface with verbal interaction
+  shared digital IM w/out verbal IM: Shared digital interface, no verbal interaction
+  separate digital IM w/out verbal IM: Separate digital interface, no verbal interaction
+type of communication:
+  goal-driven: Clearly defined goal or competition
+  mixed: Combination of open-ended and goal-driven tasks
+  open-ended: No defined goal; free interaction
+transfer of information:
+  analog: Non-digital forms of communication
+  mixed: Both analog and digital communication
+  digital: Information shared digitally
+cognitive function:
+  attention: Attention and focus
+  executive function: Higher-order cognitive processes
+  language: Language-related tasks
+  memory: Short and long-term memory
+  motor: Motor coordination
+  other: Other cognitive functions
+  social cognition: Understanding social behavior
+  visuospatial cognition: Spatial reasoning and perception
+paradigm:
+  cooperation/competition tasks: Participants either cooperate or compete
+  coordination tasks: Participants coordinate actions
+  ecologically valid setting: Naturalistic/real-world environments
+  economic exchange tasks: Participants exchange resources (e.g., money)
+  eye-contact/gaze-based tasks: Use of eye contact/gaze for interaction
+  imitation tasks: Participant imitates other's behavior
+  not applicable: Paradigm not specified
+task symmetry:
+  high: Participants have same tasks/skills
+  low: Participants have different tasks/skills
+analysis method:
+  connectivity effective: Causal influence of one brain on another
+  connectivity functional: Measures synchrony in brain activity across regions (e.g., joint attention)
+  machine learning supervised: Labeled data used to classify outcomes
+  machine learning unsupervised: Unlabeled data used to detect patterns
+  other: Other analytical approaches
+  spatial domain sensor: Sensor-level analysis from EEG/fNIRS
+  spatial domain source: Source-localized brain activity
+  temporal domain frequency: Frequency-based synchrony (e.g., theta, alpha waves)
+  temporal domain time: Changes in neural activity over time
