@@ -8,7 +8,8 @@ import streamlit as st
 import yaml
 
 import data.config
-from plotting.figures import generate_interaction_figure, generate_category_counts_figure
+from plotting.figures import generate_interaction_figure, generate_category_counts_figure, \
+    generate_interaction_figure_streamlit
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table)
 
@@ -248,6 +249,7 @@ with data_plots_tab:
     try:
         # ▶️ Interaction figure
         fig1 = generate_interaction_figure(display_df, data_plots_tab)
+        fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
         buf = io.BytesIO()
         fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True)
         buf.seek(0)
@@ -276,3 +278,5 @@ with data_plots_tab:
 
     except Exception as e:
         st.error(f"❌ Could not generate figures: {e}")
+
+

@@ -775,3 +775,105 @@ def generate_interaction_figure_backup(df):
         plt.tight_layout()
 
         return fig
+
+
+def generate_interaction_figure_streamlit(df, tab):
+    """
+    Streamlit-compatible alternative: stacked bar matrix for scenario × manipulative, colored by modality.
+    Each cell is a stacked bar showing the count per modality. All elements are interactive and aligned.
+    """
+    import plotly.graph_objects as go
+    import yaml
+    import numpy as np
+    import pandas as pd
+
+    if len(df) == 0:
+        tab.warning("No data found; make sure that at least some data is passing the selected filters.")
+        return None
+
+    # Load categories
+    yaml_file = "./data/info_yamls/categories.yaml"
+    with open(yaml_file, 'r', encoding='utf-8') as f:
+        categories = yaml.safe_load(f)
+
+    default_scenario_order = list(categories["interaction scenario"].keys())
+    default_manipulative_order = list(categories["interaction manipulative"].keys())
+    default_modalities_order = list(categories["measurement modality"].keys())
+    colormap = ["#00928f", "#00567c", "#6d90a0", "#38b6c0", "#bad23c", "#000000", "#81c5cb", "#19bdff", "#bcbec0"]
+    modality_colors = dict(zip(default_modalities_order, colormap))
+
+    # Prepare data (decode one-hot, explode, etc.)
+    prefix = "_"
+    df = decode_one_hot(df, prefix)
+    scenario_columns = [col for col in df.columns if col.startswith(f"interaction scenario{prefix}")]
+    manipulative_columns = [col for col in df.columns if col.startswith(f"interaction manipulative{prefix}")]
+    modality_columns = [col for col in df.columns if col.startswith(f"measurement modality{prefix}")]
+    df['interaction scenario'] = df[scenario_columns].apply(
+        lambda row: [col.replace(f"interaction scenario{prefix}", "") for col, val in row.items() if val], axis=1
+    )
+    df['interaction manipulative'] = df[manipulative_columns].apply(
+        lambda row: [col.replace(f"interaction manipulative{prefix}", "") for col, val in row.items() if val], axis=1
+    )
+    df['measurement modality'] = df[modality_columns].apply(
+        lambda row: [col.replace(f"measurement modality{prefix}", "") for col, val in row.items() if val], axis=1
+    )
+    df_exploded = df.explode('measurement modality')
+    df_exploded = df_exploded.explode('interaction manipulative')
+    df_exploded = df_exploded.explode('interaction scenario')
+
+    # Pivot table for stacked bar matrix
+    pivot = df_exploded.groupby([
+        'interaction scenario', 'interaction manipulative', 'measurement modality']
+    ).size().reset_index(name='count')
+
+    # Create a matrix for each modality
+    data_matrix = {}
+    for modality in default_modalities_order:
+        mat = np.zeros((len(default_scenario_order), len(default_manipulative_order)))
+        for _, row in pivot[pivot['measurement modality'] == modality].iterrows():
+            i = default_scenario_order.index(row['interaction scenario'])
+            j = default_manipulative_order.index(row['interaction manipulative'])
+            mat[i, j] = row['count']
+        data_matrix[modality] = mat
+
+    # Build stacked bar traces
+    traces = []
+    for m_idx, modality in enumerate(default_modalities_order):
+        traces.append(go.Bar(
+            x=[f"{manip}" for manip in default_manipulative_order]*len(default_scenario_order),
+            y=data_matrix[modality].flatten(),
+            name=modality,
+            marker_color=modality_colors[modality],
+            offsetgroup=0,
+            customdata=[(default_scenario_order[i//len(default_manipulative_order)], default_manipulative_order[i%len(default_manipulative_order)]) for i in range(len(default_scenario_order)*len(default_manipulative_order))],
+            hovertemplate="Scenario: %{customdata[0]}<br>Manipulative: %{customdata[1]}<br>Modality: " + modality + "<br>Count: %{y}<extra></extra>",
+        ))
+
+    # Layout
+    fig = go.Figure(data=traces)
+    fig.update_layout(
+        barmode='stack',
+        xaxis=dict(
+            tickvals=[f"{manip}" for manip in default_manipulative_order]*len(default_scenario_order),
+            ticktext=[f"{manip}" for manip in default_manipulative_order]*len(default_scenario_order),
+            title="Interaction Manipulative",
+        ),
+        yaxis=dict(title="Count"),
+        title="Stacked Bar Matrix: Scenario × Manipulative × Modality",
+        legend_title="Measurement Modality",
+        height=600,
+        width=1200,
+    )
+    # Add scenario labels as annotations
+    for i, scenario in enumerate(default_scenario_order):
+        fig.add_annotation(
+            x=-0.5 + i*len(default_manipulative_order),
+            y=0,
+            text=f"<b>{scenario}</b>",
+            showarrow=False,
+            yshift=-40,
+            xanchor="left",
+            font=dict(size=14, color="black")
+        )
+    tab.plotly_chart(fig, use_container_width=True)
+    return fig
