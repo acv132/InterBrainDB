@@ -41,7 +41,10 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID', 'inclusion_decisions', 'exclusion_reasons', 'user_notes', 'other_labels', "sample"]
+    columns=['rayyan_ID', # 'exclusion_reasons',
+        # 'user_notes',
+        # 'other_labels',
+        "sample"]
     )
 display_df["article"] = df.apply(create_article_handle, axis=1)
 display_df["DOI Link"] = "https://doi.org/" + df["doi"]
@@ -59,6 +62,29 @@ with open("./data/info_yamls/category_descriptions.yaml", 'r') as f:
 # ========================
 with st.sidebar:
     st.title("🔍 Filters")
+
+    # --- Paper Filter ---
+    # todo at some point change to binary
+    st.markdown("**Included in Paper Review**")
+    paper_options = display_df['included in paper review'].unique()
+    included_multiselect_key = "included_select"
+
+    # Button to select all articles
+    if st.button("Select all articles", key="included_selectall"):
+        st.session_state[included_multiselect_key] = paper_options
+
+    # Set default to empty unless session state holds selected articles
+    included_defaults = st.session_state.get(included_multiselect_key, [])
+    included_defaults = [a for a in included_defaults if a in paper_options]
+
+    selected_inclusion = st.multiselect(
+        "Choose articles based on paper review",
+        options=paper_options,
+        default=included_defaults,
+        key=included_multiselect_key,
+        label_visibility="collapsed",
+        placeholder="Choose a label"
+        )
 
     # --- Year Filter ---
     st.markdown("**Publication Year**")
@@ -152,10 +178,16 @@ with st.sidebar:
 filtered_df = display_df[(display_df["year"] >= selected_years[0]) & (display_df["year"] <= selected_years[1])].copy()
 
 # 2. Filter by article selection
+if selected_inclusion:
+    filtered_df = filtered_df[filtered_df['included in paper review'].apply(
+        lambda x: any(tag in normalize_cell(x) for tag in selected_inclusion)
+        )]
+
+# 3. Filter by article selection
 if selected_articles:
     filtered_df = filtered_df[filtered_df.index.isin(selected_articles)]
 
-# 3. Apply category filters
+# 4. Apply category filters
 for category, selected_labels in selected_filters.items():
     if category not in filtered_df.columns or not selected_labels:
         continue
@@ -165,7 +197,7 @@ for category, selected_labels in selected_filters.items():
         lambda x: any(tag in normalize_cell(x) for tag in selected_labels)
         )]
 
-# 4. Update global display_df
+# 5. Update global display_df
 display_df = filtered_df
 
 # ========================
@@ -179,13 +211,15 @@ with data_overview_tab:
     # Column view selector
     view_option = st.radio(
         "Select view mode:",
-        options=["Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns"],
+        options=["Dev Mode (temp)", "Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns"],
         horizontal=True
         )
 
     view_configs = {
-        "Default": ["article", 'DOI Link', "measurement modality", 'sample size', "pairing configuration", "paradigm",
-                    'cognitive function'],
+        "Dev Mode (temp)": ["article", 'DOI Link', 'included in paper review', 'exclusion_reasons', 'user_notes',
+                            'other_labels', ],
+        "Default": ["article", 'DOI Link', 'included in paper review', "measurement modality", 'sample size',
+                    "pairing configuration", "paradigm", 'cognitive function'],
         "Participants": ["article", 'DOI Link', 'sample size', "pairing configuration", "pairing setup",
                          'relationship pair'],
         "Paradigm": ["article", 'DOI Link', 'interaction scenario', 'interaction manipulative',
@@ -218,18 +252,12 @@ with data_overview_tab:
     # 📤 Export: BibTeX
     bibtex_content = generate_bibtex_content(export_df)
     st.download_button(
-        "📥 Download BibTeX",
-        data=bibtex_content,
-        file_name="BibExportReferences.bib",
-        mime="application/x-bibtex"
+        "📥 Download BibTeX", data=bibtex_content, file_name="BibExportReferences.bib", mime="application/x-bibtex"
         )
     # 📤 Export: APA7 LaTeX
     latex_table = generate_apa7_latex_table(export_df)
     st.download_button(
-        "📥 Download APA7-Style LaTeX Table",
-        data=latex_table,
-        file_name="LatexExportReferences.tex",
-        mime="text/plain"
+        "📥 Download APA7-Style LaTeX Table", data=latex_table, file_name="LatexExportReferences.tex", mime="text/plain"
         )
     # 📤 Export: Excel
     excel_table = generate_excel_table(export_df)
@@ -270,13 +298,8 @@ with data_plots_tab:
         st.markdown("### Category Counts")
         st.image(buf, use_container_width=True)
         st.download_button(
-            "📥 Download Category Figure (PNG)",
-            data=buf.getvalue(),
-            file_name="categories_figure.png",
-            mime="image/png"
+            "📥 Download Category Figure (PNG)", data=buf.getvalue(), file_name="categories_figure.png", mime="image/png"
             )
 
     except Exception as e:
         st.error(f"❌ Could not generate figures: {e}")
-
-
