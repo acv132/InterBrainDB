@@ -49,6 +49,8 @@ import streamlit as st
 #  host page on server
 #  store submit requests and send notification via e-mail
 
+# todo: update streamlit.config.toml based on assets/theme_config.toml
+
 st.set_page_config(
     page_title="Living Literature Review",
     page_icon="📚",
@@ -82,8 +84,7 @@ st.markdown("""
 st.subheader("Funding")
 image_extensions = [".png", ".jpg", ".jpeg"]
 logo_folder = "./assets/logos"
-st.markdown("todo change svg logos to valid extensions")
 
 for img in os.listdir(logo_folder):
     if any(img.endswith(ext) for ext in image_extensions):
-        st.image(os.path.join(logo_folder, img), width=150)
+        st.image(os.path.join(logo_folder, img), width=1000)
