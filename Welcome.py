@@ -9,10 +9,6 @@ import os
 
 import streamlit as st
 
-# todo implement frontend
-#  page: data display
-#   combine up to three categories to create a 3D cluster plot of studies
-
 # examples:
 # https://neuromadlab.com/en/resources/living-meta-analysis-on-tvns-and-hrv/
 # https://eitan177-cloneretriever-streamlit-cloneretriever-tt47bz.streamlit.app/

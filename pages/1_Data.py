@@ -4,11 +4,14 @@
 import ast
 import io
 
+import pandas as pd
 import streamlit as st
 import yaml
 
 import data.config
-from plotting.figures import generate_interaction_figure, generate_category_counts_figure
+from plotting.figures import generate_interaction_figure, generate_publication_year_figure, generate_2d_cluster_plot, \
+    generate_category_counts_streamlit_figure
+from plotting.plot_utils import export_all_category_counts
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table)
 
@@ -36,16 +39,18 @@ data_overview_tab, data_plots_tab = st.tabs(["📋 Data Overview", "📈 Plots"]
 # ========================
 # 📥 Load & Prepare Data
 # ========================
+
+# todo: complete database categories for excluded studies
+
 df = load_database(data.config.data_dir, data.config.file)
 df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID',
-         # 'exclusion_reasons',
-        # 'user_notes',
-        # 'other_labels',
-        "sample"]
+    columns=['rayyan_ID', # 'exclusion_reasons',
+             # 'user_notes',
+             # 'other_labels',
+             "sample"]
     )
 display_df["article"] = df.apply(create_article_handle, axis=1)
 display_df["DOI Link"] = "https://doi.org/" + df["doi"]
@@ -259,11 +264,35 @@ with data_overview_tab:
 # ========================
 # 📈 Data Plots Tab
 # ========================
-# todo: create plots with streamlit functions for cleaner lines etc. https://docs.streamlit.io/develop/api-reference/charts/st.bar_chart
-# todo add line plot depicting publication "year" titled "### Publication development"
-
 with data_plots_tab:
+    st.markdown("The generation of figures may take a few seconds, please be patient.")
     try:
+        # ▶️ Publication Year figure
+        st.markdown("### Publications over Time")
+
+        # Show streamlit-native line chart
+        year_counts = display_df["year"].value_counts().sort_index()
+        year_df = pd.DataFrame({"Publications": year_counts})
+        year_df.index = year_df.index.astype(str)
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.line_chart(
+                year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
+                )
+
+        # Use function to generate matplotlib figure for download
+        fig_year = generate_publication_year_figure(display_df)
+        buf_year = io.BytesIO()
+        fig_year.savefig(buf_year, format="jpg", bbox_inches="tight", dpi=300)
+        buf_year.seek(0)
+        with col2:
+            st.download_button(
+                label="📥 Download Year Chart (JPG)",
+                data=buf_year.getvalue(),
+                file_name="year_publication_chart.jpg",
+                mime="image/jpg"
+                )
+
         # ▶️ Interaction figure
         fig1 = generate_interaction_figure(display_df, data_plots_tab)
         # fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
@@ -279,15 +308,60 @@ with data_plots_tab:
             mime="image/jpg"
             )
         # ▶️ Category counts
-        fig2 = generate_category_counts_figure(display_df, data_plots_tab)
-        buf = io.BytesIO()
-        fig2.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
-        buf.seek(0)
-        st.markdown("### Category Counts")
-        st.image(buf, use_container_width=True)
+        # fig2 = generate_category_counts_figure(display_df, data_plots_tab)
+        fig2 = generate_category_counts_streamlit_figure(display_df, data_plots_tab)
+        # buf = io.BytesIO()
+        # fig2.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
+        # buf.seek(0)
+        # st.markdown("### Category Counts")
+        # st.image(buf, use_container_width=True)
+        # st.download_button(
+        #     "📥 Download Category Figure (JPG)", data=buf.getvalue(), file_name="categories_figure.jpg", mime="image/jpg"
+        #     )
+        counts_df = export_all_category_counts(display_df)
         st.download_button(
-            "📥 Download Category Figure (JPG)", data=buf.getvalue(), file_name="categories_figure.jpg", mime="image/jpg"
+            "📥 Download Category Counts (CSV)",
+            data=counts_df.to_csv(index=True),
+            file_name="category_counts.csv",
+            mime="text/csv"
             )
+
+        # ▶️ Cluster Plot figure
+        st.markdown("### 2D Cluster Plot")
+
+        available_cats = [col for col in display_df.columns if display_df[col].dtype == object]
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            # Select 2 axes
+            selected_cats = st.multiselect(
+                "Select 2 categorical axes (x and y)",
+                options=available_cats,
+                max_selections=2,
+                default=['type of communication', 'transfer of information']
+                )
+
+            # Select color category with default "paradigm" if available
+            filtered_cats = [c for c in available_cats if c not in selected_cats]
+            color_default_index = filtered_cats.index("paradigm") if "paradigm" in filtered_cats else 0
+            color_cat = st.selectbox(
+                "Select category to color points",
+                options=[c for c in available_cats if c not in selected_cats],
+                index=color_default_index
+                )
+
+            generate_plot = st.button("🎨 Generate Plot")
+
+        if generate_plot and len(selected_cats) == 2 and color_cat:
+            fig = generate_2d_cluster_plot(display_df, selected_cats[0], selected_cats[1], color_cat)
+            st.plotly_chart(fig, use_container_width=True)
+
+            csv_data = display_df[selected_cats + [color_cat]].dropna().copy()
+            st.download_button(
+                label="📥 Download Plot Data (CSV)",
+                data=csv_data.to_csv(index=True),
+                file_name="2d_category_plot_data.csv",
+                mime="text/csv"
+                )
 
     except Exception as e:
         st.error(f"❌ Could not generate figures: {e}")

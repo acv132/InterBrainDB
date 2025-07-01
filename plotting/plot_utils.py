@@ -1,6 +1,6 @@
 import ast
 
-import toml
+import pandas as pd
 import yaml
 
 
@@ -82,3 +82,23 @@ def is_dark_color(hex_color):
     # Perceived luminance formula
     luminance = 0.299*r + 0.587*g + 0.114*b
     return luminance < 128
+
+
+def export_all_category_counts(df):
+    df = decode_one_hot(df, "_")
+
+    with open("./data/info_yamls/categories.yaml", 'r', encoding='utf-8') as f:
+        category_definitions = yaml.safe_load(f)
+
+    base_categories = list(category_definitions.keys())
+
+    category_counts = {}
+    for cat in base_categories:
+        cols = [col for col in df.columns if col.startswith(f"{cat}_")]
+        if cols:
+            counts = df[cols].sum().rename(lambda x: x.replace(f"{cat}_", ""))
+            category_counts[cat] = counts
+
+    # Flatten into DataFrame
+    export_df = pd.concat(category_counts, axis=1).fillna(0).astype(int)
+    return export_df
