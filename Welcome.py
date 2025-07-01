@@ -10,32 +10,14 @@ import os
 import streamlit as st
 
 # todo implement frontend
-#  page: home page
-#       welcome
-#       Purpose
-#       explanation
-#       paper ref
-#       code + data ref
-#       adding new articles (submit page)
-#       contact
-#       funding
-#       links
-#  page: data overview (table of currently included studies with filters applied)
 #  page: data display
-#   display data tables
-#   display interaction figure
-#   diplay counts per category
 #   combine up to three categories to create a 3D cluster plot of studies
-#  page: submit new data point (article) with mandatory and optional fields to fill in
-#  optional: paper review overview (included and excluded full-text screening overview; exclusion reason PICOS)
 
 # examples:
 # https://neuromadlab.com/en/resources/living-meta-analysis-on-tvns-and-hrv/
 # https://eitan177-cloneretriever-streamlit-cloneretriever-tt47bz.streamlit.app/
 # https://hbretonniere-surviz--home-page-9r8djm.streamlit.app/Survey_footprint
 
-
-# todo: update streamlit.config.toml based on assets/theme_config.toml
 
 st.set_page_config(
     page_title="Living Literature Review",
@@ -68,18 +50,21 @@ The aim is to provide a comprehensive overview of the current state of research,
 Want to contribute? Use the **Submit New Article** tab to add your studies, we regularly review submissions and add 
 them to the database.
 
-Want to report an issue or suggest a feature? 
-Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
-
 ### Paper
 Read all about the Living Literature Review in our paper:
 ```
 [citation with doi]
 ```
+
 ### Code & Data
 <a href="https://github.com/acv132/Hyperscanning-Living-Review" target="_blank">
-    <img src="https://raw.githubusercontent.com/acv132/Hyperscanning-Living-Review/main/assets/github-mark.png" height="40">
+    <img src="https://github.com/acv132/Hyperscanning-Living-Review/blob/main/assets/github-mark.png" height="40">
 </a>
+
+### Contact
+Want to report an issue or suggest a feature? 
+Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
+
 """,
     unsafe_allow_html=True)
 
