@@ -1,0 +1,13 @@
+[light]
+primaryColor = "#0066cc"
+backgroundColor = "#ffffff"
+textColor = "#000000"
+secondaryBackgroundColor = "#f0f2f6"
+font = "sans serif"
+
+[dark]
+primaryColor="#019879"
+backgroundColor="#1e1f22"
+textColor="#fffff"
+secondaryBackgroundColor="#2b2d30"
+font="sans serif"
