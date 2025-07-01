@@ -10,13 +10,6 @@ import os
 import streamlit as st
 
 # todo implement frontend
-#  sidebar navigation: filters
-#       Include/exclude specific studies
-#       publication year
-#       per categories
-#       info hover buttons for each filter
-#       reload button
-#  tab navigation (top): pages
 #  page: home page
 #       welcome
 #       Purpose
@@ -41,13 +34,6 @@ import streamlit as st
 # https://eitan177-cloneretriever-streamlit-cloneretriever-tt47bz.streamlit.app/
 # https://hbretonniere-surviz--home-page-9r8djm.streamlit.app/Survey_footprint
 
-# todo implement backend
-#  load in database (excel file)
-#       how to treat missing values (can there be any?)
-#  update "used data" var after filters are set (reload button logic)
-#  create figures
-#  host page on server
-#  store submit requests and send notification via e-mail
 
 # todo: update streamlit.config.toml based on assets/theme_config.toml
 
@@ -74,16 +60,32 @@ This tool is designed to visualize up-to-date research body related to remote hy
 
 st.markdown("""
 ### Purpose
-[Short explanation of the meta-analysis goal]
+This living literature review tracks emerging research on multimodal hyperscanning in collaborative contexts. The 
+platform includes various categories, such as interaction scenario, measurement modalities, and analysis approaches, 
+serving as a dynamic open-access resource. 
+The aim is to provide a comprehensive overview of the current state of research, enabling researchers to stay informed about the latest developments in the field.
+
+Want to contribute? Use the **Submit New Article** tab to add your studies, we regularly review submissions and add 
+them to the database.
+
+Want to report an issue or suggest a feature? 
+Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
+
 ### Paper
-[citation with copy function and doi]
+Read all about the Living Literature Review in our paper:
+```
+[citation with doi]
+```
 ### Code & Data
-[GitHub]
-""")
+<a href="https://github.com/acv132/Hyperscanning-Living-Review" target="_blank">
+    <img src="https://raw.githubusercontent.com/acv132/Hyperscanning-Living-Review/main/assets/github-mark.png" height="40">
+</a>
+""",
+    unsafe_allow_html=True)
 
 st.subheader("Funding")
 image_extensions = [".png", ".jpg", ".jpeg"]
-logo_folder = "./assets/logos"
+logo_folder = "./assets/logos_Funding"
 
 for img in os.listdir(logo_folder):
     if any(img.endswith(ext) for ext in image_extensions):
