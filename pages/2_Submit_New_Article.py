@@ -10,6 +10,23 @@ import yaml
 from data.config import data_dir, file
 from utils.data_loader import load_database
 
+# ========================
+# 💅 UI Configuration
+# ========================
+st.set_page_config(page_title="Living Literature Review",
+                   page_icon='assets/favicon.ico',
+                   layout="wide")
+st.title("🆕 Submission of Article Suggestion")
+st.markdown(
+    """
+    <style>
+    .stTabs [data-baseweb="tab"] {
+        font-size: 16pt !important;
+    }
+    </style>
+    """, unsafe_allow_html=True
+    )
+
 # === Load Database ===
 df = load_database(data_dir, file)
 
@@ -27,17 +44,6 @@ if os.path.exists(submission_file):
     submitted_df = load_database(data_dir, "submitted_articles.xlsx")
 else:
     submitted_df = pd.DataFrame()
-
-st.title("🆕 Submission of Article Suggestion")
-st.markdown(
-    """
-    <style>
-    .stTabs [data-baseweb="tab"] {
-        font-size: 16pt !important;
-    }
-    </style>
-    """, unsafe_allow_html=True
-    )
 
 st.markdown("Fill in the fields below to suggest a new article for inclusion in the database.")
 

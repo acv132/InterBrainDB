@@ -6,7 +6,8 @@
 #font="sans serif"
 
 [theme]
-primaryColor="#00928f"
+#primaryColor="#00928f"
+primaryColor="#ADE1DC"
 backgroundColor="#FFFFFF"
 secondaryBackgroundColor="#F0F2F6"
 textColor="#31333F"

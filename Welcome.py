@@ -15,13 +15,14 @@ import streamlit as st
 # https://hbretonniere-surviz--home-page-9r8djm.streamlit.app/Survey_footprint
 
 
+# ========================
+# 💅 UI Configuration
+# ========================
 st.set_page_config(
     page_title="Living Literature Review",
-    page_icon="📚",
+    page_icon='assets/favicon.ico',
     layout="wide"
 )
-
-# Main content
 st.title("📚 Living Literature Review")
 st.markdown("""
 ### Welcome to the Living Literature Review
