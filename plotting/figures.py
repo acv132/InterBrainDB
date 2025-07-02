@@ -169,8 +169,20 @@ def generate_category_counts_streamlit_figure(df, tab):
 
             with cols[col_idx]:
                 st.markdown(f"**{cat}**")
-                st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
+                # st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
+                import altair as alt
+                chart_df = pd.DataFrame(
+                    {
+                        "label": counts.index, "count": counts.values
+                        }
+                    )
+                bar_chart = alt.Chart(chart_df).mark_bar(color=st.get_option('theme.primaryColor')).encode(
+                    x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
+                    # Sort by count descending
+                    tooltip=["label", "count"]
+                    ).properties(height=300)
 
+                st.altair_chart(bar_chart, use_container_width=True)
     return
 
 
@@ -535,6 +547,8 @@ def generate_interaction_figure(df, tab):
         ax.add_artist(study_design_legend)
 
     plt.tight_layout()
+    x_min, x_max = ax.get_xlim()
+    ax.set_xlim(x_min, x_max + 1)
 
     return fig
 
