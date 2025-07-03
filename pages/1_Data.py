@@ -74,16 +74,16 @@ with st.sidebar:
 
     # --- Paper Filter ---
     st.markdown("**Included in Paper Review**")
-
-    # Checkbox: default is True (only included)
     # todo for final version: set default to False (show all)
     include_only = st.checkbox("Show only included papers", value=True)
-
-    # Apply filter
     if include_only:
         filtered_df = display_df[display_df['included in paper review'] == True]
     else:
         filtered_df = display_df
+
+    # --- Keyword Search ---
+    keyword = st.text_input("🔎 Keyword search", placeholder="Type to filter any column", help="Filters rows if any "
+                                                                                             "column contains this text")
 
     # --- Year Filter ---
     st.markdown("**Publication Year**")
@@ -92,9 +92,9 @@ with st.sidebar:
     selected_years = st.slider(
         "Year range", min_value=min_year, max_value=max_year, value=(min_year, max_year), key="year_range"
         )
-
+    st.markdown("---")
     # --- Reset Button ---
-    if st.button("🔄 Reset Filters"):
+    if st.button("🔄 Reset Category Filters"):
         for key in list(st.session_state.keys()):
             if any(key.endswith(suffix) for suffix in ("_toggle", "_multiselect", "year_range", "_article_select")):
                 del st.session_state[key]
@@ -128,11 +128,12 @@ with st.sidebar:
         multi_key = f"{category}_multiselect"
 
         # Tooltip text from YAML if available
-        tooltip_lines = [f"- **{label}**: {label_dict.get(label, '')}" for label in all_labels if label in label_dict]
-        tooltip_text = category_tooltips[category]
-        tooltip_text += "\n".join(tooltip_lines).strip()
+        intro = category_tooltips[category].rstrip()
+        list_items = [f"- **{lbl}**: {label_dict.get(lbl,'')}" for lbl in all_labels if lbl in label_dict]
+        tooltip_text = intro + "\n\n" + "\n".join(list_items)
 
-        st.markdown(f"**{category.capitalize()}***️", help=tooltip_text)
+        st.markdown(f"**{category.capitalize()}**️", help=tooltip_text)
+
 
         # Select all button
         if st.button("Select all", key=f"{category}_selectall"):
@@ -176,15 +177,23 @@ with st.sidebar:
 # 1. Filter by year range
 filtered_df = display_df[(display_df["year"] >= selected_years[0]) & (display_df["year"] <= selected_years[1])].copy()
 
-# 2. Filter by article selection
+# 2. Filter by inclusion in paper review
 if include_only:
     filtered_df = filtered_df[filtered_df['included in paper review'] == True]
 
-# 3. Filter by article selection
+# 3. Keyword filter: keep only rows where any column contains the keyword
+if keyword:
+    # convert all columns to string, do a case‐insensitive contains, and any() across columns
+    mask = filtered_df.astype(str).apply(
+        lambda row: row.str.contains(keyword, case=False, na=False).any(),
+        axis=1
+    )
+    filtered_df = filtered_df[mask]
+# 4. Filter by article selection
 if selected_articles:
     filtered_df = filtered_df[filtered_df.index.isin(selected_articles)]
 
-# 4. Apply category filters
+# 5. Apply category filters
 for category, selected_labels in selected_filters.items():
     if category not in filtered_df.columns or not selected_labels:
         continue
@@ -194,7 +203,7 @@ for category, selected_labels in selected_filters.items():
         lambda x: any(tag in normalize_cell(x) for tag in selected_labels)
         )]
 
-# 5. Update global display_df
+# 6. Update global display_df
 display_df = filtered_df
 
 # ========================
