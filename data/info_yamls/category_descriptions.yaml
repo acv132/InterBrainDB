@@ -6,24 +6,20 @@ pairing setup: Defines the gender-based setup of participant pairs or groups (e.
   female-female, male-male).
 relationship pair: Describes the prior relationship between participants (e.g., parent-child,
   unfamiliar individuals).
-# todo add reference
 interaction scenario: The physical or virtual arrangement in which participants interact
-  (e.g., face-to-face, virtual).
-# todo add reference
+  (e.g., face-to-face, virtual). Based on Balters et al. (2021) https://doi.org/10.1007/978-3-030-76324-4_2
 interaction manipulative: Specifies how participants interact with physical or digital
-  elements and the modality of communication involved.
-# todo add reference
+  elements and the modality of communication involved. Based on Balters et al. (2021) https://doi.org/10.1007/978-3-030-76324-4_2
 type of communication: Defines the communication goal or openness in the interaction
-  (e.g., goal-driven vs. open-ended).
-# todo add reference
+  (e.g., goal-driven vs. open-ended). Based on Balters et al. (2020) https://doi.org/10.3389/fnhum.2020.588494
 transfer of information: Describes the medium through which information is exchanged
-  between participants (e.g., analog, digital).
+  between participants (e.g., analog, digital). Based on Balters et al. (2020) https://doi.org/10.3389/fnhum.2020.588494
 cognitive function: Indicates the cognitive processes targeted or measured by the
   study (e.g., attention, memory).
-# todo add reference
 paradigm: Refers to the experimental task or framework used to study social interaction
-  (e.g., imitation, cooperation).
+  (e.g., imitation, cooperation). Based on Wang et al. (2018) https://doi.org/10.21037/qims.2018.09.07
 task symmetry: Pertains to whether participants had the same or different roles/tasks
-  during the paradigm.
+  during the paradigm. Based on Wikström (2022) https://helda.helsinki
+  .fi/bitstreams/408ae468-880e-41c0-b757-708ab02d9dae/download
 analysis method: Describes the analytical techniques used to interpret the data collected
   in hyperscanning studies.

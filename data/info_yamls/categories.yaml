@@ -17,13 +17,13 @@ pairing setup:
   ff: female-female
   mm: male-male
   fm: female-male
-  n/a: not available
+  n/s: not specified
 relationship pair:
   parent-child: Parent and child relationship
   instructor-student: Instructor and student relationship
   familiar: Participants are familiar with each other
   unfamiliar: Participants do not know each other
-  n/a: not available
+  n/s: not specified
 interaction scenario:
   FTF: Face-to-face
   SBS: Side-by-side
@@ -49,15 +49,6 @@ transfer of information:
   analog: Non-digital forms of communication
   mixed: Both analog and digital communication
   digital: Information shared digitally
-cognitive function:
-  attention: Attention and focus
-  executive function: Higher-order cognitive processes
-  language: Language-related tasks
-  memory: Short and long-term memory
-  motor: Motor coordination
-  other: Other cognitive functions
-  social cognition: Understanding social behavior
-  visuospatial cognition: Spatial reasoning and perception
 paradigm:
   cooperation/competition tasks: Participants either cooperate or compete
   coordination tasks: Participants coordinate actions
@@ -79,3 +70,12 @@ analysis method:
   spatial domain source: Source-localized brain activity
   temporal domain frequency: Frequency-based synchrony (e.g., theta, alpha waves)
   temporal domain time: Changes in neural activity over time
+cognitive function:
+  attention: Attention and focus
+  executive function: Higher-order cognitive processes
+  language: Language-related tasks
+  memory: Short and long-term memory
+  motor: Motor coordination
+  other: Other cognitive functions
+  social cognition: Understanding social behavior
+  visuospatial cognition: Spatial reasoning and perception
