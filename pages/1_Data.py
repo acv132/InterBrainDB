@@ -49,7 +49,8 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID', # 'exclusion_reasons',
+    columns=['rayyan_ID',
+             # 'exclusion_reasons',
              # 'user_notes',
              # 'other_labels',
              "sample"]
@@ -75,6 +76,7 @@ with st.sidebar:
     st.markdown("**Included in Paper Review**")
 
     # Checkbox: default is True (only included)
+    # todo for final version: set default to False (show all)
     include_only = st.checkbox("Show only included papers", value=True)
 
     # Apply filter
@@ -267,6 +269,8 @@ with data_overview_tab:
 # 📈 Data Plots Tab
 # ========================
 with data_plots_tab:
+    st.markdown(f"Total studies in database: N = {len(df)}")
+    st.markdown(f"Currently included studies: N = {len(display_df)}")
     # todo add figure descriptions and download tips for all
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:

@@ -3,9 +3,9 @@ import io
 import os
 from ast import literal_eval
 
-import tabulate
 import pandas as pd
 import streamlit as st
+import tabulate
 
 
 def create_article_handle(row):
@@ -23,9 +23,9 @@ def create_article_handle(row):
 def load_database(data_dir, file):
     # load data
     if file.endswith(".csv"):
-        return pd.read_csv(os.path.join(data_dir, file), sep=";")
+        return pd.read_csv(os.path.join(data_dir, file), sep=";", keep_default_na=False)
     elif file.endswith(".xlsx"):
-        return pd.read_excel(os.path.join(data_dir, file))
+        return pd.read_excel(os.path.join(data_dir, file), keep_default_na=False)
     else:
         raise ValueError("Unsupported file format. Please use either .csv or .xlsx.")
 

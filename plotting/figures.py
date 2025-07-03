@@ -52,10 +52,8 @@ def generate_category_counts_figure(df, tab):
     all_columns = df.columns
 
     # Identify one-hot columns for each category
-    category_columns = {
-        cat: [col for col in all_columns if col.startswith(f"{cat}{prefix}")]
-        for cat in base_categories
-    }
+    category_columns = {cat: [col for col in all_columns if col.startswith(f"{cat}{prefix}")] for cat in
+        base_categories}
 
     # Clean up: only keep categories with at least 1 matching one-hot column
     category_columns = {k: v for k, v in category_columns.items() if v}
@@ -132,10 +130,8 @@ def generate_category_counts_streamlit_figure(df, tab):
 
     # Identify one-hot columns per category
     all_columns = df.columns
-    category_columns = {
-        cat: [col for col in all_columns if col.startswith(f"{cat}{prefix}")]
-        for cat in base_categories
-    }
+    category_columns = {cat: [col for col in all_columns if col.startswith(f"{cat}{prefix}")] for cat in
+        base_categories}
     category_columns = {k: v for k, v in category_columns.items() if v}
 
     n_categories = len(category_columns)
@@ -143,7 +139,7 @@ def generate_category_counts_streamlit_figure(df, tab):
     # User layout choice
     layout_option = tab.radio(
         "Choose plot layout:", ["Auto", "Single Column", "Grid (3 columns)"], horizontal=True
-    )
+        )
 
     if layout_option == "Single Column":
         n_cols = 1
@@ -180,7 +176,14 @@ def generate_category_counts_streamlit_figure(df, tab):
                     x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
                     # Sort by count descending
                     tooltip=["label", "count"]
-                    ).properties(height=300)
+                    ).properties(
+                    height=300,
+                    padding={"left": 20, "right": 20, "top": 20, "bottom": 20}, ).configure_view(
+                    stroke=None
+                    ).configure_axis(
+                    labelFontSize=12, labelLimit=150, # distance in pixels between axis‐line and tick labels
+                    labelPadding=10, # distance in pixels between axis‐line and title
+                    titlePadding=15, )
 
                 st.altair_chart(bar_chart, use_container_width=True)
     return
@@ -262,8 +265,8 @@ def generate_interaction_figure(df, tab):
     modalities_contained = [col.replace("measurement modality_", "") for col in modality_columns]
 
     scenario_order = [scenario for scenario in default_scenario_order if scenario in scenario_contained]
-    manipulative_order = [manipulative for manipulative in default_manipulative_order if manipulative in
-                          manipulative_contained]
+    manipulative_order = [manipulative for manipulative in default_manipulative_order if
+                          manipulative in manipulative_contained]
     modalities_order = [modality for modality in default_modalities_order if modality in modalities_contained]
 
     # prepare confusion matrix rows and columns
@@ -315,24 +318,14 @@ def generate_interaction_figure(df, tab):
     connection_data = []
     for ((start, end), modality), count in connection_counts.items():
         start_scenario = get_scenario_or_manipulative(
-            start[1],
-            'y',
-            scenario_order,
-            manipulative_order,
-            row_pos,
-            col_pos
+            start[1], 'y', scenario_order, manipulative_order, row_pos, col_pos
             )
         start_manipulative = get_scenario_or_manipulative(
             start[0], 'x', scenario_order, manipulative_order, row_pos, col_pos
             )
         end_scenario = get_scenario_or_manipulative(end[1], 'y', scenario_order, manipulative_order, row_pos, col_pos)
         end_manipulative = get_scenario_or_manipulative(
-            end[0],
-            'x',
-            scenario_order,
-            manipulative_order,
-            row_pos,
-            col_pos
+            end[0], 'x', scenario_order, manipulative_order, row_pos, col_pos
             )
 
         connection_data.append(
@@ -453,7 +446,13 @@ def generate_interaction_figure(df, tab):
     ax.set_yticks(row_pos)
 
     # Increase padding for tick labels
-    ax.set_xticklabels([c.replace(" IM", '') for c in manipulative_order], rotation=45, ha='right', fontsize=14, color=font_color)
+    ax.set_xticklabels(
+        [c.replace(" IM", '') for c in manipulative_order],
+        rotation=45,
+        ha='right',
+        fontsize=14,
+        color=font_color
+        )
     ax.tick_params(axis='x', which='both', length=0, pad=10)
     ax.set_yticklabels(scenario_order, fontsize=14, color=font_color)
     ax.tick_params(axis='y', which='both', length=0, pad=10)
@@ -481,7 +480,7 @@ def generate_interaction_figure(df, tab):
     # Get only modalities actually used
     used_modalities = connection_df['modality'].unique()
     filtered_modality_handles = {label: handle for label, handle in modality_handles.items() if
-        label in used_modalities}
+                                 label in used_modalities}
 
     # Get only counts actually used
     used_counts = connection_df['count'].unique()
