@@ -1,14 +1,12 @@
 import os
-import re
 from datetime import datetime
 
 import pandas as pd
-import requests
 import streamlit as st
 import yaml
 
 from data.config import data_dir, file
-from utils.data_loader import load_database
+from utils.data_loader import load_database, validate_doi
 
 # ========================
 # 💅 UI Configuration
@@ -16,7 +14,7 @@ from utils.data_loader import load_database
 st.set_page_config(page_title="Living Literature Review",
                    page_icon='assets/favicon.ico',
                    layout="wide")
-st.title("🆕 Submission of Article Suggestion")
+st.title("🆕 Submission of New Article")
 st.markdown(
     """
     <style>
@@ -45,96 +43,95 @@ if os.path.exists(submission_file):
 else:
     submitted_df = pd.DataFrame()
 
-st.markdown("Fill in the fields below to suggest a new article for inclusion in the database.")
+col1,col2 = st.columns([1,1])
+with col1:
+    # === Mandatory Fields ===
+    st.subheader("🔒 Required Information")
+    st.markdown("Fill in the fields below to suggest a new article for inclusion in the database.")
 
-# === Mandatory Fields ===
-st.subheader("🔒 Required Information")
-doi = st.text_input("DOI", placeholder="10.1234/example.doi")
-def validate_doi(doi):
-    '''
-    Tests if the provided DOI is valid.
-    '''
-    def is_valid_doi(doi):
-        pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
-        return bool(re.match(pattern, doi, re.IGNORECASE))
+    doi = st.text_input("DOI", placeholder="10.1234/example.doi")
 
-    def doi_exists(doi):
-        url = f"https://doi.org/{doi}"
-        response = requests.head(url, allow_redirects=True)
-        return response.status_code == 200
-    return is_valid_doi(doi) and doi_exists(doi)
+    if not validate_doi(doi) and doi != "":
+        st.error("Invalid DOI. Please ensure it is in the correct format and exists.")
 
-if not validate_doi(doi) and doi != "":
-    st.error("Invalid DOI. Please ensure it is in the correct format and exists.")
+    year = st.number_input("Year", min_value=1900, max_value=datetime.now().year, value=datetime.now().year, step=1)
+    authors = st.text_area("Authors", placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3")
+    title = st.text_area("Title")
+    abstract = st.text_area("Abstract")
 
-year = st.number_input("Year", min_value=1900, max_value=datetime.now().year, value=datetime.now().year, step=1)
-authors = st.text_area("Authors", placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3")
-title = st.text_area("Title")
-abstract = st.text_area("Abstract")
+    # === Optional Categorizations ===
+    st.subheader("🏷️ Optional Categorization")
 
-# === Optional Categorizations ===
-st.subheader("🏷️ Optional Categorization")
-optional_inputs = {}
+    st.markdown("Optionally you may already categorize the article based on the categories below. If"
+                " you are unsure, you can leave these fields empty and the reviewers will categorize it for you.")
+    optional_inputs = {}
 
-for category, label_dict in label_tooltips.items():
-    if not isinstance(label_dict, dict):
-        continue
+    for category, label_dict in label_tooltips.items():
+        if not isinstance(label_dict, dict):
+            continue
 
-    options = sorted(label_dict.keys())
-    helptext = category_tooltips.get(category, "")
-    label_info = "\n".join(
-        [f"- **{label}**: {label_dict[label]}" for label in options if label in label_dict]
-    )
-    full_help = f"{helptext}\n\n{label_info}".strip()
+        options = sorted(label_dict.keys())
+        helptext = category_tooltips.get(category, "")
+        label_info = "\n".join(
+            [f"- **{label}**: {label_dict[label]}" for label in options if label in label_dict]
+        )
+        full_help = f"{helptext}\n\n{label_info}".strip()
 
-    selected = st.multiselect(
-        f"{category.capitalize()}",
-        options=options,
-        help=full_help,
-        placeholder=f"Select {category.lower()} (optional)"
-    )
-    optional_inputs[category] = selected
+        selected = st.multiselect(
+            f"{category.capitalize()}",
+            options=options,
+            help=full_help,
+            placeholder=f"Select {category.lower()} (optional)"
+        )
+        optional_inputs[category] = selected
 
-# === Submission Button ===
-if st.button("📤 Submit Suggestion"):
-    missing_fields = []
-    if not doi:
-        missing_fields.append("DOI")
-    if not title:
-        missing_fields.append("Title")
-    if not authors:
-        missing_fields.append("Authors")
-    if not abstract:
-        missing_fields.append("Abstract")
+with col2:
+    # === Submission Button ===
+    st.markdown("#### 📨 Submit Your Article Suggestion")
+    st.markdown("Once you have filled in the required information, you can submit your article suggestion for review. "
+                "The reviewers will then check the article and categorize it if necessary. "
+                "If you have any questions, do not hesitate to contact us.")
+    if doi and title and authors and abstract:
+        st.info("The required information is filled in. Click the button below to submit your article suggestion.")
+    if st.button("📤 Submit Suggestion"):
+        missing_fields = []
+        if not doi:
+            missing_fields.append("DOI")
+        if not title:
+            missing_fields.append("Title")
+        if not authors:
+            missing_fields.append("Authors")
+        if not abstract:
+            missing_fields.append("Abstract")
 
-    if missing_fields:
-        st.error(f"Please fill in the required fields: {', '.join(missing_fields)}")
-    else:
-        new_entry = {
-            "doi": doi,
-            "year": year,
-            "authors": authors,
-            "title": title,
-            "abstract": abstract
-        }
-        # Include optional labels
-        new_entry.update(optional_inputs)
-
-        # Normalize for comparison
-        new_doi = new_entry["doi"].strip().lower()
-
-        # === Check if DOI exists in main database or submitted suggestions ===
-        existing_dois = set()
-        if "doi" in df.columns:
-            existing_dois.update(df["doi"].astype(str).str.lower())
-            existing_dois.update(submitted_df["doi"].astype(str).str.lower())
-
-        if new_doi in existing_dois:
-            st.info("ℹ️ This article has already been submitted or is in the database.")
+        if missing_fields:
+            st.error(f"Please fill in the required fields: {', '.join(missing_fields)}")
         else:
-            new_row = pd.DataFrame([new_entry])
-            submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
-            submitted_df.to_excel(submission_file, index=False)
+            new_entry = {
+                "doi": doi,
+                "year": year,
+                "authors": authors,
+                "title": title,
+                "abstract": abstract
+            }
+            # Include optional labels
+            new_entry.update(optional_inputs)
 
-            st.success("✅ Article suggestion submitted successfully!")
-            st.balloons()
+            # Normalize for comparison
+            new_doi = new_entry["doi"].strip().lower()
+
+            # === Check if DOI exists in main database or submitted suggestions ===
+            existing_dois = set()
+            if "doi" in df.columns:
+                existing_dois.update(df["doi"].astype(str).str.lower())
+                existing_dois.update(submitted_df["doi"].astype(str).str.lower())
+
+            if new_doi in existing_dois:
+                st.info("ℹ️ This article has already been submitted or is in the database.")
+            else:
+                new_row = pd.DataFrame([new_entry])
+                submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
+                submitted_df.to_excel(submission_file, index=False)
+
+                st.success("✅ Article suggestion submitted successfully!")
+                st.balloons()

@@ -5,7 +5,8 @@ Streamlit automatically create the tabs in the left sidebar from the .py files l
 Here we just have the home page, with a short description of the tabs, and some images
 
 """
-import os
+
+import base64
 
 import streamlit as st
 
@@ -43,32 +44,46 @@ This living literature review tracks emerging research on multimodal hyperscanni
 platform includes various categories, such as interaction scenario, measurement modalities, and analysis approaches, 
 serving as a dynamic open-access resource. 
 The aim is to provide a comprehensive overview of the current state of research, enabling researchers to stay informed about the latest developments in the field.
+""")
 
-Want to contribute? Use the **Submit New Article** tab to add your studies, we regularly review submissions and add 
-them to the database.
+st.markdown("Want to contribute? Click the button below to submit a new article for review:")
+st.page_link(label="Submit New Article", page="pages/2_Submit_New_Article.py", icon="🆕")
 
+st.markdown(f"""
 ### Paper
-Read all about the Living Literature Review in our paper:
+Read the original literature review here:
 ```
 [citation with doi]
 ```
+If you use this resource, please cite this paper as well. 
+""")
 
+# --- Configurable vars ---
+label = "Git Repository"
+url = "https://github.com/acv132/Hyperscanning-Living-Review"
+icon_path = "assets/github.svg"
+icon_width =35  # in pixels
+with open(icon_path, "rb") as f:
+    svg_bytes = f.read()
+b64 = base64.b64encode(svg_bytes).decode()
+html = f"""
 ### Code & Data
-<a href="https://github.com/acv132/Hyperscanning-Living-Review" target="_blank">
-    <img src="https://github.com/acv132/Hyperscanning-Living-Review/blob/main/assets/github-mark.png" height="40">
-</a>
 
+<a href="{url}" target="_blank"
+   style="text-decoration: none; display: inline-flex; align-items: center;">
+  <img src="data:image/svg+xml;base64,{b64}" width="{icon_width}" style="margin-right:8px;"/>
+  <span style="font-size:16px; color:inherit;">{label}</span>
+</a>
+"""
+st.markdown(html, unsafe_allow_html=True)
+
+st.markdown("""
 ### Contact
 Want to report an issue or suggest a feature? 
 Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
 
-""",
-    unsafe_allow_html=True)
+""")
 
 st.subheader("Funding")
-image_extensions = [".png", ".jpg", ".jpeg"]
-logo_folder = "./assets/logos_Funding"
-
-for img in os.listdir(logo_folder):
-    if any(img.endswith(ext) for ext in image_extensions):
-        st.image(os.path.join(logo_folder, img), width=1000)
+logo = "./assets/logos.svg"
+st.image(logo, width=1000)

@@ -1,9 +1,11 @@
 import ast
 import io
 import os
+import re
 from ast import literal_eval
 
 import pandas as pd
+import requests
 import streamlit as st
 import tabulate
 
@@ -94,3 +96,18 @@ def normalize_cell(val):
     if pd.isna(val):
         return []
     return [val]
+
+
+def validate_doi(doi):
+    '''
+    Tests if the provided DOI is valid.
+    '''
+    def is_valid_doi(doi):
+        pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
+        return bool(re.match(pattern, doi, re.IGNORECASE))
+
+    def doi_exists(doi):
+        url = f"https://doi.org/{doi}"
+        response = requests.head(url, allow_redirects=True)
+        return response.status_code == 200
+    return is_valid_doi(doi) and doi_exists(doi)
