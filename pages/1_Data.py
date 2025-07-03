@@ -18,9 +18,9 @@ from utils.data_loader import (load_database, create_article_handle, generate_bi
 # ========================
 # 💅 UI Configuration
 # ========================
-st.set_page_config(page_title="Living Literature Review",
-                   page_icon='assets/favicon.ico',
-                   layout="wide")
+st.set_page_config(
+    page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
+    )
 
 st.title("📖 Database")
 st.markdown(
@@ -36,7 +36,7 @@ st.markdown(
 # ========================
 # 🗂️ Tabs
 # ========================
-data_overview_tab, data_plots_tab = st.tabs(["📋 Data Overview", "📈 Plots"])
+data_overview_tab, data_plots_tab, data_plots_tab2 = st.tabs(["📋 Data Overview", "📈 Plots", "📈 Plots (Slow)"])
 
 # ========================
 # 📥 Load & Prepare Data
@@ -49,8 +49,7 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID',
-             # 'exclusion_reasons',
+    columns=['rayyan_ID',  # 'exclusion_reasons',
              # 'user_notes',
              # 'other_labels',
              "sample"]
@@ -82,8 +81,10 @@ with st.sidebar:
         filtered_df = display_df
 
     # --- Keyword Search ---
-    keyword = st.text_input("🔎 Keyword search", placeholder="Type to filter any column", help="Filters rows if any "
-                                                                                             "column contains this text")
+    keyword = st.text_input(
+        "🔎 Keyword search", placeholder="Type to filter any column", help="Filters rows if any "
+                                                                          "column contains this text"
+        )
 
     # --- Year Filter ---
     st.markdown("**Publication Year**")
@@ -129,11 +130,10 @@ with st.sidebar:
 
         # Tooltip text from YAML if available
         intro = category_tooltips[category].rstrip()
-        list_items = [f"- **{lbl}**: {label_dict.get(lbl,'')}" for lbl in all_labels if lbl in label_dict]
+        list_items = [f"- **{lbl}**: {label_dict.get(lbl, '')}" for lbl in all_labels if lbl in label_dict]
         tooltip_text = intro + "\n\n" + "\n".join(list_items)
 
         st.markdown(f"**{category.capitalize()}**️", help=tooltip_text)
-
 
         # Select all button
         if st.button("Select all", key=f"{category}_selectall"):
@@ -185,9 +185,8 @@ if include_only:
 if keyword:
     # convert all columns to string, do a case‐insensitive contains, and any() across columns
     mask = filtered_df.astype(str).apply(
-        lambda row: row.str.contains(keyword, case=False, na=False).any(),
-        axis=1
-    )
+        lambda row: row.str.contains(keyword, case=False, na=False).any(), axis=1
+        )
     filtered_df = filtered_df[mask]
 # 4. Filter by article selection
 if selected_articles:
@@ -210,9 +209,9 @@ display_df = filtered_df
 # 📄 Data Overview Tab
 # ========================
 with data_overview_tab:
-    st.markdown("This table provides an overview of the studies included in the analysis.")
     st.markdown(f"Total studies in database: N = {len(df)}")
     st.markdown(f"Currently included studies: N = {len(display_df)}")
+    st.markdown("This table provides an overview of the studies included in the analysis.")
 
     # Column view selector
     view_option = st.radio(
@@ -317,13 +316,25 @@ with data_plots_tab:
             # ▶️ Interaction figure
             col3, col4 = st.columns([1, 1])
             with col3:
-                fig1 = generate_interaction_figure(display_df, data_plots_tab)
+                fig1, condition_count, number_studies = generate_interaction_figure(display_df, data_plots_tab)
                 # fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
                 buf = io.BytesIO()
                 fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
                 buf.seek(0)
                 st.markdown("### Interaction Conditions")
                 st.image(buf, use_container_width=True)
+                st.markdown(
+                    f"""
+                *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
+                studies across interaction manipulative and interaction scenario axes. The numbers provide the counted 
+                occurrences of the combination of an interaction manipulative and scenario. The colors represent the 
+                measurement modalities reported for a cross-section of conditions. The lines indicate reported 
+                cross-condition comparisons separated per axis, where all horizontal connections account for scenario 
+                comparisons and all vertical connections represent a manipulative comparison). The studies involving 
+                a digital component either through a digital manipulative or virtual interaction scenario are marked 
+                through a gray shaded area. 
+                """
+                    )
             with col4:
                 st.markdown(
                     """
@@ -338,6 +349,17 @@ with data_plots_tab:
                     mime="image/jpg"
                     )
 
+        except Exception as e:
+            st.error(f"❌ Could not generate figures: {e}")
+
+# ========================
+# 📈 Data Plots Tab (Slow)
+# ========================
+with data_plots_tab2:
+    st.markdown(f"Total studies in database: N = {len(df)}")
+    st.markdown(f"Currently included studies: N = {len(display_df)}")
+    with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
+        try:
             # ▶️ Cluster Plot figure
             st.markdown("### 2D Cluster Plot")
 
@@ -363,17 +385,18 @@ with data_plots_tab:
 
                 generate_plot = st.button("🎨 Generate Plot")
 
-            if generate_plot and len(selected_cats) == 2 and color_cat:
-                fig = generate_2d_cluster_plot(display_df, selected_cats[0], selected_cats[1], color_cat)
-                st.plotly_chart(fig, use_container_width=True)
-
-                csv_data = display_df[selected_cats + [color_cat]].dropna().copy()
-                st.download_button(
-                    label="📥 Download Plot Data (CSV)",
-                    data=csv_data.to_csv(index=True),
-                    file_name="2d_category_plot_data.csv",
-                    mime="text/csv"
-                    )
+                if generate_plot and len(selected_cats) == 2 and color_cat:
+                    fig = generate_2d_cluster_plot(display_df, selected_cats[0], selected_cats[1], color_cat)
+                    st.plotly_chart(fig, use_container_width=True)
+            with col2:
+                if generate_plot and len(selected_cats) == 2 and color_cat:
+                    csv_data = display_df[selected_cats + [color_cat]].dropna().copy()
+                    st.download_button(
+                        label="📥 Download Plot Data (CSV)",
+                        data=csv_data.to_csv(index=True),
+                        file_name="2d_category_plot_data.csv",
+                        mime="text/csv"
+                        )
 
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")

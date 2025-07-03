@@ -463,8 +463,9 @@ def generate_interaction_figure(df, tab):
 
     ax.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
 
+    condition_count = cross_section_counts["count"].sum()
     ax.set_title(
-        f"Confusion matrix of experimental interaction conditions ({cross_section_counts["count"].sum()} "
+        f"Confusion matrix of experimental interaction conditions ({condition_count} "
         f"conditions in total {number_studies} studies)", fontsize=14, pad=10, color=font_color
         )
 
@@ -549,7 +550,7 @@ def generate_interaction_figure(df, tab):
     x_min, x_max = ax.get_xlim()
     ax.set_xlim(x_min, x_max + 1)
 
-    return fig
+    return fig, condition_count, number_studies
 
 
 def generate_publication_year_figure(df):

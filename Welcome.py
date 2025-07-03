@@ -25,21 +25,19 @@ st.set_page_config(
     layout="wide"
 )
 st.title("📚 Living Literature Review")
+st.subheader("Welcome to the Living Literature Review")
 st.markdown("""
-### Welcome to the Living Literature Review
-
 This tool is designed to visualize up-to-date research body related to remote hyperscanning by:
 
 - **Displaying included studies** and their characteristics.
-- **Allowing user-submitted studies** (with review).
 - **Visualizing trends** and categorization.
 - Providing **transparent inclusion/exclusion** overviews.
+- Integrating **user-submitted studies**.
 
 ---
 """)
-
+st.subheader("Purpose")
 st.markdown("""
-### Purpose
 This living literature review tracks emerging research on multimodal hyperscanning in collaborative contexts. The 
 platform includes various categories, such as interaction scenario, measurement modalities, and analysis approaches, 
 serving as a dynamic open-access resource. 
@@ -49,8 +47,8 @@ The aim is to provide a comprehensive overview of the current state of research,
 st.markdown("Want to contribute? Click the button below to submit a new article for review:")
 st.page_link(label="Submit New Article", page="pages/2_Submit_New_Article.py", icon="🆕")
 
+st.subheader("Paper")
 st.markdown(f"""
-### Paper
 Read the original literature review here:
 ```
 [citation with doi]
@@ -58,7 +56,7 @@ Read the original literature review here:
 If you use this resource, please cite this paper as well. 
 """)
 
-# --- Configurable vars ---
+st.subheader("Code")
 label = "Git Repository"
 url = "https://github.com/acv132/Hyperscanning-Living-Review"
 icon_path = "assets/github.svg"
@@ -67,8 +65,6 @@ with open(icon_path, "rb") as f:
     svg_bytes = f.read()
 b64 = base64.b64encode(svg_bytes).decode()
 html = f"""
-### Code & Data
-
 <a href="{url}" target="_blank"
    style="text-decoration: none; display: inline-flex; align-items: center;">
   <img src="data:image/svg+xml;base64,{b64}" width="{icon_width}" style="margin-right:8px;"/>
@@ -79,11 +75,11 @@ st.markdown(html, unsafe_allow_html=True)
 
 st.markdown("""
 ### Contact
-Want to report an issue or suggest a feature? 
-Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
-
+Want to report an issue or suggest a feature? Post an issue on the GitHub repository.
 """)
+# Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
 
-st.subheader("Funding")
+
+st.subheader("Funding and Support")
 logo = "./assets/logos.svg"
 st.image(logo, width=1000)
