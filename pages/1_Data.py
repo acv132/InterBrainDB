@@ -13,7 +13,7 @@ from plotting.figures import generate_interaction_figure, generate_2d_cluster_pl
     generate_category_counts_streamlit_figure
 from plotting.plot_utils import export_all_category_counts
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
-                               normalize_cell, generate_excel_table)
+                               normalize_cell, generate_excel_table, flatten_cell)
 
 # ========================
 # 💅 UI Configuration
@@ -36,24 +36,28 @@ st.markdown(
 # ========================
 # 🗂️ Tabs
 # ========================
-data_overview_tab, data_plots_tab, data_plots_tab2 = st.tabs(["📋 Data Overview", "📈 Plots", "📈 Plots (Slow)"])
+data_overview_tab, data_plots_tab, data_plots_tab2, test_tab = st.tabs(
+    ["📋 Data Overview", "📈 Plots", "📈 Plots ("
+                                   "Slow)", "🔬 Test"]
+    )
 
 # ========================
 # 📥 Load & Prepare Data
 # ========================
-
-# todo: complete database categories for excluded studies
-
 df = load_database(data.config.data_dir, data.config.file)
 df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID',  # 'exclusion_reasons',
+    columns=['rayyan_ID', # 'exclusion_reasons',
              # 'user_notes',
-             # 'other_labels',
-             "sample"]
+             # 'other_labels'
+             ]
     )
+
+# Apply flattening to the entire DataFrame
+display_df = display_df.applymap(flatten_cell)
+
 display_df["article"] = df.apply(create_article_handle, axis=1)
 display_df["DOI Link"] = "https://doi.org/" + df["doi"]
 display_df["sample size"] = df.apply(lambda row: f"N = {row['sample size']}", axis=1)
@@ -205,12 +209,26 @@ for category, selected_labels in selected_filters.items():
 # 6. Update global display_df
 display_df = filtered_df
 
+
 # ========================
 # 📄 Data Overview Tab
 # ========================
-with data_overview_tab:
+def create_tab_header(df, display_df):
     st.markdown(f"Total studies in database: N = {len(df)}")
     st.markdown(f"Currently included studies: N = {len(display_df)}")
+    avg_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').mean()
+    sd_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').std()
+    sem_sample_size = round(sd_sample_size / (len(display_df) ** 0.5) if len(display_df) > 0 else 0, 2)
+    min_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').min()
+    max_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').max()
+    st.markdown(f"Descriptives of sample size: Mean = {avg_sample_size:.1f} ± {sd_sample_size:.1f} (SEM = "
+        f"{sem_sample_size}), "
+        f"min: {min_sample_size}, max: {max_sample_size}"
+        )
+
+
+with data_overview_tab:
+    create_tab_header(df, display_df)
     st.markdown("This table provides an overview of the studies included in the analysis.")
 
     # Column view selector
@@ -221,17 +239,17 @@ with data_overview_tab:
         )
 
     view_configs = {
-        "Dev Mode (temp)": ["article", 'DOI Link', 'included in paper review', 'exclusion_reasons', 'user_notes',
+        'Dev Mode (temp)': ['article', 'DOI Link', 'included in paper review', 'exclusion_reasons', 'user_notes',
                             'other_labels', ],
-        "Default": ["article", 'DOI Link', 'included in paper review', "measurement modality", 'sample size',
-                    "pairing configuration", "paradigm", 'cognitive function'],
-        "Participants": ["article", 'DOI Link', 'sample size', "pairing configuration", "pairing setup",
+        'Default': ['article', 'DOI Link', 'included in paper review', 'measurement modality', 'sample size',
+                    'pairing configuration', 'paradigm', 'cognitive function'],
+        'Participants': ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
                          'relationship pair'],
-        "Paradigm": ["article", 'DOI Link', 'interaction scenario', 'interaction manipulative',
+        'Paradigm': ['article', 'DOI Link', 'interaction scenario', 'interaction manipulative',
                      'transfer of information', 'type of communication', 'paradigm', 'task symmetry'],
-        "Measurement & Analysis": ["article", 'DOI Link', "measurement modality", 'analysis method',
+        'Measurement & Analysis': ['article', 'DOI Link', 'measurement modality', 'analysis method',
                                    'cognitive function'],
-        "All Columns": list(display_df.columns)
+        'All Columns': list(display_df.columns)
         }
     column_order = view_configs.get(view_option, view_configs["Default"])
 
@@ -277,8 +295,7 @@ with data_overview_tab:
 # 📈 Data Plots Tab
 # ========================
 with data_plots_tab:
-    st.markdown(f"Total studies in database: N = {len(df)}")
-    st.markdown(f"Currently included studies: N = {len(display_df)}")
+    create_tab_header(df, display_df)
     # todo add figure descriptions and download tips for all
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
@@ -324,6 +341,7 @@ with data_plots_tab:
                 buf.seek(0)
                 st.subheader("Interaction Conditions")
                 st.image(buf, use_container_width=True)
+                st.pyplot(fig1)
                 st.markdown(
                     f"""
                 *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
@@ -357,8 +375,7 @@ with data_plots_tab:
 # 📈 Data Plots Tab (Slow)
 # ========================
 with data_plots_tab2:
-    st.markdown(f"Total studies in database: N = {len(df)}")
-    st.markdown(f"Currently included studies: N = {len(display_df)}")
+    create_tab_header(df, display_df)
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
             # ▶️ Cluster Plot figure
@@ -400,3 +417,18 @@ with data_plots_tab2:
 
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")
+
+with test_tab:
+    create_tab_header(df, display_df)
+    try:
+        st.subheader(
+            "Test Space (under development)"
+            )  # 2. Sunburst or Treemap Plots  # Show hierarchical relationships or proportions between categories and subcategories for a more intuitive overview.
+
+        # 3. Category Evolution Over Time  # Plot how the frequency of each category label changes by year to identify emerging or declining trends.
+
+        # 4. Category Diversity Metrics  # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
+
+
+    except Exception as e:
+        st.error(f"❌ Could not generate funnel plot: {e}")

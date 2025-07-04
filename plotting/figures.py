@@ -1,5 +1,6 @@
 from collections import defaultdict
 from itertools import combinations, product
+from threading import RLock
 
 import matplotlib.patches as mpatches
 import numpy as np
@@ -15,6 +16,8 @@ from sklearn.preprocessing import LabelEncoder
 
 from data.config import ColorMap
 from plotting.plot_utils import *
+
+_lock = RLock()
 
 
 def generate_category_counts_figure(df, tab):
@@ -81,28 +84,29 @@ def generate_category_counts_figure(df, tab):
     subplot_height = max(4, max_labels * 0.4)
 
     # Create figure
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, subplot_height * n_rows))
-    axes = axes.flatten()
+    with _lock:
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, subplot_height * n_rows))
+        axes = axes.flatten()
 
-    # If there's only one category, ensure axes is a list
-    if len(category_columns) == 1:
-        axes = [axes]
+        # If there's only one category, ensure axes is a list
+        if len(category_columns) == 1:
+            axes = [axes]
 
-    # Create bar plots per category
-    for ax, (cat, columns) in zip(axes, category_columns.items()):
-        counts = df[columns].sum().sort_values(ascending=True)
-        counts.index = [col.replace(f"{cat}{prefix}", "") for col in counts.index]
+        # Create bar plots per category
+        for ax, (cat, columns) in zip(axes, category_columns.items()):
+            counts = df[columns].sum().sort_values(ascending=True)
+            counts.index = [col.replace(f"{cat}{prefix}", "") for col in counts.index]
 
-        counts.plot(kind='barh', ax=ax, color=bar_color)
-        ax.set_title(f"{cat} counts", color=font_color)
-        ax.set_xlabel("Number of Studies", color=font_color)
-        ax.set_ylabel(cat, color=font_color)
-        ax.tick_params(axis='x', colors=font_color)
-        ax.tick_params(axis='y', colors=font_color)
-        ax.grid(True, linestyle="--", alpha=0.4, color="gray")
+            counts.plot(kind='barh', ax=ax, color=bar_color)
+            ax.set_title(f"{cat} counts", color=font_color)
+            ax.set_xlabel("Number of Studies", color=font_color)
+            ax.set_ylabel(cat, color=font_color)
+            ax.tick_params(axis='x', colors=font_color)
+            ax.tick_params(axis='y', colors=font_color)
+            ax.grid(True, linestyle="--", alpha=0.4, color="gray")
 
-    fig.tight_layout()
-    return fig
+        fig.tight_layout()
+        return fig
 
 
 def generate_category_counts_streamlit_figure(df, tab):
@@ -164,28 +168,36 @@ def generate_category_counts_streamlit_figure(df, tab):
             counts.index = [col.replace(f"{cat}{prefix}", "") for col in counts.index]
 
             with cols[col_idx]:
-                st.markdown(f"**{cat}**")
-                # st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
-                import altair as alt
-                chart_df = pd.DataFrame(
-                    {
-                        "label": counts.index, "count": counts.values
-                        }
-                    )
-                bar_chart = alt.Chart(chart_df).mark_bar(color=st.get_option('theme.primaryColor')).encode(
-                    x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
-                    # Sort by count descending
-                    tooltip=["label", "count"]
-                    ).properties(
-                    height=300,
-                    padding={"left": 20, "right": 20, "top": 20, "bottom": 20}, ).configure_view(
-                    stroke=None
-                    ).configure_axis(
-                    labelFontSize=12, labelLimit=150, # distance in pixels between axis‐line and tick labels
-                    labelPadding=10, # distance in pixels between axis‐line and title
-                    titlePadding=15, )
+                if (counts > 0).sum() > 1:
+                        st.markdown(f"**{cat}**")
+                        # st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
+                        import altair as alt
+                        chart_df = pd.DataFrame(
+                            {
+                                "label": counts.index, "count": counts.values
+                                }
+                            )
+                        bar_chart = alt.Chart(chart_df).mark_bar(color=st.get_option('theme.primaryColor')).encode(
+                            x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
+                            # Sort by count descending
+                            tooltip=["label", "count"]
+                            ).properties(
+                            height=300,
+                            padding={"left": 20, "right": 20, "top": 20, "bottom": 20}, ).configure_view(
+                            stroke=None
+                            ).configure_axis(
+                            labelFontSize=12, labelLimit=150, # distance in pixels between axis‐line and tick labels
+                            labelPadding=10, # distance in pixels between axis‐line and title
+                            titlePadding=15, )
 
-                st.altair_chart(bar_chart, use_container_width=True)
+                        st.altair_chart(bar_chart, use_container_width=True)
+                else:
+                    # Print the label and its count if only one label is present and associated count
+                    st.markdown(f"**{cat}**")
+                    label = counts.index[0]
+                    value = counts.iloc[0]
+                    st.write(f"Only label is {label}: {value} counts")
+
     return
 
 
@@ -343,214 +355,215 @@ def generate_interaction_figure(df, tab):
     ###############
     # Prepare the plot
     ###############
-    fig, ax = plt.subplots(figsize=(16, 12))
+    with _lock:
+        fig, ax = plt.subplots(figsize=(16, 12))
 
-    # draw connection lines
-    for idx, row in connection_df.iterrows():
-        start, end = row['start'], row['end']
-        modality = row['modality']
-        count = row['count']
+        # draw connection lines
+        for idx, row in connection_df.iterrows():
+            start, end = row['start'], row['end']
+            modality = row['modality']
+            count = row['count']
 
-        # Get color and line width
-        color = modality_colors.get(modality, 'black')
-        line_width = base_width
-        line_style = count_to_style[count]
-        curvature = (list(modality_colors.keys()).index(row['modality']) + 1) * base_curvature
+            # Get color and line width
+            color = modality_colors.get(modality, 'black')
+            line_width = base_width
+            line_style = count_to_style[count]
+            curvature = (list(modality_colors.keys()).index(row['modality']) + 1) * base_curvature
 
-        # Draw curved lines using Bezier path
-        control_point = (0., 0.)
-        if start[0] == end[0]:
-            control_point = ((start[0] + end[0]) / 2 + curvature, (start[1] + end[1]) / 2)
-        elif start[1] == end[1]:
-            control_point = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + curvature)
-        vertices = np.array([start, control_point, end])
-        codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
-        bezier_path = Path(vertices, codes)
+            # Draw curved lines using Bezier path
+            control_point = (0., 0.)
+            if start[0] == end[0]:
+                control_point = ((start[0] + end[0]) / 2 + curvature, (start[1] + end[1]) / 2)
+            elif start[1] == end[1]:
+                control_point = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + curvature)
+            vertices = np.array([start, control_point, end])
+            codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
+            bezier_path = Path(vertices, codes)
 
-        # Add Bezier path to the plot
-        patch = PathPatch(bezier_path, color=color, lw=line_width, fill=False, linestyle=line_style, zorder=1)
-        ax.add_patch(patch)
+            # Add Bezier path to the plot
+            patch = PathPatch(bezier_path, color=color, lw=line_width, fill=False, linestyle=line_style, zorder=1)
+            ax.add_patch(patch)
 
-    # Draw pie charts for each scenario and manipulative combination
-    for i, scenario in enumerate(scenario_order):
-        for j, manipulative in enumerate(manipulative_order):
-            # Get counts for this cell
-            cell_data = df_exploded[(df_exploded['interaction scenario'] == scenario) & (
-                    df_exploded['interaction manipulative'] == manipulative)]
-            modality_counts = cell_data['measurement modality'].value_counts()
+        # Draw pie charts for each scenario and manipulative combination
+        for i, scenario in enumerate(scenario_order):
+            for j, manipulative in enumerate(manipulative_order):
+                # Get counts for this cell
+                cell_data = df_exploded[(df_exploded['interaction scenario'] == scenario) & (
+                        df_exploded['interaction manipulative'] == manipulative)]
+                modality_counts = cell_data['measurement modality'].value_counts()
 
-            if not modality_counts.empty:
-                # Prepare pie sizes and colors
-                pie_sizes = modality_counts.values
-                pie_colors = [modality_colors[mod] for mod in modality_counts.index]
+                if not modality_counts.empty:
+                    # Prepare pie sizes and colors
+                    pie_sizes = modality_counts.values
+                    pie_colors = [modality_colors[mod] for mod in modality_counts.index]
 
-                # Scale pie size
-                size_factor = sum(pie_sizes) / df_exploded.shape[0]  # Scale relative to total data
-                radius = pie_radius + size_factor  # Adjust radius dynamically
-                ax.pie(
-                    pie_sizes,
-                    colors=pie_colors,
-                    center=(col_pos[j], row_pos[i]),
-                    radius=radius,
-                    wedgeprops=dict(width=0.3), )
-                ax.text(
-                    col_pos[j],
-                    row_pos[i],
-                    str(pie_sizes.sum()),
-                    color='k',
-                    fontsize=12,
-                    ha='center',
-                    va='center',
-                    bbox=dict(
-                        boxstyle="circle", facecolor="white", edgecolor="none", pad=radius + 0.3, )
-                    )
+                    # Scale pie size
+                    size_factor = sum(pie_sizes) / df_exploded.shape[0]  # Scale relative to total data
+                    radius = pie_radius + size_factor  # Adjust radius dynamically
+                    ax.pie(
+                        pie_sizes,
+                        colors=pie_colors,
+                        center=(col_pos[j], row_pos[i]),
+                        radius=radius,
+                        wedgeprops=dict(width=0.3), )
+                    ax.text(
+                        col_pos[j],
+                        row_pos[i],
+                        str(pie_sizes.sum()),
+                        color='k',
+                        fontsize=12,
+                        ha='center',
+                        va='center',
+                        bbox=dict(
+                            boxstyle="circle", facecolor="white", edgecolor="none", pad=radius + 0.3, )
+                        )
 
-    # Draw gray area in plot to highlight virtual row and digital IM columns
-    plt.xlim(left=-1, right=12)
-    plt.ylim(bottom=-1, top=12)
-    virtual_row_index = scenario_order.index("virtual")
+        # Draw gray area in plot to highlight virtual row and digital IM columns
+        plt.xlim(left=-1, right=12)
+        plt.ylim(bottom=-1, top=12)
+        virtual_row_index = scenario_order.index("virtual")
 
-    digital_im_column_indices = [manipulative_order.index(col) for col in manipulative_order if "digital" in col]
+        digital_im_column_indices = [manipulative_order.index(col) for col in manipulative_order if "digital" in col]
 
-    virtual_y_start = row_pos[virtual_row_index] - row_spacing / 2
-    virtual_y_end = row_pos[virtual_row_index] + row_spacing / 2
-    virtual_x_start = col_pos[0] - col_spacing / 2
-    virtual_x_end = col_pos[-1] + col_spacing / 2
-    ax.add_patch(
-        Rectangle(
-            (virtual_x_start, virtual_y_start),
-            virtual_x_end - virtual_x_start,
-            virtual_y_end - virtual_y_start,
-            color=color_rect,
-            zorder=0,
-            alpha=1, )
-        )
+        virtual_y_start = row_pos[virtual_row_index] - row_spacing / 2
+        virtual_y_end = row_pos[virtual_row_index] + row_spacing / 2
+        virtual_x_start = col_pos[0] - col_spacing / 2
+        virtual_x_end = col_pos[-1] + col_spacing / 2
+        ax.add_patch(
+            Rectangle(
+                (virtual_x_start, virtual_y_start),
+                virtual_x_end - virtual_x_start,
+                virtual_y_end - virtual_y_start,
+                color=color_rect,
+                zorder=0,
+                alpha=1, )
+            )
 
-    digital_x_start = col_pos[digital_im_column_indices[0]] - col_spacing / 2
-    digital_x_end = col_pos[digital_im_column_indices[-1]] + col_spacing / 2
-    digital_y_start = row_pos[0] - row_spacing / 2
-    digital_y_end = row_pos[-1] + row_spacing / 2
-    ax.add_patch(
-        Rectangle(
-            (digital_x_start, digital_y_start),
-            digital_x_end - digital_x_start,
-            digital_y_end - digital_y_start,
-            color=color_rect,
-            zorder=0,
-            alpha=1, )
-        )
+        digital_x_start = col_pos[digital_im_column_indices[0]] - col_spacing / 2
+        digital_x_end = col_pos[digital_im_column_indices[-1]] + col_spacing / 2
+        digital_y_start = row_pos[0] - row_spacing / 2
+        digital_y_end = row_pos[-1] + row_spacing / 2
+        ax.add_patch(
+            Rectangle(
+                (digital_x_start, digital_y_start),
+                digital_x_end - digital_x_start,
+                digital_y_end - digital_y_start,
+                color=color_rect,
+                zorder=0,
+                alpha=1, )
+            )
 
-    # Format the plot
-    # Add gridlines for clarity
-    ax.set_xticks(col_pos)
-    ax.set_yticks(row_pos)
+        # Format the plot
+        # Add gridlines for clarity
+        ax.set_xticks(col_pos)
+        ax.set_yticks(row_pos)
 
-    # Increase padding for tick labels
-    ax.set_xticklabels(
-        [c.replace(" IM", '') for c in manipulative_order],
-        rotation=45,
-        ha='right',
-        fontsize=14,
-        color=font_color
-        )
-    ax.tick_params(axis='x', which='both', length=0, pad=10)
-    ax.set_yticklabels(scenario_order, fontsize=14, color=font_color)
-    ax.tick_params(axis='y', which='both', length=0, pad=10)
+        # Increase padding for tick labels
+        ax.set_xticklabels(
+            [c.replace(" IM", '') for c in manipulative_order],
+            rotation=45,
+            ha='right',
+            fontsize=14,
+            color=font_color
+            )
+        ax.tick_params(axis='x', which='both', length=0, pad=10)
+        ax.set_yticklabels(scenario_order, fontsize=14, color=font_color)
+        ax.tick_params(axis='y', which='both', length=0, pad=10)
 
-    # Add labels for axes with consistent padding
-    ax.set_xlabel("Interaction Manipulative", fontsize=16, labelpad=10, color=font_color)
-    ax.set_ylabel("Interaction Scenario", fontsize=16, labelpad=10, color=font_color)
+        # Add labels for axes with consistent padding
+        ax.set_xlabel("Interaction Manipulative", fontsize=16, labelpad=10, color=font_color)
+        ax.set_ylabel("Interaction Scenario", fontsize=16, labelpad=10, color=font_color)
 
-    ax.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
+        ax.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    condition_count = cross_section_counts["count"].sum()
-    ax.set_title(
-        f"Confusion matrix of experimental interaction conditions ({condition_count} "
-        f"conditions in total {number_studies} studies)", fontsize=14, pad=10, color=font_color
-        )
+        condition_count = cross_section_counts["count"].sum()
+        ax.set_title(
+            f"Confusion matrix of experimental interaction conditions ({condition_count} "
+            f"conditions in total {number_studies} studies)", fontsize=14, pad=10, color=font_color
+            )
 
-    # Create dictionary for legend handles
-    modality_handles = {label: plt.Line2D([0], [0], color=color, lw=4, linestyle='-')  # Default solid line for modality
-                        for label, color in modality_colors.items()}
-    style_handles = {
-        f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=line_styles[i % len(line_styles)]) for
-        i, count in enumerate(unique_counts)}
-    area_handle = {
-        'digital component': mpatches.Patch(color=color_rect, label='digital component')
-        }
-    # Get only modalities actually used
-    used_modalities = connection_df['modality'].unique()
-    filtered_modality_handles = {label: handle for label, handle in modality_handles.items() if
-                                 label in used_modalities}
-
-    # Get only counts actually used
-    used_counts = connection_df['count'].unique()
-    filtered_style_handles = {
-        f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=count_to_style[count]) for count in
-        used_counts}
-
-    # Only add digital component if it's actually highlighted
-    filtered_area_handle = {}
-    if digital_im_column_indices:  # non-empty list
-        filtered_area_handle = {
+        # Create dictionary for legend handles
+        modality_handles = {label: plt.Line2D([0], [0], color=color, lw=4, linestyle='-')  # Default solid line for modality
+                            for label, color in modality_colors.items()}
+        style_handles = {
+            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=line_styles[i % len(line_styles)]) for
+            i, count in enumerate(unique_counts)}
+        area_handle = {
             'digital component': mpatches.Patch(color=color_rect, label='digital component')
             }
+        # Get only modalities actually used
+        used_modalities = connection_df['modality'].unique()
+        filtered_modality_handles = {label: handle for label, handle in modality_handles.items() if
+                                     label in used_modalities}
 
-    # 1. Modality Legend (Fixed at top)
-    mod_legend = ax.legend(
-        handles=list(filtered_modality_handles.values()),
-        labels=list(filtered_modality_handles.keys()),
-        title="measurement modality",
-        loc="center left",
-        bbox_to_anchor=(1.0, 0.7),
-        fontsize=14,
-        alignment="left",
-        framealpha=0,
-        facecolor=facecolor_legend,
-        labelcolor=font_color,
-        title_fontproperties=legend_title_props, )
-    plt.setp(mod_legend.get_title(), color=font_color)
+        # Get only counts actually used
+        used_counts = connection_df['count'].unique()
+        filtered_style_handles = {
+            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=count_to_style[count]) for count in
+            used_counts}
 
-    # 2. Comparison Legend (middle)
-    comparison_legend = Legend(
-        ax,
-        handles=list(filtered_style_handles.values()),
-        labels=list(filtered_style_handles.keys()),
-        title="comparisons",
-        loc="center left",
-        bbox_to_anchor=(1.0, 0.45),
-        fontsize=14,
-        alignment="left",
-        framealpha=0,
-        facecolor=facecolor_legend,
-        labelcolor=font_color,
-        title_fontproperties=legend_title_props, )
-    plt.setp(comparison_legend.get_title(), color=font_color)
-    ax.add_artist(comparison_legend)
+        # Only add digital component if it's actually highlighted
+        filtered_area_handle = {}
+        if digital_im_column_indices:  # non-empty list
+            filtered_area_handle = {
+                'digital component': mpatches.Patch(color=color_rect, label='digital component')
+                }
 
-    # 3. Study Design Legend (bottom, only if used)
-    if filtered_area_handle:
-        study_design_legend = Legend(
-            ax,
-            handles=list(filtered_area_handle.values()),
-            labels=list(filtered_area_handle.keys()),
-            title="study design",
+        # 1. Modality Legend (Fixed at top)
+        mod_legend = ax.legend(
+            handles=list(filtered_modality_handles.values()),
+            labels=list(filtered_modality_handles.keys()),
+            title="measurement modality",
             loc="center left",
-            bbox_to_anchor=(1.0, 0.30),
+            bbox_to_anchor=(1.0, 0.7),
             fontsize=14,
             alignment="left",
             framealpha=0,
             facecolor=facecolor_legend,
             labelcolor=font_color,
             title_fontproperties=legend_title_props, )
-        plt.setp(study_design_legend.get_title(), color=font_color)
-        ax.add_artist(study_design_legend)
+        plt.setp(mod_legend.get_title(), color=font_color)
 
-    plt.tight_layout()
-    x_min, x_max = ax.get_xlim()
-    ax.set_xlim(x_min, x_max + 1)
+        # 2. Comparison Legend (middle)
+        comparison_legend = Legend(
+            ax,
+            handles=list(filtered_style_handles.values()),
+            labels=list(filtered_style_handles.keys()),
+            title="comparisons",
+            loc="center left",
+            bbox_to_anchor=(1.0, 0.45),
+            fontsize=14,
+            alignment="left",
+            framealpha=0,
+            facecolor=facecolor_legend,
+            labelcolor=font_color,
+            title_fontproperties=legend_title_props, )
+        plt.setp(comparison_legend.get_title(), color=font_color)
+        ax.add_artist(comparison_legend)
 
-    return fig, condition_count, number_studies
+        # 3. Study Design Legend (bottom, only if used)
+        if filtered_area_handle:
+            study_design_legend = Legend(
+                ax,
+                handles=list(filtered_area_handle.values()),
+                labels=list(filtered_area_handle.keys()),
+                title="study design",
+                loc="center left",
+                bbox_to_anchor=(1.0, 0.30),
+                fontsize=14,
+                alignment="left",
+                framealpha=0,
+                facecolor=facecolor_legend,
+                labelcolor=font_color,
+                title_fontproperties=legend_title_props, )
+            plt.setp(study_design_legend.get_title(), color=font_color)
+            ax.add_artist(study_design_legend)
+
+        plt.tight_layout()
+        x_min, x_max = ax.get_xlim()
+        ax.set_xlim(x_min, x_max + 1)
+
+        return fig, condition_count, number_studies
 
 
 def generate_publication_year_figure(df):
@@ -565,16 +578,17 @@ def generate_publication_year_figure(df):
     """
     year_counts = df["year"].value_counts().sort_index()
 
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(year_counts.index, year_counts.values, marker='o')
-    ax.set_title("Publication Development Over Time")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Number of Publications")
-    ax.grid(True)
-    for spine in ["top", "right"]:
-        ax.spines[spine].set_visible(False)
+    with _lock:
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(year_counts.index, year_counts.values, marker='o')
+        ax.set_title("Publication Development Over Time")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Number of Publications")
+        ax.grid(True)
+        for spine in ["top", "right"]:
+            ax.spines[spine].set_visible(False)
 
-    return fig
+        return fig
 
 
 def generate_2d_cluster_plot(df, x_cat, y_cat, color_cat, jitter_scale=0.15):

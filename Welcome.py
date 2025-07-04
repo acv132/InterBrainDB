@@ -43,8 +43,10 @@ platform includes various categories, such as interaction scenario, measurement 
 serving as a dynamic open-access resource. 
 The aim is to provide a comprehensive overview of the current state of research, enabling researchers to stay informed about the latest developments in the field.
 """)
-
-st.markdown("Want to contribute? Click the button below to submit a new article for review:")
+st.subheader("Adding New Articles")
+st.markdown("A living review means a growing database. Therefore, if we either missed a paper or you published "
+            "results, please consider submitting your article. Click the button below to submit a new article for "
+            "review:")
 st.page_link(label="Submit New Article", page="pages/2_Submit_New_Article.py", icon="🆕")
 
 st.subheader("Paper")
@@ -57,6 +59,7 @@ If you use this resource, please cite this paper as well.
 """)
 
 st.subheader("Code")
+st.markdown("Want to report an issue or suggest a feature? Post an issue on the GitHub repository.")
 label = "Git Repository"
 url = "https://github.com/acv132/Hyperscanning-Living-Review"
 icon_path = "assets/github.svg"
@@ -75,9 +78,13 @@ st.markdown(html, unsafe_allow_html=True)
 
 st.markdown("""
 ### Contact
-Want to report an issue or suggest a feature? Post an issue on the GitHub repository.
+The app is being maintained by the Applied Neurocognitive Systems Team, Department of Human-Computer Interaction, 
+University of Stuttgart & Fraunhofer IAO.
+
+Contact: Anna Vorreuther [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de,
+"Subject: Living Literature Review Contact Request")
 """)
-# Write an e-mail to [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de, "Subject: Living Literature Review Feedback")
+
 
 
 st.subheader("Funding and Support")

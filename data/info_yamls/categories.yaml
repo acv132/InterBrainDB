@@ -9,6 +9,14 @@ measurement modality:
   camera-based tracking: Motion tracking using video/camera
   other: Any other measurement modality not listed
 
+sample:
+  healthy adults: Adults participants without known neurological or psychiatric conditions
+  adolescents: Participants aged 10-18 years
+  children: Participants aged 3-9 years
+  infants: Participants aged 0-2 years
+  older adults: Participants aged 60 years and older
+  patient group: Participants with specific health conditions (e.g., autism, schizophrenia, epilepsy)
+
 pairing configuration:
   dyad: Two participants
   triad: Three participants

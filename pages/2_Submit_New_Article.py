@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 
 import bibtexparser
@@ -53,6 +54,34 @@ else:
     submitted_df = pd.DataFrame()
 
 col1, col2 = st.columns([1, 1])
+with col2:
+    # === Paste BibTeX Entry ===
+    st.markdown("#### 📋 Paste BibTeX Entry")
+    bib_input = st.text_area(
+        "Paste a BibTeX entry here to auto-fill the required fields.", value='', height=150,)
+    if st.button("Parse BibTeX"):
+        try:
+            bib_db = bibtexparser.loads(bib_input)
+            if bib_db.entries:
+                entry = bib_db.entries[0]
+                st.session_state.doi = entry.get('doi', st.session_state.doi)
+                st.session_state.title = entry.get('title', st.session_state.title)
+                # Convert BibTeX authors ("A and B and C") to lines
+                authors = entry.get('author', '')
+                if authors:
+                    st.session_state.authors = authors.replace(' and ', ';\n')
+                # Year
+                year = entry.get('year')
+                if year and year.isdigit():
+                    st.session_state.year = int(year)
+                # Abstract
+                if 'abstract' in entry:
+                    st.session_state.abstract = entry.get('abstract')
+                st.success("✅ Parsed BibTeX and updated fields!")
+            else:
+                st.error("No entries found in BibTeX input.")
+        except Exception as e:
+            st.error(f"Error parsing BibTeX: {e}")
 with col1:
     # === Mandatory Fields ===
     st.subheader("🔒 Required Information")
@@ -95,6 +124,15 @@ with col1:
         if not isinstance(label_dict, dict):
             continue
 
+        if category == "sample":
+            optional_inputs['sample_size'] = st.number_input(
+                "Sample size",
+                min_value=2,
+                value=2,
+                help="Number of participants analysed in the study.",
+                key='sample_size'
+            )
+
         options = sorted(label_dict.keys())
         helptext = category_tooltips.get(category, "")
         label_info = "\n".join(
@@ -110,35 +148,9 @@ with col1:
         )
         optional_inputs[category] = selected
 
-with col2:
-    # === Paste BibTeX Entry ===
-    st.markdown("#### 📋 Paste BibTeX Entry")
-    bib_input = st.text_area(
-        "Paste a BibTeX entry here to auto-fill the required fields.", value='', height=150,)
-    if st.button("Parse BibTeX"):
-        try:
-            bib_db = bibtexparser.loads(bib_input)
-            if bib_db.entries:
-                entry = bib_db.entries[0]
-                st.session_state.doi = entry.get('doi', st.session_state.doi)
-                st.session_state.title = entry.get('title', st.session_state.title)
-                # Convert BibTeX authors ("A and B and C") to lines
-                authors = entry.get('author', '')
-                if authors:
-                    st.session_state.authors = authors.replace(' and ', ';\n')
-                # Year
-                year = entry.get('year')
-                if year and year.isdigit():
-                    st.session_state.year = int(year)
-                # Abstract
-                if 'abstract' in entry:
-                    st.session_state.abstract = entry.get('abstract')
-                st.success("✅ Parsed BibTeX and updated fields!")
-            else:
-                st.error("No entries found in BibTeX input.")
-        except Exception as e:
-            st.error(f"Error parsing BibTeX: {e}")
+    optional_inputs['other_labels'] = []
 
+with col2:
     # === Submission Button ===
     st.markdown('---')
     st.markdown("#### 📨 Submit Your Article Suggestion")
@@ -162,12 +174,20 @@ with col2:
         if missing_fields:
             st.error(f"Please fill in the required fields: {', '.join(missing_fields)}")
         else:
+            fa = authors.split(';')[0].split(',')[0].replace(' ', '').lower()
+            tk = re.sub(r"[ \-\(\):']", "", title[:20].lower())
+            unique_id = f"{fa}{year}{tk}"
+
             new_entry = {
                 "doi": doi,
-                "year": year,
                 "authors": authors,
+                "year": year,
                 "title": title,
-                "abstract": abstract
+                "abstract": abstract,
+                'ID': unique_id,
+                'included in paper review': 'False',
+                'exclusion_reasons': 'submission after publication',
+
             }
             # Include optional labels
             new_entry.update(optional_inputs)
@@ -179,10 +199,11 @@ with col2:
             existing_dois = set()
             if "doi" in df.columns:
                 existing_dois.update(df["doi"].astype(str).str.lower())
+            if "doi" in submitted_df.columns:
                 existing_dois.update(submitted_df["doi"].astype(str).str.lower())
 
             if new_doi in existing_dois:
-                st.info("ℹ️ This article has already been submitted or is in the database.")
+                st.info("ℹ️ This article has already been submitted or is part of the database.")
             else:
                 new_row = pd.DataFrame([new_entry])
                 submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)

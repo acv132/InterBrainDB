@@ -111,3 +111,56 @@ def validate_doi(doi):
         response = requests.head(url, allow_redirects=True)
         return response.status_code == 200
     return is_valid_doi(doi) and doi_exists(doi)
+
+
+def flatten_cell(x):
+    # If actual list of length 1, take its element
+    if isinstance(x, list) and len(x) == 1:
+        return x[0]
+    # If string that looks like a Python list, try parsing
+    if isinstance(x, str) and x.startswith('[') and x.endswith(']'):
+        try:
+            parsed = ast.literal_eval(x)
+            if isinstance(parsed, list) and len(parsed) == 1:
+                return parsed[0]
+        except (ValueError, SyntaxError):
+            pass
+    return x
+
+
+def hedges_g_from_groups(groups, apply_correction=True):
+    """
+    Compute Hedges' g from any number of groups.
+
+    Parameters:
+    - groups: list of tuples (mean, std, n)
+    - apply_correction: whether to apply small sample correction (default: True)
+
+    Returns:
+    - g: Hedges' g (standardized mean difference between first two groups)
+    - s_pooled: pooled standard deviation
+    """
+
+    if len(groups) < 2:
+        raise ValueError("At least two groups are needed to compute Hedges' g.")
+
+    # Extract values
+    means = [m for m, s, n in groups]
+    variances = [(n - 1) * (s ** 2) for m, s, n in groups]
+    total_df = sum(n - 1 for _, _, n in groups)
+
+    # Compute pooled standard deviation
+    s_pooled = np.sqrt(sum(variances) / total_df)
+
+    # Difference between first two means
+    mean_diff = means[0] - means[1]
+
+    # Raw Hedges' g
+    g = mean_diff / s_pooled
+
+    if apply_correction:
+        N_total = sum(n for _, _, n in groups)
+        correction = 1 - (3 / (4 * N_total - 9)) if N_total > 9 else 1
+        g *= correction
+
+    return g, s_pooled

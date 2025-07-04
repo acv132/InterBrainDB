@@ -1,5 +1,7 @@
 measurement modality: Describes the type of physiological or behavioral data collected
   during the study (e.g., EEG, eye-tracking).
+sample: Refers to the characteristics of the participants involved in the study,
+  such as age group or health status (e.g., healthy adults, adolescents).
 pairing configuration: Specifies the grouping size and structure of participants (e.g.,
   dyads, triads).
 pairing setup: Defines the gender-based setup of participant pairs or groups (e.g.,
