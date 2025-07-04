@@ -67,11 +67,11 @@ def convert_to_horizontal_and_vertical_connections(element):
     return new_connections
 
 
-def get_scenario_or_manipulative(coord, axis, scenario_order, manipulative_order, row_pos, col_pos):
+def get_scenario_or_manipulation(coord, axis, scenario_order, manipulation_order, row_pos, col_pos):
     if axis == 'y':  # For y-coordinate (scenarios)
         return scenario_order[list(row_pos).index(coord)]
-    elif axis == 'x':  # For x-coordinate (manipulatives)
-        return manipulative_order[list(col_pos).index(coord)]
+    elif axis == 'x':  # For x-coordinate (manipulations)
+        return manipulation_order[list(col_pos).index(coord)]
     return None
 
 

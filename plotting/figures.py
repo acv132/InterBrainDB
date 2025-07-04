@@ -219,7 +219,7 @@ def generate_interaction_figure(df, tab):
         categories = yaml.safe_load(f)
 
     default_scenario_order = categories["interaction scenario"].keys()
-    default_manipulative_order = categories["interaction manipulative"].keys()
+    default_manipulation_order = categories["interaction manipulation"].keys()
     default_modalities_order = categories["measurement modality"].keys()
 
     # define some figure specs
@@ -252,38 +252,38 @@ def generate_interaction_figure(df, tab):
     number_studies = len(df)
 
     scenario_columns = [col for col in df.columns if col.startswith(f"interaction scenario{prefix}")]
-    manipulative_columns = [col for col in df.columns if col.startswith(f"interaction manipulative{prefix}")]
+    manipulation_columns = [col for col in df.columns if col.startswith(f"interaction manipulation{prefix}")]
     modality_columns = [col for col in df.columns if col.startswith(f"measurement modality{prefix}")]
     df['interaction scenario'] = df[scenario_columns].apply(
         lambda row: [col.replace(f"interaction scenario{prefix}", "") for col, val in row.items() if val], axis=1
         )
-    df['interaction manipulative'] = df[manipulative_columns].apply(
-        lambda row: [col.replace(f"interaction manipulative{prefix}", "") for col, val in row.items() if val], axis=1
+    df['interaction manipulation'] = df[manipulation_columns].apply(
+        lambda row: [col.replace(f"interaction manipulation{prefix}", "") for col, val in row.items() if val], axis=1
         )
     df['measurement modality'] = df[modality_columns].apply(
         lambda row: [col.replace(f"measurement modality{prefix}", "") for col, val in row.items() if val], axis=1
         )
     df_exploded = df.explode('measurement modality')
-    df_exploded = df_exploded.explode('interaction manipulative')
+    df_exploded = df_exploded.explode('interaction manipulation')
     df_exploded = df_exploded.explode('interaction scenario')
     pivot_table = df_exploded.groupby(
-        ['measurement modality', 'interaction scenario', 'interaction manipulative']
+        ['measurement modality', 'interaction scenario', 'interaction manipulation']
         ).size().unstack(fill_value=0)
     cross_section_counts = df_exploded.groupby(
-        ['measurement modality', 'interaction scenario', 'interaction manipulative']
+        ['measurement modality', 'interaction scenario', 'interaction manipulation']
         ).size().reset_index(name='count')
     scenario_contained = [col.replace("interaction scenario_", "") for col in scenario_columns]
-    manipulative_contained = [col.replace("interaction manipulative_", "") for col in manipulative_columns]
+    manipulation_contained = [col.replace("interaction manipulation_", "") for col in manipulation_columns]
     modalities_contained = [col.replace("measurement modality_", "") for col in modality_columns]
 
     scenario_order = [scenario for scenario in default_scenario_order if scenario in scenario_contained]
-    manipulative_order = [manipulative for manipulative in default_manipulative_order if
-                          manipulative in manipulative_contained]
+    manipulation_order = [manipulation for manipulation in default_manipulation_order if
+                          manipulation in manipulation_contained]
     modalities_order = [modality for modality in default_modalities_order if modality in modalities_contained]
 
     # prepare confusion matrix rows and columns
     row_pos = np.arange(len(scenario_order)) * row_spacing
-    col_pos = np.arange(len(manipulative_order)) * col_spacing
+    col_pos = np.arange(len(manipulation_order)) * col_spacing
     # try:
     #     modality_colors = dict(zip(modalities_order, plt.get_cmap(colormap)(np.linspace(0, 1, len(modalities_order)))))
     # except ValueError:
@@ -292,16 +292,16 @@ def generate_interaction_figure(df, tab):
     cooccurrance_per_study = []
     # get any accounts of co-existence of conditions in one study (ID)
     for study_id, group in df.groupby('article'):
-        # Get all scenarios, manipulatives, and modalities used in this study
+        # Get all scenarios, manipulations, and modalities used in this study
         scenarios = [col.replace("interaction scenario_", "") for col in scenario_columns if group[col].iloc[0] == 1]
-        manipulatives = [col.replace("interaction manipulative_", "") for col in manipulative_columns if
+        manipulations = [col.replace("interaction manipulation_", "") for col in manipulation_columns if
                          group[col].iloc[0] == 1]
         modalities = [col.replace("measurement modality_", "") for col in modality_columns if group[col].iloc[0] == 1]
 
-        # get coordinates of each scenario and manipulative for each modality
+        # get coordinates of each scenario and manipulation for each modality
         for modality in modalities:
             y_coor = row_pos[[scenario_order.index(s) for s in scenarios]]
-            x_coor = col_pos[[manipulative_order.index(m) for m in manipulatives]]
+            x_coor = col_pos[[manipulation_order.index(m) for m in manipulations]]
             cooccurrance_per_study.append((x_coor, y_coor, modality))
 
     # count unique connection lines
@@ -329,19 +329,19 @@ def generate_interaction_figure(df, tab):
 
     connection_data = []
     for ((start, end), modality), count in connection_counts.items():
-        start_scenario = get_scenario_or_manipulative(
-            start[1], 'y', scenario_order, manipulative_order, row_pos, col_pos
+        start_scenario = get_scenario_or_manipulation(
+            start[1], 'y', scenario_order, manipulation_order, row_pos, col_pos
             )
-        start_manipulative = get_scenario_or_manipulative(
-            start[0], 'x', scenario_order, manipulative_order, row_pos, col_pos
+        start_manipulation = get_scenario_or_manipulation(
+            start[0], 'x', scenario_order, manipulation_order, row_pos, col_pos
             )
-        end_scenario = get_scenario_or_manipulative(end[1], 'y', scenario_order, manipulative_order, row_pos, col_pos)
-        end_manipulative = get_scenario_or_manipulative(
-            end[0], 'x', scenario_order, manipulative_order, row_pos, col_pos
+        end_scenario = get_scenario_or_manipulation(end[1], 'y', scenario_order, manipulation_order, row_pos, col_pos)
+        end_manipulation = get_scenario_or_manipulation(
+            end[0], 'x', scenario_order, manipulation_order, row_pos, col_pos
             )
 
         connection_data.append(
-            (start, end, f"{start_scenario} - {start_manipulative}", f"{end_scenario} - {end_manipulative}", modality,
+            (start, end, f"{start_scenario} - {start_manipulation}", f"{end_scenario} - {end_manipulation}", modality,
              count,)
             )
 
@@ -384,12 +384,12 @@ def generate_interaction_figure(df, tab):
             patch = PathPatch(bezier_path, color=color, lw=line_width, fill=False, linestyle=line_style, zorder=1)
             ax.add_patch(patch)
 
-        # Draw pie charts for each scenario and manipulative combination
+        # Draw pie charts for each scenario and manipulation combination
         for i, scenario in enumerate(scenario_order):
-            for j, manipulative in enumerate(manipulative_order):
+            for j, manipulation in enumerate(manipulation_order):
                 # Get counts for this cell
                 cell_data = df_exploded[(df_exploded['interaction scenario'] == scenario) & (
-                        df_exploded['interaction manipulative'] == manipulative)]
+                        df_exploded['interaction manipulation'] == manipulation)]
                 modality_counts = cell_data['measurement modality'].value_counts()
 
                 if not modality_counts.empty:
@@ -423,7 +423,7 @@ def generate_interaction_figure(df, tab):
         plt.ylim(bottom=-1, top=12)
         virtual_row_index = scenario_order.index("virtual")
 
-        digital_im_column_indices = [manipulative_order.index(col) for col in manipulative_order if "digital" in col]
+        digital_im_column_indices = [manipulation_order.index(col) for col in manipulation_order if "digital" in col]
 
         virtual_y_start = row_pos[virtual_row_index] - row_spacing / 2
         virtual_y_end = row_pos[virtual_row_index] + row_spacing / 2
@@ -460,7 +460,7 @@ def generate_interaction_figure(df, tab):
 
         # Increase padding for tick labels
         ax.set_xticklabels(
-            [c.replace(" IM", '') for c in manipulative_order],
+            [c.replace(" IM", '') for c in manipulation_order],
             rotation=45,
             ha='right',
             fontsize=14,
@@ -471,7 +471,7 @@ def generate_interaction_figure(df, tab):
         ax.tick_params(axis='y', which='both', length=0, pad=10)
 
         # Add labels for axes with consistent padding
-        ax.set_xlabel("Interaction Manipulative", fontsize=16, labelpad=10, color=font_color)
+        ax.set_xlabel("Interaction manipulation", fontsize=16, labelpad=10, color=font_color)
         ax.set_ylabel("Interaction Scenario", fontsize=16, labelpad=10, color=font_color)
 
         ax.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
