@@ -245,7 +245,7 @@ with data_overview_tab:
                     'pairing configuration', 'paradigm', 'cognitive function'],
         'Participants': ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
                          'relationship pair'],
-        'Paradigm': ['article', 'DOI Link', 'interaction scenario', 'interaction manipulative',
+        'Paradigm': ['article', 'DOI Link', 'interaction scenario', 'interaction manipulation',
                      'transfer of information', 'type of communication', 'paradigm', 'task symmetry'],
         'Measurement & Analysis': ['article', 'DOI Link', 'measurement modality', 'analysis method',
                                    'cognitive function'],
@@ -333,40 +333,39 @@ with data_plots_tab:
 
             # ▶️ Interaction figure
             col3, col4 = st.columns([1, 1])
-            with col3:
-                fig1, condition_count, number_studies = generate_interaction_figure(display_df, data_plots_tab)
-                # fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
-                buf = io.BytesIO()
-                fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
-                buf.seek(0)
-                st.subheader("Interaction Conditions")
-                st.image(buf, use_container_width=True)
-                st.pyplot(fig1)
-                st.markdown(
-                    f"""
-                *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
-                studies across interaction manipulative and interaction scenario axes. The numbers provide the counted 
-                occurrences of the combination of an interaction manipulative and scenario. The colors represent the 
-                measurement modalities reported for a cross-section of conditions. The lines indicate reported 
-                cross-condition comparisons separated per axis, where all horizontal connections account for scenario 
-                comparisons and all vertical connections represent a manipulative comparison). The studies involving 
-                a digital component either through a digital manipulative or virtual interaction scenario are marked 
-                through a gray shaded area. 
+            # with col3:
+            fig1, condition_count, number_studies = generate_interaction_figure(display_df, data_plots_tab)
+            # fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
+            buf = io.BytesIO()
+            fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
+            buf.seek(0)
+            st.subheader("Interaction Conditions")
+            st.image(buf, use_container_width=True)
+            st.markdown(
+                f"""
+            *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
+            studies across interaction manipulation and interaction scenario axes. The numbers provide the counted 
+            occurrences of the combination of an interaction manipulation and scenario. The colors represent the 
+            measurement modalities reported for a cross-section of conditions. The lines indicate reported 
+            cross-condition comparisons separated per axis, where all horizontal connections account for scenario 
+            comparisons and all vertical connections represent a manipulation comparison). The studies involving 
+            a digital component either through a digital manipulation or virtual interaction scenario are marked 
+            through a gray shaded area. 
+            """
+                )
+            # with col4:
+            st.markdown(
                 """
-                    )
-            with col4:
-                st.markdown(
-                    """
-                    💡 **Tip:** The interaction figure is not based on streamlit-compatible plotting libraries, 
-                    therefore you may use this download button to save the figure as a high-resolution image.
-                    """
-                    )
-                st.download_button(
-                    "📥 Download Interaction Figure (JPG)",
-                    data=buf.getvalue(),
-                    file_name="interaction_figure.jpg",
-                    mime="image/jpg"
-                    )
+                💡 **Tip:** The interaction figure is not based on streamlit-compatible plotting libraries, 
+                therefore you may use this download button to save the figure as a high-resolution image.
+                """
+                )
+            st.download_button(
+                "📥 Download Interaction Figure (JPG)",
+                data=buf.getvalue(),
+                file_name="interaction_figure.jpg",
+                mime="image/jpg"
+                )
 
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")
@@ -423,11 +422,16 @@ with test_tab:
     try:
         st.subheader(
             "Test Space (under development)"
-            )  # 2. Sunburst or Treemap Plots  # Show hierarchical relationships or proportions between categories and subcategories for a more intuitive overview.
+            )
 
-        # 3. Category Evolution Over Time  # Plot how the frequency of each category label changes by year to identify emerging or declining trends.
+        # 2. Sunburst or Treemap Plots
+        # Show hierarchical relationships or proportions between categories and subcategories for a more intuitive overview.
 
-        # 4. Category Diversity Metrics  # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
+        # 3. Category Evolution Over Time
+        # Plot how the frequency of each category label changes by year to identify emerging or declining trends.
+
+        # 4. Category Diversity Metrics
+        # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
 
 
     except Exception as e:

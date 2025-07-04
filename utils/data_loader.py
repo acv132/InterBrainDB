@@ -11,7 +11,7 @@ import tabulate
 
 
 def create_article_handle(row):
-    author_snippet = row['author'].replace(",","").split(" ")
+    author_snippet = row['author'].replace(",", "").split(" ")
     if len(author_snippet) == 1:
         author = author_snippet[0]
     elif len(author_snippet) == 2:
@@ -20,6 +20,7 @@ def create_article_handle(row):
         author = author_snippet[0] + " et al.,"
     handle = f"{author} {row['year']}"
     return handle
+
 
 @st.cache_data
 def load_database(data_dir, file):
@@ -102,6 +103,7 @@ def validate_doi(doi):
     '''
     Tests if the provided DOI is valid.
     '''
+
     def is_valid_doi(doi):
         pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
         return bool(re.match(pattern, doi, re.IGNORECASE))
@@ -110,6 +112,7 @@ def validate_doi(doi):
         url = f"https://doi.org/{doi}"
         response = requests.head(url, allow_redirects=True)
         return response.status_code == 200
+
     return is_valid_doi(doi) and doi_exists(doi)
 
 
@@ -128,7 +131,7 @@ def flatten_cell(x):
     return x
 
 
-def hedges_g_from_groups(groups, apply_correction=True):
+def hedges_g_between(groups, apply_correction=True):
     """
     Compute Hedges' g from any number of groups.
 
@@ -164,3 +167,30 @@ def hedges_g_from_groups(groups, apply_correction=True):
         g *= correction
 
     return g, s_pooled
+
+
+def hedges_g_within(subject_diffs, apply_correction=True):
+    """
+    Computes Hedges' g for within-subjects (paired) designs.
+
+    Parameters:
+    - subject_diffs: array-like of difference scores (Condition A - Condition B)
+    - apply_correction: apply small-sample correction (default True)
+
+    Returns:
+    - g_z: bias-corrected standardized mean difference
+    - d_z: raw effect size (Cohen's d_z)
+    """
+    diffs = np.asarray(subject_diffs)
+    M_D = np.mean(diffs)
+    SD_D = np.std(diffs, ddof=1)
+    d_z = M_D / SD_D
+
+    n = len(diffs)
+    if apply_correction:
+        correction = 1 - (3 / (4 * n - 1))
+        g_z = d_z * correction
+    else:
+        g_z = d_z
+
+    return g_z, d_z

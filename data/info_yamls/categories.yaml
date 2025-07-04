@@ -9,6 +9,11 @@ measurement modality:
   camera-based tracking: Motion tracking using video/camera
   other: Any other measurement modality not listed
 
+condition design:
+  within-subjects: Same participants in all conditions
+  between-subjects: Different participants in each condition
+  mixed: Combination of within- and between-subject designs
+
 sample:
   healthy adults: Adults participants without known neurological or psychiatric conditions
   adolescents: Participants aged 10-18 years
@@ -45,7 +50,7 @@ interaction scenario:
   SBS v-b: Side-by-side with visual barriers
   virtual: Interaction via a virtual environment
 
-interaction manipulative:
+interaction manipulation:
   shared physical IM and verbal IM: Shared physical objects and verbal interaction
   physical IM w/out verbal IM: Non-verbal interaction with physical objects
   verbal IM: Verbal interaction only

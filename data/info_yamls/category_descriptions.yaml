@@ -1,5 +1,7 @@
 measurement modality: Describes the type of physiological or behavioral data collected
   during the study (e.g., EEG, eye-tracking).
+condition design: Indicates the experimental design conditions used in the study (e.g., within-subjects,
+  between-subjects, mixed).
 sample: Refers to the characteristics of the participants involved in the study,
   such as age group or health status (e.g., healthy adults, adolescents).
 pairing configuration: Specifies the grouping size and structure of participants (e.g.,
@@ -10,7 +12,7 @@ relationship pair: Describes the prior relationship between participants (e.g., 
   unfamiliar individuals).
 interaction scenario: The physical or virtual arrangement in which participants interact
   (e.g., face-to-face, virtual). Based on Balters et al. (2021) https://doi.org/10.1007/978-3-030-76324-4_2
-interaction manipulative: Specifies how participants interact with physical or digital
+interaction manipulation: Specifies how participants interact with physical or digital
   elements and the modality of communication involved. Based on Balters et al. (2021) https://doi.org/10.1007/978-3-030-76324-4_2
 type of communication: Defines the communication goal or openness in the interaction
   (e.g., goal-driven vs. open-ended). Based on Balters et al. (2020) https://doi.org/10.3389/fnhum.2020.588494
