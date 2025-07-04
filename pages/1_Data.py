@@ -283,7 +283,7 @@ with data_plots_tab:
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
             # ▶️ Publication Year figure
-            st.markdown("### Publications over Time")
+            st.subheader("Publications over Time")
 
             # Show streamlit-native line chart
             year_counts = display_df["year"].value_counts().sort_index()
@@ -304,6 +304,7 @@ with data_plots_tab:
                     )
 
             # ▶️ Category counts
+            st.subheader("Category Counts")
             fig2 = generate_category_counts_streamlit_figure(display_df, data_plots_tab)
             counts_df = export_all_category_counts(display_df)
             st.download_button(
@@ -321,7 +322,7 @@ with data_plots_tab:
                 buf = io.BytesIO()
                 fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
                 buf.seek(0)
-                st.markdown("### Interaction Conditions")
+                st.subheader("Interaction Conditions")
                 st.image(buf, use_container_width=True)
                 st.markdown(
                     f"""
@@ -361,8 +362,7 @@ with data_plots_tab2:
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
             # ▶️ Cluster Plot figure
-            st.markdown("### 2D Cluster Plot")
-
+            st.subheader("Cluster Plot")
             available_cats = [col for col in display_df.columns if display_df[col].dtype == object]
             col1, col2 = st.columns([1, 1])
             with col1:
