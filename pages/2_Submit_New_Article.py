@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import bibtexparser
 import pandas as pd
 import streamlit as st
 import yaml
@@ -23,7 +24,15 @@ st.markdown(
     }
     </style>
     """, unsafe_allow_html=True
-    )
+)
+
+# Initialize session state defaults
+for key, default in {
+    'doi': '', 'year': datetime.now().year, 'authors': '',
+    'title': '', 'abstract': ''
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 # === Load Database ===
 df = load_database(data_dir, file)
@@ -43,27 +52,43 @@ if os.path.exists(submission_file):
 else:
     submitted_df = pd.DataFrame()
 
-col1,col2 = st.columns([1,1])
+col1, col2 = st.columns([1, 1])
 with col1:
     # === Mandatory Fields ===
     st.subheader("🔒 Required Information")
     st.markdown("Fill in the fields below to suggest a new article for inclusion in the database.")
 
-    doi = st.text_input("DOI", placeholder="10.1234/example.doi")
+    doi = st.text_input("DOI",
+                        value=st.session_state.doi,
+                        placeholder="10.1234/example.doi",
+                        key='doi')
 
     if not validate_doi(doi) and doi != "":
         st.error("Invalid DOI. Please ensure it is in the correct format and exists.")
 
-    year = st.number_input("Year", min_value=1900, max_value=datetime.now().year, value=datetime.now().year, step=1)
-    authors = st.text_area("Authors", placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3")
-    title = st.text_area("Title")
-    abstract = st.text_area("Abstract")
+    year = st.number_input("Year",
+                            min_value=1900,
+                            max_value=datetime.now().year,
+                            value=st.session_state.year,
+                            step=1,
+                            key='year')
+    authors = st.text_area("Authors",
+                           value=st.session_state.authors,
+                           placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3",
+                           key='authors')
+    title = st.text_area("Title",
+                         value=st.session_state.title,
+                         key='title')
+    abstract = st.text_area("Abstract",
+                            value=st.session_state.abstract,
+                            key='abstract')
 
     # === Optional Categorizations ===
     st.subheader("🏷️ Optional Categorization")
 
-    st.markdown("Optionally you may already categorize the article based on the categories below. If"
-                " you are unsure, you can leave these fields empty and the reviewers will categorize it for you.")
+    st.markdown(
+        "Optionally you may already categorize the article based on the categories below. If"
+        " you are unsure, you can leave these fields empty and the reviewers will categorize it for you.")
     optional_inputs = {}
 
     for category, label_dict in label_tooltips.items():
@@ -86,11 +111,41 @@ with col1:
         optional_inputs[category] = selected
 
 with col2:
+    # === Paste BibTeX Entry ===
+    st.markdown("#### 📋 Paste BibTeX Entry")
+    bib_input = st.text_area(
+        "Paste a BibTeX entry here to auto-fill the required fields.", value='', height=150,)
+    if st.button("Parse BibTeX"):
+        try:
+            bib_db = bibtexparser.loads(bib_input)
+            if bib_db.entries:
+                entry = bib_db.entries[0]
+                st.session_state.doi = entry.get('doi', st.session_state.doi)
+                st.session_state.title = entry.get('title', st.session_state.title)
+                # Convert BibTeX authors ("A and B and C") to lines
+                authors = entry.get('author', '')
+                if authors:
+                    st.session_state.authors = authors.replace(' and ', ';\n')
+                # Year
+                year = entry.get('year')
+                if year and year.isdigit():
+                    st.session_state.year = int(year)
+                # Abstract
+                if 'abstract' in entry:
+                    st.session_state.abstract = entry.get('abstract')
+                st.success("✅ Parsed BibTeX and updated fields!")
+            else:
+                st.error("No entries found in BibTeX input.")
+        except Exception as e:
+            st.error(f"Error parsing BibTeX: {e}")
+
     # === Submission Button ===
+    st.markdown('---')
     st.markdown("#### 📨 Submit Your Article Suggestion")
-    st.markdown("Once you have filled in the required information, you can submit your article suggestion for review. "
-                "The reviewers will then check the article and categorize it if necessary. "
-                "If you have any questions, do not hesitate to contact us.")
+    st.markdown(
+        "Once you have filled in the required information, you can submit your article suggestion for review. "
+        "The reviewers will then check the article and categorize it if necessary. "
+        "If you have any questions, do not hesitate to contact us.")
     if doi and title and authors and abstract:
         st.info("The required information is filled in. Click the button below to submit your article suggestion.")
     if st.button("📤 Submit Suggestion"):
