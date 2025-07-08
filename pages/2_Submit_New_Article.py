@@ -148,6 +148,18 @@ with col1:
         )
         optional_inputs[category] = selected
 
+        # If "more" is selected in sample, ask for number of groups
+        if category == "pairing configuration":
+            if "more (n group = x)" in optional_inputs['pairing configuration'] and "more (n group = x)" in selected:
+                n_groups = st.number_input(
+                    "Number of participants in group (n group = x)",
+                    min_value=5,
+                    help="Specify the number of participants per group if more than a tetrad was formed.",
+                    key='n_groups'
+                    )
+                optional_inputs['pairing configuration'] = f"more (n group = {n_groups}"
+
+
     optional_inputs['other_labels'] = []
 
 with col2:
