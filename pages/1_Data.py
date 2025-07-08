@@ -319,7 +319,10 @@ with data_plots_tab:
                     *(wording may vary slightly depending on your browser)*
                     """
                     )
+        except Exception as e:
+            st.error(f"❌ Could not generate figures: {e}")
 
+        try:
             # ▶️ Category counts
             st.subheader("Category Counts")
             fig2 = generate_category_counts_streamlit_figure(display_df, data_plots_tab)
@@ -330,7 +333,10 @@ with data_plots_tab:
                 file_name="category_counts.csv",
                 mime="text/csv"
                 )
+        except Exception as e:
+            st.error(f"❌ Could not generate figures: {e}")
 
+        try:
             # ▶️ Interaction figure
             col3, col4 = st.columns([1, 1])
             # with col3:
