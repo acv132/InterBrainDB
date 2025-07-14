@@ -110,7 +110,10 @@ def validate_doi(doi):
 
     def doi_exists(doi):
         url = f"https://doi.org/{doi}"
-        response = requests.head(url, allow_redirects=True)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Accept": "application/json"
+            }
+        response = requests.get(url, allow_redirects=True, headers=headers)
         return response.status_code == 200
 
     return is_valid_doi(doi) and doi_exists(doi)

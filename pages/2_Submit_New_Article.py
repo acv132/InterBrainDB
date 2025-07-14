@@ -48,10 +48,13 @@ with open("./data/info_yamls/category_descriptions.yaml", 'r') as f:
 submission_file = os.path.join(data_dir, "submitted_articles.xlsx")
 
 # === Load or Initialize Submission Data ===
-if os.path.exists(submission_file):
-    submitted_df = load_database(data_dir, "submitted_articles.xlsx")
-else:
-    submitted_df = pd.DataFrame()
+if "submitted_df" not in st.session_state:
+    if os.path.exists(submission_file):
+        st.session_state.submitted_df = load_database(data_dir, "submitted_articles.xlsx")
+    else:
+        st.session_state.submitted_df = pd.DataFrame()
+
+submitted_df = st.session_state.submitted_df
 
 col1, col2 = st.columns([1, 1])
 with col2:
@@ -218,8 +221,18 @@ with col2:
                 st.info("ℹ️ This article has already been submitted or is part of the database.")
             else:
                 new_row = pd.DataFrame([new_entry])
+                # submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
+                # submitted_df.to_excel(submission_file, index=False)
                 submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
+                st.session_state.submitted_df = submitted_df  # persist in session
                 submitted_df.to_excel(submission_file, index=False)
 
                 st.success("✅ Article suggestion submitted successfully!")
                 st.balloons()
+                # Reset input fields for new submission
+                st.session_state.doi = ""
+                st.session_state.title = ""
+                st.session_state.authors = ""
+                st.session_state.abstract = ""
+                st.session_state.year = datetime.now().year
+                st.experimental_rerun()
