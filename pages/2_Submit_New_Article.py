@@ -229,10 +229,3 @@ with col2:
 
                 st.success("✅ Article suggestion submitted successfully!")
                 st.balloons()
-                # Reset input fields for new submission
-                st.session_state.doi = ""
-                st.session_state.title = ""
-                st.session_state.authors = ""
-                st.session_state.abstract = ""
-                st.session_state.year = datetime.now().year
-                st.experimental_rerun()
