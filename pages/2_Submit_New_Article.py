@@ -151,6 +151,23 @@ with col1:
             placeholder=f"Select {category.lower()} (optional)"
         )
         optional_inputs[category] = selected
+        if category == "measurement modality":
+            if "fNIRS" in selected:
+                optional_inputs["fNIRS_channel_number"] = st.number_input(
+                    "fNIRS channel number",
+                    min_value=1,
+                    value=None,
+                    help="Number of fNIRS channels used in the study.",
+                    key='fNIRS_channel_number'
+                    )
+            if "EEG" in selected:
+                optional_inputs["EEG_channel_number"] = st.number_input(
+                    "EEG channel number",
+                    min_value=1,
+                    value=None,
+                    help="Number of EEG channels used in the study.",
+                    key='EEG_channel_number'
+                    )
 
         # If "more" is selected in sample, ask for number of groups
         if category == "pairing configuration":
@@ -163,8 +180,20 @@ with col1:
                     )
                 optional_inputs['pairing configuration'] = f"more (n group = {n_groups}"
 
+    # === Other Labels ===
+    other_separator = ','
+    other_labels = st.text_area("Other Labels",key='other_labels',help=f"Add any other relevant labels that do not fit "
+                                                                   f"into the "
+                                                        "categories above. Separate multiple labels with a comma "
+                                                        f"({other_separator}).")
 
-    optional_inputs['other_labels'] = []
+    optional_inputs['other_labels'] = [item for item in other_labels.split(other_separator) if item.strip()]
+    if "fNIRS_channel_number" in optional_inputs:
+        optional_inputs["other_labels"] = [f"fNIRS channel number: {optional_inputs['fNIRS_channel_number']}"] + optional_inputs["other_labels"]
+        optional_inputs.pop("fNIRS_channel_number", None)
+    if "EEG_channel_number" in optional_inputs:
+        optional_inputs["other_labels"] = [f"EEG channel number: {optional_inputs['EEG_channel_number']}"] + optional_inputs["other_labels"]
+        optional_inputs.pop("EEG_channel_number", None)
 
 with col2:
     # === Submission Button ===
