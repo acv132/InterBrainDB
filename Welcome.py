@@ -24,7 +24,7 @@ st.set_page_config(
     page_icon='assets/favicon.ico',
     layout="wide"
 )
-st.title("📚 Living Literature Review")
+st.title("📚 Living Literature Review on Digital Hyperscanning")
 st.subheader("Welcome to the Living Literature Review")
 st.markdown("""
 This tool is designed to visualize up-to-date research body related to hyperscanning with digital components by:

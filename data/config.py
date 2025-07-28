@@ -1,4 +1,7 @@
+import os
 from dotenv import load_dotenv
+from pathlib import Path
+
 load_dotenv()
 data_dir = Path(os.getenv('data_dir'))
 file = Path(os.getenv('file'))
