@@ -43,6 +43,8 @@ component. The platform includes various categories, such as interaction scenari
 modalities, and analysis approaches, serving as a dynamic open-access resource. 
 The aim is to provide a comprehensive overview of the current state of digital hyperscanning research, 
 enabling researchers to stay informed about the latest developments in the field.
+Eventually, the platform will also include hyperscanning studies that do not involve a digital component, as well as 
+extending the scope to include other population groups, such as children or clinical populations.
 """)
 st.subheader("Adding New Articles")
 st.markdown("A living review means a growing database. Therefore, if we either missed a paper or you published "
@@ -57,7 +59,7 @@ Read the original literature review here:
 ```
 [citation with doi]
 ```
-If you use this resource, please cite this paper as well. 
+If you use this resource, please consider citing our paper. 
 """)
 
 st.subheader("Code")
