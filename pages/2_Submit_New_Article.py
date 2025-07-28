@@ -161,12 +161,12 @@ with col1:
                     key='fNIRS_channel_number'
                     )
             if "EEG" in selected:
-                optional_inputs["EEG_channel_number"] = st.number_input(
-                    "EEG channel number",
+                optional_inputs["EEG_electrode_number"] = st.number_input(
+                    "EEG electrode number",
                     min_value=1,
                     value=None,
-                    help="Number of EEG channels used in the study.",
-                    key='EEG_channel_number'
+                    help="Number of EEG electrodes used in the study.",
+                    key='EEG_electrode_number'
                     )
 
         # If "more" is selected in sample, ask for number of groups
@@ -191,11 +191,29 @@ with col1:
     if "fNIRS_channel_number" in optional_inputs:
         optional_inputs["other_labels"] = [f"fNIRS channel number: {optional_inputs['fNIRS_channel_number']}"] + optional_inputs["other_labels"]
         optional_inputs.pop("fNIRS_channel_number", None)
-    if "EEG_channel_number" in optional_inputs:
-        optional_inputs["other_labels"] = [f"EEG channel number: {optional_inputs['EEG_channel_number']}"] + optional_inputs["other_labels"]
-        optional_inputs.pop("EEG_channel_number", None)
+    if "EEG_electrode_number" in optional_inputs:
+        optional_inputs["other_labels"] = [f"EEG electrode number: {optional_inputs['EEG_electrode_number']}"] + optional_inputs["other_labels"]
+        optional_inputs.pop("EEG_electrode_number", None)
 
 with col2:
+    st.markdown('---')
+    st.markdown("#### 🔍 Check Database for Existing DOIs")
+    st.markdown(
+        "You may want to check if the DOI you are submitting already exists in or has been submitted to "
+        "the database before filling in the remaining fields. You can do this quickly by clicking the button below. ")
+    if st.button("☑️ Check Database"):
+        existing_dois = set()
+        if "doi" in df.columns:
+            existing_dois.update(df["doi"].astype(str).str.lower())
+        if "doi" in submitted_df.columns:
+            existing_dois.update(submitted_df["doi"].astype(str).str.lower())
+        if doi:
+            if doi.strip().lower() in existing_dois:
+                st.warning(f"⚠️ An article with the DOI {doi} has already been submitted or is part of the "
+                           f"database.")
+            else:
+                st.info("ℹ️ This DOI is not found in the database. You may proceed with submission.")
+
     # === Submission Button ===
     st.markdown('---')
     st.markdown("#### 📨 Submit Your Article Suggestion")
@@ -217,7 +235,7 @@ with col2:
             missing_fields.append("Abstract")
 
         if missing_fields:
-            st.error(f"Please fill in the required fields: {', '.join(missing_fields)}")
+            st.error(f"❗Please fill in the required fields: {', '.join(missing_fields)}")
         else:
             fa = authors.split(';')[0].split(',')[0].replace(' ', '').lower()
             tk = re.sub(r"[ \-\(\):']", "", title[:20].lower())
