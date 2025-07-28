@@ -28,7 +28,7 @@ def generate_category_counts_figure(df, tab):
 
     # Check if DataFrame has any rows
     if df is None or df.empty:
-        tab.warning("No data found; make sure that at least some data is passing the selected filters.")
+        tab.warning("⚠️ No data found; make sure that at least some data is passing the selected filters.")
         return None
 
     # Theme-aware font color
@@ -116,7 +116,7 @@ def generate_category_counts_streamlit_figure(df, tab):
     """
 
     if df is None or df.empty:
-        tab.warning("No data found; make sure that at least some data is passing the selected filters.")
+        tab.warning("⚠️ No data found; make sure that at least some data is passing the selected filters.")
         return
 
     # Theme-aware color logic (for future use or consistency)
@@ -206,7 +206,7 @@ def generate_interaction_figure(df, tab):
 
     # Check if DataFrame has any rows
     if len(df) == 0:
-        tab.warning("No data found; make sure that at least some data is passing the selected filters.")
+        tab.warning("⚠️ No data found; make sure that at least some data is passing the selected filters.")
         return None
 
     ###############
