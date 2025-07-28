@@ -68,6 +68,7 @@ with col2:
             if bib_db.entries:
                 entry = bib_db.entries[0]
                 st.session_state.doi = entry.get('doi', st.session_state.doi)
+                entry['title'] = entry.get('title', '').replace('{', '').replace('}', '')  # Clean title
                 st.session_state.title = entry.get('title', st.session_state.title)
                 # Convert BibTeX authors ("A and B and C") to lines
                 authors = entry.get('author', '')
