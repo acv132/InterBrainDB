@@ -82,7 +82,7 @@ st.markdown(html, unsafe_allow_html=True)
 
 st.markdown("""
 ### Contact
-The app is being maintained by the Applied Neurocognitive Systems Team, Department of Human-Computer Interaction, 
+The app is maintained by the Applied Neurocognitive Systems Team, Department of Human-Computer Interaction, 
 University of Stuttgart & Fraunhofer IAO.
 
 Contact: Anna Vorreuther [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de,
