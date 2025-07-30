@@ -60,8 +60,8 @@ col1, col2 = st.columns([1, 1])
 with col2:
     # === Paste BibTeX Entry ===
     st.markdown("#### 📋 Paste BibTeX Entry")
-    bib_input = st.text_area(
-        "Paste a BibTeX entry here to auto-fill the required fields.", value='', height=150,)
+    st.markdown("Paste a BibTeX entry here to auto-fill the required fields.")
+    bib_input = st.text_area(label="BibTeX", value='', height=150,)
     if st.button("Parse BibTeX"):
         try:
             bib_db = bibtexparser.loads(bib_input)
@@ -130,9 +130,9 @@ with col1:
 
         if category == "sample":
             optional_inputs['sample_size'] = st.number_input(
-                "Sample size",
+                "Enter sample size (optional)",
                 min_value=2,
-                value=2,
+                value=None,
                 help="Number of participants analysed in the study.",
                 key='sample_size'
             )
@@ -185,7 +185,9 @@ with col1:
     other_labels = st.text_area("Other Labels",key='other_labels',help=f"Add any other relevant labels that do not fit "
                                                                    f"into the "
                                                         "categories above. Separate multiple labels with a comma "
-                                                        f"({other_separator}).")
+                                                        f"({other_separator}).",
+                                placeholder="label1, label2, ... (optional)",
+                                )
 
     optional_inputs['other_labels'] = [item for item in other_labels.split(other_separator) if item.strip()]
     if "fNIRS_channel_number" in optional_inputs:
