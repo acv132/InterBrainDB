@@ -56,7 +56,7 @@ def generate_category_counts_figure(df, tab):
 
     # Identify one-hot columns for each category
     category_columns = {cat: [col for col in all_columns if col.startswith(f"{cat}{prefix}")] for cat in
-        base_categories}
+                        base_categories}
 
     # Clean up: only keep categories with at least 1 matching one-hot column
     category_columns = {k: v for k, v in category_columns.items() if v}
@@ -135,11 +135,10 @@ def generate_category_counts_streamlit_figure(df, tab):
     # Identify one-hot columns per category
     all_columns = df.columns
     category_columns = {cat: [col for col in all_columns if col.startswith(f"{cat}{prefix}")] for cat in
-        base_categories}
+                        base_categories}
     category_columns = {k: v for k, v in category_columns.items() if v}
 
     n_categories = len(category_columns)
-
     # User layout choice
     layout_option = tab.radio(
         "Choose plot layout:", ["Auto", "Single Column", "Grid (3 columns)"], horizontal=True
@@ -151,7 +150,7 @@ def generate_category_counts_streamlit_figure(df, tab):
         n_cols = 3
     else:  # Auto layout
         n_cols = min(4, n_categories)
-    n_rows = int(-(-n_categories / n_cols))
+    n_rows = int(np.ceil(-(-n_categories / n_cols)))
 
     # Render bar charts
     cat_list = list(category_columns.items())
@@ -169,28 +168,27 @@ def generate_category_counts_streamlit_figure(df, tab):
 
             with cols[col_idx]:
                 if (counts > 0).sum() > 1:
-                        st.markdown(f"**{cat}**")
-                        # st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
-                        import altair as alt
-                        chart_df = pd.DataFrame(
-                            {
-                                "label": counts.index, "count": counts.values
-                                }
-                            )
-                        bar_chart = alt.Chart(chart_df).mark_bar(color=st.get_option('theme.primaryColor')).encode(
-                            x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
-                            # Sort by count descending
-                            tooltip=["label", "count"]
-                            ).properties(
-                            height=300,
-                            padding={"left": 20, "right": 20, "top": 20, "bottom": 20}, ).configure_view(
-                            stroke=None
-                            ).configure_axis(
-                            labelFontSize=12, labelLimit=150, # distance in pixels between axis‐line and tick labels
-                            labelPadding=10, # distance in pixels between axis‐line and title
-                            titlePadding=15, )
+                    st.markdown(f"**{cat}**")
+                    # st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
+                    import altair as alt
+                    chart_df = pd.DataFrame(
+                        {
+                            "label": counts.index, "count": counts.values
+                            }
+                        )
+                    bar_chart = alt.Chart(chart_df).mark_bar(color=st.get_option('theme.primaryColor')).encode(
+                        x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
+                        # Sort by count descending
+                        tooltip=["label", "count"]
+                        ).properties(
+                        height=300, padding={"left": 20, "right": 20, "top": 20, "bottom": 20}, ).configure_view(
+                        stroke=None
+                        ).configure_axis(
+                        labelFontSize=12, labelLimit=150,  # distance in pixels between axis‐line and tick labels
+                        labelPadding=10,  # distance in pixels between axis‐line and title
+                        titlePadding=15, )
 
-                        st.altair_chart(bar_chart, use_container_width=True)
+                    st.altair_chart(bar_chart, use_container_width=True)
                 else:
                     # Print the label and its count if only one label is present and associated count
                     st.markdown(f"**{cat}**")
@@ -284,10 +282,6 @@ def generate_interaction_figure(df, tab):
     # prepare confusion matrix rows and columns
     row_pos = np.arange(len(scenario_order)) * row_spacing
     col_pos = np.arange(len(manipulation_order)) * col_spacing
-    # try:
-    #     modality_colors = dict(zip(modalities_order, plt.get_cmap(colormap)(np.linspace(0, 1, len(modalities_order)))))
-    # except ValueError:
-    #     modality_colors = dict(zip(modalities_order, colormap))
 
     cooccurrance_per_study = []
     # get any accounts of co-existence of conditions in one study (ID)
@@ -316,16 +310,25 @@ def generate_interaction_figure(df, tab):
             connections = list(combinations(coordinates, 2))
             normalized_connections = [tuple(sorted(el)) for el in connections]
             for element in normalized_connections:
-                # if connection is not diagnoal, simply count it
+                # if connection is not diagonal, simply count it
                 if is_horizontal_or_vertical(element[0][0], element[0][1], element[1][0], element[1][1]):
                     connection_counts[(element, modality)] += 1
-                # if it is diagnoal, form corresponding triangle connections and count them if not already counted
+                # fixme if it is diagonal, form corresponding triangle connections and count them if not already counted
+                #  draws twice the amount of comparisons, e.g., with [FTF, virtual] and [shared IM, separate IM],
+                #  four connections are made even though in reality only the pairings FTF-shared and virtual-separate
+                #  exist
                 else:
                     new_connections = convert_to_horizontal_and_vertical_connections(element)
                     for new_element in new_connections:
                         normalized_conn = tuple(sorted(new_element))
                         if normalized_conn not in normalized_connections:
                             connection_counts[(normalized_conn, modality)] += 1
+                # fixme if both both dimensions have two (or more) items, the comparison is determined based on the
+                #  following logic:
+                #  "virtual" IS and "separate *" IM go together by default, and the other remaining are paired
+                #  respectively, assuming
+                #  PROBLEM: may not apply in VR studies
+                #  PROBLEM: what about 3*2 comparisons?
 
     connection_data = []
     for ((start, end), modality), count in connection_counts.items():
@@ -460,11 +463,7 @@ def generate_interaction_figure(df, tab):
 
         # Increase padding for tick labels
         ax.set_xticklabels(
-            [c.replace(" IM", '') for c in manipulation_order],
-            rotation=45,
-            ha='right',
-            fontsize=14,
-            color=font_color
+            [c.replace(" IM", '') for c in manipulation_order], rotation=45, ha='right', fontsize=14, color=font_color
             )
         ax.tick_params(axis='x', which='both', length=0, pad=10)
         ax.set_yticklabels(scenario_order, fontsize=14, color=font_color)
@@ -483,11 +482,12 @@ def generate_interaction_figure(df, tab):
             )
 
         # Create dictionary for legend handles
-        modality_handles = {label: plt.Line2D([0], [0], color=color, lw=4, linestyle='-')  # Default solid line for modality
+        modality_handles = {label: plt.Line2D([0], [0], color=color, lw=4, linestyle='-')
+                            # Default solid line for modality
                             for label, color in modality_colors.items()}
         style_handles = {
-            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=line_styles[i % len(line_styles)]) for
-            i, count in enumerate(unique_counts)}
+            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=line_styles[i % len(line_styles)])
+            for i, count in enumerate(unique_counts)}
         area_handle = {
             'digital component': mpatches.Patch(color=color_rect, label='digital component')
             }
@@ -499,8 +499,8 @@ def generate_interaction_figure(df, tab):
         # Get only counts actually used
         used_counts = connection_df['count'].unique()
         filtered_style_handles = {
-            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=count_to_style[count]) for count in
-            used_counts}
+            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=count_to_style[count]) for count
+            in used_counts}
 
         # Only add digital component if it's actually highlighted
         filtered_area_handle = {}
@@ -566,29 +566,367 @@ def generate_interaction_figure(df, tab):
         return fig, condition_count, number_studies
 
 
-def generate_publication_year_figure(df):
-    """
-    Generate a matplotlib figure showing number of publications per year.
+def generate_interaction_figure_diagonal_connections(df, tab):
+    """Generate a confusion matrix-like figure showing the interaction conditions across studies."""
 
-    Args:
-        df (pd.DataFrame): DataFrame containing a 'year' column.
+    # Check if DataFrame has any rows
+    if len(df) == 0:
+        tab.warning("⚠️ No data found; make sure that at least some data is passing the selected filters.")
+        return None
 
-    Returns:
-        fig (matplotlib.figure.Figure): The publication year plot.
-    """
-    year_counts = df["year"].value_counts().sort_index()
+    ###############
+    # Configs
+    ###############
 
+    # get defined category labels for CM and color legend
+    yaml_file = "./data/info_yamls/categories.yaml"
+    with open(yaml_file, 'r', encoding='utf-8') as f:
+        categories = yaml.safe_load(f)
+
+    default_scenario_order = categories["interaction scenario"].keys()
+    default_manipulation_order = categories["interaction manipulation"].keys()
+    default_modalities_order = categories["measurement modality"].keys()
+
+    # define some figure specs
+    row_spacing = 1.5  # Increase spacing between rows
+    col_spacing = 1.5  # Increase spacing between columns
+    # Base width for line thickness
+    base_width = 1.5
+    base_curvature = .4
+    line_styles = ['-', '--', ':', '-.']  # Solid, dashed, dash-dot, dotted
+
+    # Adjust radius for connections to start/end at pie edges
+    pie_radius = 0.5
+    colormap = ColorMap
+    modality_colors = dict(zip(default_modalities_order, colormap))
+
+    figure_background_color = st.get_option('theme.backgroundColor')
+    color_rect = "#43454a" if is_dark_color(figure_background_color) else "#e9e9e9"
+    font_color = "#ffffff" if is_dark_color(figure_background_color) else "#000000"
+
+    # Legend configs
+    legend_title_props = FontProperties(size=16)
+    facecolor_legend = None
+    y_axis_legend_start = .7
+
+    ###############
+    # prepare data
+    ###############
+    prefix = "_"
+    df = decode_one_hot(df, prefix)
+    number_studies = len(df)
+    scenario_columns = [col for col in df.columns if col.startswith(f"interaction scenario{prefix}")]
+    manipulation_columns = [col for col in df.columns if col.startswith(f"interaction manipulation{prefix}")]
+    modality_columns = [col for col in df.columns if col.startswith(f"measurement modality{prefix}")]
+    df['interaction scenario'] = df[scenario_columns].apply(
+        lambda row: [col.replace(f"interaction scenario{prefix}", "") for col, val in row.items() if val], axis=1
+        )
+    df['interaction manipulation'] = df[manipulation_columns].apply(
+        lambda row: [col.replace(f"interaction manipulation{prefix}", "") for col, val in row.items() if val], axis=1
+        )
+    df['measurement modality'] = df[modality_columns].apply(
+        lambda row: [col.replace(f"measurement modality{prefix}", "") for col, val in row.items() if val], axis=1
+        )
+    df_exploded = df.explode('measurement modality')
+    df_exploded = df_exploded.explode('interaction manipulation')
+    df_exploded = df_exploded.explode('interaction scenario')
+    pivot_table = df_exploded.groupby(
+        ['measurement modality', 'interaction scenario', 'interaction manipulation']
+        ).size().unstack(fill_value=0)
+    cross_section_counts = df_exploded.groupby(
+        ['measurement modality', 'interaction scenario', 'interaction manipulation']
+        ).size().reset_index(name='count')
+    scenario_contained = [col.replace("interaction scenario_", "") for col in scenario_columns]
+    manipulation_contained = [col.replace("interaction manipulation_", "") for col in manipulation_columns]
+    modalities_contained = [col.replace("measurement modality_", "") for col in modality_columns]
+
+    scenario_order = [scenario for scenario in default_scenario_order if scenario in scenario_contained]
+    manipulation_order = [manipulation for manipulation in default_manipulation_order if
+                          manipulation in manipulation_contained]
+    modalities_order = [modality for modality in default_modalities_order if modality in modalities_contained]
+
+    # prepare confusion matrix rows and columns
+    row_pos = np.arange(len(scenario_order)) * row_spacing
+    col_pos = np.arange(len(manipulation_order)) * col_spacing
+    # try:
+    #     modality_colors = dict(zip(modalities_order, plt.get_cmap(colormap)(np.linspace(0, 1, len(modalities_order)))))
+    # except ValueError:
+    #     modality_colors = dict(zip(modalities_order, colormap))
+
+    cooccurrance_per_study = []
+    # get any accounts of co-existence of conditions in one study (ID)
+    for study_id, group in df.groupby('article'):
+        # Get all scenarios, manipulations, and modalities used in this study
+        scenarios = [col.replace("interaction scenario_", "") for col in scenario_columns if group[col].iloc[0] == 1]
+        manipulations = [col.replace("interaction manipulation_", "") for col in manipulation_columns if
+                         group[col].iloc[0] == 1]
+        modalities = [col.replace("measurement modality_", "") for col in modality_columns if group[col].iloc[0] == 1]
+
+        # get coordinates of each scenario and manipulation for each modality
+        for modality in modalities:
+            y_coor = row_pos[[scenario_order.index(s) for s in scenarios]]
+            x_coor = col_pos[[manipulation_order.index(m) for m in manipulations]]
+            cooccurrance_per_study.append((x_coor, y_coor, modality))
+
+    # count unique connection lines
+    connection_counts = defaultdict(int)
+    for x_coor, y_coor, modality in cooccurrance_per_study:
+        # connection lines are valid to count if they are in fact a line (not a dot)
+        if len(x_coor) > 1 or len(y_coor) > 1:
+            # get color according to modality
+            color = modality_colors.get(modality, 'black')
+
+            coordinates = list(product(x_coor, y_coor))
+            connections = list(combinations(coordinates, 2))
+            normalized_connections = [tuple(sorted(el)) for el in connections]
+            for element in normalized_connections:
+                connection_counts[(element, modality)] += 1
+                # # if connection is not diagonal, simply count it
+                # if is_horizontal_or_vertical(element[0][0], element[0][1], element[1][0], element[1][1]):
+                #     connection_counts[(element, modality)] += 1
+                # # if it is diagonal, form corresponding triangle connections and count them if not already counted
+                # else:
+                #     new_connections = convert_to_horizontal_and_vertical_connections(element)
+                #     for new_element in new_connections:
+                #         normalized_conn = tuple(sorted(new_element))
+                #         if normalized_conn not in normalized_connections:
+                #             connection_counts[(normalized_conn, modality)] += 1
+
+    connection_data = []
+    for ((start, end), modality), count in connection_counts.items():
+        start_scenario = get_scenario_or_manipulation(
+            start[1], 'y', scenario_order, manipulation_order, row_pos, col_pos
+            )
+        start_manipulation = get_scenario_or_manipulation(
+            start[0], 'x', scenario_order, manipulation_order, row_pos, col_pos
+            )
+        end_scenario = get_scenario_or_manipulation(end[1], 'y', scenario_order, manipulation_order, row_pos, col_pos)
+        end_manipulation = get_scenario_or_manipulation(
+            end[0], 'x', scenario_order, manipulation_order, row_pos, col_pos
+            )
+
+        connection_data.append(
+            (start, end, f"{start_scenario} - {start_manipulation}", f"{end_scenario} - {end_manipulation}", modality,
+             count,)
+            )
+
+    # Create updated DataFrame
+    connection_df = pd.DataFrame(
+        connection_data, columns=["start", "end", "start_pairing", "end_pairing", "modality", "count"]
+        )
+
+    unique_counts = sorted(connection_df['count'].unique())
+    count_to_style = {count: line_styles[i % len(line_styles)] for i, count in enumerate(unique_counts)}
+
+    ###############
+    # Prepare the plot
+    ###############
     with _lock:
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(year_counts.index, year_counts.values, marker='o')
-        ax.set_title("Publication Development Over Time")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Number of Publications")
-        ax.grid(True)
-        for spine in ["top", "right"]:
-            ax.spines[spine].set_visible(False)
+        fig, ax = plt.subplots(figsize=(16, 12))
 
-        return fig
+        # draw connection lines
+        for idx, row in connection_df.iterrows():
+            start, end = row['start'], row['end']
+            modality = row['modality']
+            count = row['count']
+
+            # Get color and line width
+            color = modality_colors.get(modality, 'black')
+            line_width = base_width
+            line_style = count_to_style[count]
+            curvature = (list(modality_colors.keys()).index(row['modality']) + 1) * base_curvature
+
+            # Draw curved lines using Bezier path
+            control_point = (0., 0.)
+            if start[0] == end[0]:
+                control_point = ((start[0] + end[0]) / 2 + curvature, (start[1] + end[1]) / 2)
+            elif start[1] == end[1]:
+                control_point = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + curvature)
+            vertices = np.array([start, control_point, end])
+            codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
+            bezier_path = Path(vertices, codes)
+
+            # Add Bezier path to the plot
+            patch = PathPatch(bezier_path, color=color, lw=line_width, fill=False, linestyle=line_style, zorder=1)
+            ax.add_patch(patch)
+
+        # Draw pie charts for each scenario and manipulation combination
+        for i, scenario in enumerate(scenario_order):
+            for j, manipulation in enumerate(manipulation_order):
+                # Get counts for this cell
+                cell_data = df_exploded[(df_exploded['interaction scenario'] == scenario) & (
+                        df_exploded['interaction manipulation'] == manipulation)]
+                modality_counts = cell_data['measurement modality'].value_counts()
+
+                if not modality_counts.empty:
+                    # Prepare pie sizes and colors
+                    pie_sizes = modality_counts.values
+                    pie_colors = [modality_colors[mod] for mod in modality_counts.index]
+
+                    # Scale pie size
+                    size_factor = sum(pie_sizes) / df_exploded.shape[0]  # Scale relative to total data
+                    radius = pie_radius + size_factor  # Adjust radius dynamically
+                    ax.pie(
+                        pie_sizes,
+                        colors=pie_colors,
+                        center=(col_pos[j], row_pos[i]),
+                        radius=radius,
+                        wedgeprops=dict(width=0.3), )
+                    ax.text(
+                        col_pos[j],
+                        row_pos[i],
+                        str(pie_sizes.sum()),
+                        color='k',
+                        fontsize=12,
+                        ha='center',
+                        va='center',
+                        bbox=dict(
+                            boxstyle="circle", facecolor="white", edgecolor="none", pad=radius + 0.3, )
+                        )
+
+        # Draw gray area in plot to highlight virtual row and digital IM columns
+        plt.xlim(left=-1, right=12)
+        plt.ylim(bottom=-1, top=12)
+        virtual_row_index = scenario_order.index("virtual")
+
+        digital_im_column_indices = [manipulation_order.index(col) for col in manipulation_order if "digital" in col]
+
+        virtual_y_start = row_pos[virtual_row_index] - row_spacing / 2
+        virtual_y_end = row_pos[virtual_row_index] + row_spacing / 2
+        virtual_x_start = col_pos[0] - col_spacing / 2
+        virtual_x_end = col_pos[-1] + col_spacing / 2
+        ax.add_patch(
+            Rectangle(
+                (virtual_x_start, virtual_y_start),
+                virtual_x_end - virtual_x_start,
+                virtual_y_end - virtual_y_start,
+                color=color_rect,
+                zorder=0,
+                alpha=1, )
+            )
+
+        digital_x_start = col_pos[digital_im_column_indices[0]] - col_spacing / 2
+        digital_x_end = col_pos[digital_im_column_indices[-1]] + col_spacing / 2
+        digital_y_start = row_pos[0] - row_spacing / 2
+        digital_y_end = row_pos[-1] + row_spacing / 2
+        ax.add_patch(
+            Rectangle(
+                (digital_x_start, digital_y_start),
+                digital_x_end - digital_x_start,
+                digital_y_end - digital_y_start,
+                color=color_rect,
+                zorder=0,
+                alpha=1, )
+            )
+
+        # Format the plot
+        # Add gridlines for clarity
+        ax.set_xticks(col_pos)
+        ax.set_yticks(row_pos)
+
+        # Increase padding for tick labels
+        ax.set_xticklabels(
+            [c.replace(" IM", '') for c in manipulation_order], rotation=45, ha='right', fontsize=14, color=font_color
+            )
+        ax.tick_params(axis='x', which='both', length=0, pad=10)
+        ax.set_yticklabels(scenario_order, fontsize=14, color=font_color)
+        ax.tick_params(axis='y', which='both', length=0, pad=10)
+
+        # Add labels for axes with consistent padding
+        ax.set_xlabel("Interaction manipulation", fontsize=16, labelpad=10, color=font_color)
+        ax.set_ylabel("Interaction Scenario", fontsize=16, labelpad=10, color=font_color)
+
+        ax.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
+
+        condition_count = cross_section_counts["count"].sum()
+        ax.set_title(
+            f"Confusion matrix of experimental interaction conditions ({condition_count} "
+            f"conditions in total {number_studies} studies)", fontsize=14, pad=10, color=font_color
+            )
+
+        # Create dictionary for legend handles
+        modality_handles = {label: plt.Line2D([0], [0], color=color, lw=4, linestyle='-')
+                            # Default solid line for modality
+                            for label, color in modality_colors.items()}
+        style_handles = {
+            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=line_styles[i % len(line_styles)])
+            for i, count in enumerate(unique_counts)}
+        area_handle = {
+            'digital component': mpatches.Patch(color=color_rect, label='digital component')
+            }
+        # Get only modalities actually used
+        used_modalities = connection_df['modality'].unique()
+        filtered_modality_handles = {label: handle for label, handle in modality_handles.items() if
+                                     label in used_modalities}
+
+        # Get only counts actually used
+        used_counts = connection_df['count'].unique()
+        filtered_style_handles = {
+            f"count: {count}": plt.Line2D([0], [0], color=font_color, lw=4, linestyle=count_to_style[count]) for count
+            in used_counts}
+
+        # Only add digital component if it's actually highlighted
+        filtered_area_handle = {}
+        if digital_im_column_indices:  # non-empty list
+            filtered_area_handle = {
+                'digital component': mpatches.Patch(color=color_rect, label='digital component')
+                }
+
+        # 1. Modality Legend (Fixed at top)
+        mod_legend = ax.legend(
+            handles=list(filtered_modality_handles.values()),
+            labels=list(filtered_modality_handles.keys()),
+            title="measurement modality",
+            loc="center left",
+            bbox_to_anchor=(1.0, 0.7),
+            fontsize=14,
+            alignment="left",
+            framealpha=0,
+            facecolor=facecolor_legend,
+            labelcolor=font_color,
+            title_fontproperties=legend_title_props, )
+        plt.setp(mod_legend.get_title(), color=font_color)
+
+        # 2. Comparison Legend (middle)
+        comparison_legend = Legend(
+            ax,
+            handles=list(filtered_style_handles.values()),
+            labels=list(filtered_style_handles.keys()),
+            title="comparisons",
+            loc="center left",
+            bbox_to_anchor=(1.0, 0.45),
+            fontsize=14,
+            alignment="left",
+            framealpha=0,
+            facecolor=facecolor_legend,
+            labelcolor=font_color,
+            title_fontproperties=legend_title_props, )
+        plt.setp(comparison_legend.get_title(), color=font_color)
+        ax.add_artist(comparison_legend)
+
+        # 3. Study Design Legend (bottom, only if used)
+        if filtered_area_handle:
+            study_design_legend = Legend(
+                ax,
+                handles=list(filtered_area_handle.values()),
+                labels=list(filtered_area_handle.keys()),
+                title="study design",
+                loc="center left",
+                bbox_to_anchor=(1.0, 0.30),
+                fontsize=14,
+                alignment="left",
+                framealpha=0,
+                facecolor=facecolor_legend,
+                labelcolor=font_color,
+                title_fontproperties=legend_title_props, )
+            plt.setp(study_design_legend.get_title(), color=font_color)
+            ax.add_artist(study_design_legend)
+
+        plt.tight_layout()
+        x_min, x_max = ax.get_xlim()
+        ax.set_xlim(x_min, x_max + 1)
+
+        return fig, condition_count, number_studies
 
 
 def generate_2d_cluster_plot(df, x_cat, y_cat, color_cat, jitter_scale=0.15):
@@ -638,3 +976,48 @@ def generate_2d_cluster_plot(df, x_cat, y_cat, color_cat, jitter_scale=0.15):
         )
 
     return fig
+
+import streamlit as st
+import pandas as pd
+import ast
+
+def plot_publications_over_time(
+        df, selected_category, label_tooltips, container=st
+        ):
+    """
+    Plot publication counts over time, optionally split by a category.
+    Handles columns with single strings, lists, or stringified lists.
+    """
+    # --- Handle multi-label columns, stringified lists, etc. ---
+    year_label_pairs = []
+    for _, row in df.iterrows():
+        year = str(row["year"])
+        col_val = row[selected_category]
+        if isinstance(col_val, list):
+            labels = col_val
+        elif pd.isna(col_val):
+            labels = []
+        elif isinstance(col_val, str) and col_val.startswith("[") and col_val.endswith("]"):
+            # Fix case where lists are stored as string repr (e.g., "['ECG','EDA']")
+            try:
+                labels = ast.literal_eval(col_val)
+                if not isinstance(labels, list):
+                    labels = [labels]
+            except Exception:
+                labels = [col_val]
+        else:
+            labels = [col_val]
+        for label in labels:
+            # Skip nan, empty strings, or lists (should not happen)
+            if pd.isna(label) or isinstance(label, list) or label == "":
+                continue
+            year_label_pairs.append((year, label))
+
+    if not year_label_pairs:
+        container.warning("No data to plot for the selected category.")
+        return
+
+    pair_df = pd.DataFrame(year_label_pairs, columns=["year", "label"])
+    pivot = pair_df.groupby(["year", "label"]).size().unstack(fill_value=0)
+    pivot = pivot.sort_index()
+    container.line_chart(pivot, use_container_width=True, color=ColorMap[:len(pivot.columns)])

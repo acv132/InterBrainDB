@@ -37,3 +37,10 @@ streamlit run Welcome.py --server.port 8501
 ```
 4. You can now view the streamlit app in your browser via a local URL: 
 http://localhost:8501
+
+
+### TODO
+- add respiration as own category measurement modality
+- add fMRI as own category measurement modality
+- add more details to "included" studies through other_labels 
+  - double-check number of fNIRS channels and number of EEG-channels info exists for all of them

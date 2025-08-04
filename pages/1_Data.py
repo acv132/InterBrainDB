@@ -10,7 +10,8 @@ import yaml
 
 import data.config
 from plotting.figures import generate_interaction_figure, generate_2d_cluster_plot, \
-    generate_category_counts_streamlit_figure
+    generate_category_counts_streamlit_figure, plot_publications_over_time, \
+    generate_interaction_figure_diagonal_connections
 from plotting.plot_utils import export_all_category_counts
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table, flatten_cell)
@@ -49,7 +50,7 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID', # 'exclusion_reasons',
+    columns=['rayyan_ID',  # 'exclusion_reasons',
              # 'user_notes',
              # 'other_labels'
              ]
@@ -221,7 +222,8 @@ def create_tab_header(df, display_df):
     sem_sample_size = round(sd_sample_size / (len(display_df) ** 0.5) if len(display_df) > 0 else 0, 2)
     min_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').min()
     max_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').max()
-    st.markdown(f"Descriptives of sample size: Mean = {avg_sample_size:.1f} ± {sd_sample_size:.1f} (SEM = "
+    st.markdown(
+        f"Descriptives of sample size: Mean = {avg_sample_size:.1f} ± {sd_sample_size:.1f} (SEM = "
         f"{sem_sample_size}), "
         f"min: {min_sample_size}, max: {max_sample_size}"
         )
@@ -245,7 +247,7 @@ with data_overview_tab:
                     'pairing configuration', 'paradigm', 'cognitive function'],
         'Participants': ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
                          'relationship pair'],
-        'Paradigm': ['article', 'DOI Link', 'interaction scenario', 'interaction manipulation',
+        'Paradigm': ['article', 'DOI Link', 'condition design', 'interaction scenario', 'interaction manipulation',
                      'transfer of information', 'type of communication', 'paradigm', 'task symmetry'],
         'Measurement & Analysis': ['article', 'DOI Link', 'measurement modality', 'analysis method',
                                    'cognitive function'],
@@ -294,23 +296,39 @@ with data_overview_tab:
 # ========================
 # 📈 Data Plots Tab
 # ========================
-with data_plots_tab:
+with (data_plots_tab):
     create_tab_header(df, display_df)
     # todo add figure descriptions and download tips for all
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
+
             # ▶️ Publication Year figure
             st.subheader("Publications over Time")
 
-            # Show streamlit-native line chart
-            year_counts = display_df["year"].value_counts().sort_index()
-            year_df = pd.DataFrame({"Publications": year_counts})
-            year_df.index = year_df.index.astype(str)
+            # Select category for line splitting
+            selected_category = None
+            category_options = list(label_tooltips.keys())
+            selected_category = st.selectbox(
+                "Choose a category to split lines:", options=['None'] + category_options, )
             col1, col2 = st.columns([1, 1])
             with col1:
-                st.line_chart(
-                    year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
-                    )
+                if selected_category is None or selected_category == 'None':
+                    selected_category = None
+                    year_counts = display_df["year"].value_counts().sort_index()
+                    year_df = pd.DataFrame({"Publications": year_counts})
+                    year_df.index = year_df.index.astype(str)
+                    st.line_chart(
+                        year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
+                        )
+                else:
+                    # Group by year and selected category, count publications
+                    plot_publications_over_time(
+                        display_df,
+                        None if selected_category == 'None' else selected_category,
+                        label_tooltips,
+                        container=st
+                        )
+
             with col2:
                 st.markdown(
                     """
@@ -341,7 +359,6 @@ with data_plots_tab:
             col3, col4 = st.columns([1, 1])
             # with col3:
             fig1, condition_count, number_studies = generate_interaction_figure(display_df, data_plots_tab)
-            # fig1b = generate_interaction_figure_streamlit(display_df, data_plots_tab)
             buf = io.BytesIO()
             fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
             buf.seek(0)
@@ -439,6 +456,25 @@ with test_tab:
         # 4. Category Diversity Metrics
         # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
 
-
+        fig1b, condition_count, number_studies = generate_interaction_figure_diagonal_connections(
+            display_df,
+            data_plots_tab
+            )
+        buf = io.BytesIO()
+        fig1b.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
+        buf.seek(0)
+        st.subheader("Interaction Conditions")
+        st.image(buf, use_container_width=True)
+        st.markdown(
+            f"""
+        *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
+        studies across interaction manipulation and interaction scenario axes. The numbers provide the counted 
+        occurrences of the combination of an interaction manipulation and scenario. The colors represent the 
+        measurement modalities reported for a cross-section of conditions. The lines indicate reported cross-condition 
+        occurrences separated per axis, where all horizontal connections account for scenarios and all vertical 
+        connections represent a manipulation). The studies involving a digital component either through a digital 
+        manipulation or virtual interaction scenario are marked through a gray shaded area.
+        """
+            )
     except Exception as e:
         st.error(f"❌ Could not generate funnel plot: {e}")

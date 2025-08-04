@@ -84,15 +84,15 @@ task symmetry:
   low: Participants have different tasks/skills
 
 analysis method:
-  connectivity effective: Causal influence of one brain on another
-  connectivity functional: Measures synchrony in brain activity across regions (e.g., joint attention)
+  connectivity effective: Causal influence of one signal on another
+  connectivity functional: Measures correlation of two signals
+  spatial domain sensor: Sensor-level analysis
+  spatial domain source: Source-localized analysis
+  temporal domain frequency: Frequency-based synchrony
+  temporal domain time: Changes in signals over time
   machine learning supervised: Labeled data used to classify outcomes
   machine learning unsupervised: Unlabeled data used to detect patterns
   other: Other analytical approaches
-  spatial domain sensor: Sensor-level analysis from EEG/fNIRS
-  spatial domain source: Source-localized brain activity
-  temporal domain frequency: Frequency-based synchrony (e.g., theta, alpha waves)
-  temporal domain time: Changes in neural activity over time
 
 cognitive function:
   attention: Attention and focus
