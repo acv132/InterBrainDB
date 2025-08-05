@@ -9,8 +9,8 @@ import streamlit as st
 import yaml
 
 import data.config
-from plotting.figures import generate_interaction_figure, generate_2d_cluster_plot, \
-    generate_category_counts_figure, plot_publications_over_time
+from plotting.figures import generate_interaction_figure, generate_2d_cluster_plot, generate_category_counts_figure, \
+    plot_publications_over_time
 from plotting.plot_utils import export_all_category_counts
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table, flatten_cell)
@@ -49,8 +49,9 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['rayyan_ID',  # 'exclusion_reasons',
-             # 'user_notes',
+    columns=['rayyan_ID',
+             # 'exclusion_reasons',
+             'user_notes',
              # 'other_labels'
              ]
     )
@@ -370,14 +371,14 @@ with (data_plots_tab):
                     st.image(buf, use_container_width=True)
                 st.markdown(
                     f"""
-                *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
-                studies across interaction manipulation and interaction scenario axes. The numbers provide the counted 
-                occurrences of the combination of an interaction manipulation and scenario. The colors represent the 
-                measurement modalities reported for a cross-section of conditions. The lines indicate reported 
-                cross-condition comparisons separated per axis, where all horizontal connections account for scenario 
-                comparisons and all vertical connections represent a manipulation comparison). The studies involving 
-                a digital component either through a digital manipulation or virtual interaction scenario are marked 
-                through a gray shaded area. 
+                *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of 
+                {number_studies} studies across interaction manipulation and interaction scenario axes. The 
+                numbers provide the counted occurrences of the combination of an interaction manipulation and 
+                scenario (n = {connection_df['count'].sum()} simultaneous condition occurences). The colors 
+                represent the measurement modalities reported for a cross-section of conditions. The connection 
+                lines indicate reported cross-condition occurrences separated per axis. Studies involving a digital 
+                component either through a digital manipulation or virtual interaction scenario are marked through 
+                a gray shaded area. 
                 """
                     )
                 with st.expander("Show dataframe of connection lines"):
@@ -452,14 +453,13 @@ with test_tab:
             "Test Space (under development)"
             )
 
-        # 2. Sunburst or Treemap Plots
-        # Show hierarchical relationships or proportions between categories and subcategories for a more intuitive overview.
+        # correlate the occurences of labels within categories for display_df
 
-        # 3. Category Evolution Over Time
-        # Plot how the frequency of each category label changes by year to identify emerging or declining trends.
+        # 2. Sunburst or Treemap Plots  # Show hierarchical relationships or proportions between categories and subcategories for a more intuitive overview.
 
-        # 4. Category Diversity Metrics
-        # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
+        # 3. Category Evolution Over Time  # Plot how the frequency of each category label changes by year to identify emerging or declining trends.
+
+        # 4. Category Diversity Metrics  # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
 
 
     except Exception as e:

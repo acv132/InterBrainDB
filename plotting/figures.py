@@ -181,30 +181,12 @@ def generate_interaction_figure(df, tab):
     df['measurement modality'] = df[modality_columns].apply(
         lambda row: [col.replace(f"measurement modality{prefix}", "") for col, val in row.items() if val], axis=1
         )
-    df_exploded = df.explode('measurement modality')
-    df_exploded = df_exploded.explode('interaction manipulation')
-    df_exploded = df_exploded.explode('interaction scenario')
-    # cross_section_counts = df_exploded.groupby(
-    #     ['measurement modality', 'interaction scenario', 'interaction manipulation']
-    #     ).size().reset_index(name='count')
-    # scenario_contained = [col.replace("interaction scenario_", "") for col in scenario_columns]
-    # manipulation_contained = [col.replace("interaction manipulation_", "") for col in manipulation_columns]
-    # modalities_contained = [col.replace("measurement modality_", "") for col in modality_columns]
-    #
-    # # for plotting
-    # scenario_order = [scenario for scenario in default_scenario_order if scenario in scenario_contained]
-    # manipulation_order = [manipulation for manipulation in default_manipulation_order if
-    #                       manipulation in manipulation_contained]
-    #
-    # # prepare confusion matrix rows and columns
-    # row_pos = np.arange(len(scenario_order)) * row_spacing
-    # col_pos = np.arange(len(manipulation_order)) * col_spacing
 
     ####################
     # Count conditions #
     ####################
     condition_rows = []
-    for doi, group in df.groupby('doi'):
+    for doi, group in df_orig.groupby('doi'):
         # Use original, pre-exploded, pre-onehot DataFrame for correct pairing!
         orig_row = df_orig[df_orig['doi'] == doi].iloc[0]
 
@@ -236,7 +218,6 @@ def generate_interaction_figure(df, tab):
     cross_section_counts = condition_df.groupby(
         ['measurement modality', 'interaction scenario', 'interaction manipulation']
         ).size().reset_index(name='count')
-    st.dataframe(cross_section_counts)
 
     # For later plotting
     scenario_contained = [col.replace("interaction scenario_", "") for col in scenario_columns]
@@ -259,7 +240,7 @@ def generate_interaction_figure(df, tab):
     connection_display_orders = defaultdict(list)
     pairing_warnings = []
 
-    for doi, group in df.groupby('doi'):
+    for doi, group in df_orig.groupby('doi'):
         modalities = [mod for mod in modalities_contained if group[f"measurement modality_{mod}"].iloc[0] == 1]
 
         # Fetch scenarios and manipulations directly from df_orig using DOI
