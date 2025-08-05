@@ -102,3 +102,23 @@ def export_all_category_counts(df):
     # Flatten into DataFrame
     export_df = pd.concat(category_counts, axis=1).fillna(0).astype(int)
     return export_df
+
+
+def ensure_list(val):
+    if isinstance(val, list):
+        return val
+    elif pd.isnull(val):
+        return []
+    elif isinstance(val, str):
+        # Try to eval strings that look like lists
+        import ast
+        try:
+            result = ast.literal_eval(val)
+            if isinstance(result, list):
+                return result
+            else:
+                return [result]
+        except:
+            return [val]
+    else:
+        return [val]

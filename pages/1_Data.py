@@ -10,8 +10,7 @@ import yaml
 
 import data.config
 from plotting.figures import generate_interaction_figure, generate_2d_cluster_plot, \
-    generate_category_counts_streamlit_figure, plot_publications_over_time, \
-    generate_interaction_figure_diagonal_connections
+    generate_category_counts_figure, plot_publications_over_time
 from plotting.plot_utils import export_all_category_counts
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table, flatten_cell)
@@ -343,7 +342,7 @@ with (data_plots_tab):
         try:
             # ▶️ Category counts
             st.subheader("Category Counts")
-            fig2 = generate_category_counts_streamlit_figure(display_df, data_plots_tab)
+            fig2 = generate_category_counts_figure(display_df, data_plots_tab)
             counts_df = export_all_category_counts(display_df)
             st.download_button(
                 "📥 Download Category Counts (CSV)",
@@ -357,39 +356,45 @@ with (data_plots_tab):
         try:
             # ▶️ Interaction figure
             col3, col4 = st.columns([1, 1])
-            # with col3:
-            fig1, condition_count, number_studies = generate_interaction_figure(display_df, data_plots_tab)
-            buf = io.BytesIO()
-            fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
-            buf.seek(0)
-            st.subheader("Interaction Conditions")
-            st.image(buf, use_container_width=True)
-            st.markdown(
-                f"""
-            *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
-            studies across interaction manipulation and interaction scenario axes. The numbers provide the counted 
-            occurrences of the combination of an interaction manipulation and scenario. The colors represent the 
-            measurement modalities reported for a cross-section of conditions. The lines indicate reported 
-            cross-condition comparisons separated per axis, where all horizontal connections account for scenario 
-            comparisons and all vertical connections represent a manipulation comparison). The studies involving 
-            a digital component either through a digital manipulation or virtual interaction scenario are marked 
-            through a gray shaded area. 
-            """
-                )
-            # with col4:
-            st.markdown(
-                """
-                💡 **Tip:** The interaction figure is not based on streamlit-compatible plotting libraries, 
-                therefore you may use this download button to save the figure as a high-resolution image.
-                """
-                )
-            st.download_button(
-                "📥 Download Interaction Figure (JPG)",
-                data=buf.getvalue(),
-                file_name="interaction_figure.jpg",
-                mime="image/jpg"
-                )
+            with col3:
 
+                result = generate_interaction_figure(display_df, test_tab)
+                if result is None:
+                    st.warning("No figure was generated for interaction conditions.")
+                else:
+                    fig1, condition_count, number_studies, connection_df = result
+                    buf = io.BytesIO()
+                    fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
+                    buf.seek(0)
+                    st.subheader("Interaction Conditions")
+                    st.image(buf, use_container_width=True)
+                st.markdown(
+                    f"""
+                *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
+                studies across interaction manipulation and interaction scenario axes. The numbers provide the counted 
+                occurrences of the combination of an interaction manipulation and scenario. The colors represent the 
+                measurement modalities reported for a cross-section of conditions. The lines indicate reported 
+                cross-condition comparisons separated per axis, where all horizontal connections account for scenario 
+                comparisons and all vertical connections represent a manipulation comparison). The studies involving 
+                a digital component either through a digital manipulation or virtual interaction scenario are marked 
+                through a gray shaded area. 
+                """
+                    )
+                with st.expander("Show dataframe of connection lines"):
+                    st.dataframe(connection_df[["modality", "condition1", "condition2", "count"]], hide_index=True)
+            with col4:
+                st.markdown(
+                    """
+                    💡 **Tip:** The interaction figure is not based on streamlit-compatible plotting libraries, 
+                    therefore you may use this download button to save the figure as a high-resolution image.
+                    """
+                    )
+                st.download_button(
+                    "📥 Download Interaction Figure (JPG)",
+                    data=buf.getvalue(),
+                    file_name="interaction_figure.jpg",
+                    mime="image/jpg"
+                    )
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")
 
@@ -456,25 +461,6 @@ with test_tab:
         # 4. Category Diversity Metrics
         # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
 
-        fig1b, condition_count, number_studies = generate_interaction_figure_diagonal_connections(
-            display_df,
-            data_plots_tab
-            )
-        buf = io.BytesIO()
-        fig1b.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=800)
-        buf.seek(0)
-        st.subheader("Interaction Conditions")
-        st.image(buf, use_container_width=True)
-        st.markdown(
-            f"""
-        *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of {number_studies} 
-        studies across interaction manipulation and interaction scenario axes. The numbers provide the counted 
-        occurrences of the combination of an interaction manipulation and scenario. The colors represent the 
-        measurement modalities reported for a cross-section of conditions. The lines indicate reported cross-condition 
-        occurrences separated per axis, where all horizontal connections account for scenarios and all vertical 
-        connections represent a manipulation). The studies involving a digital component either through a digital 
-        manipulation or virtual interaction scenario are marked through a gray shaded area.
-        """
-            )
+
     except Exception as e:
         st.error(f"❌ Could not generate funnel plot: {e}")
