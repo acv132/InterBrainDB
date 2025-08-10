@@ -51,7 +51,7 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 display_df = df.copy().drop(
     columns=['rayyan_ID',
              # 'exclusion_reasons',
-             'user_notes',
+             # 'user_notes',
              # 'other_labels'
              ]
     )
@@ -305,28 +305,39 @@ with (data_plots_tab):
             # ▶️ Publication Year figure
             st.subheader("Publications over Time")
 
-            # Select category for line splitting
-            selected_category = None
-            category_options = list(label_tooltips.keys())
-            selected_category = st.selectbox(
-                "Choose a category to split lines:", options=['None'] + category_options, )
             col1, col2 = st.columns([1, 1])
             with col1:
+                # Select category for line splitting
+                selected_category = None
+                category_options = list(label_tooltips.keys())
+                selected_category = st.selectbox(
+                    "Choose a category to split lines:", options=['None'] + category_options, )
+                plot_type = st.radio(
+                    "Choose plot type:", options=["Line Plot", "Bar Plot"], index=0,  # default to line
+                    horizontal=True
+                    )
+                plot_type = plot_type.lower().replace(' plot', '')
                 if selected_category is None or selected_category == 'None':
                     selected_category = None
                     year_counts = display_df["year"].value_counts().sort_index()
                     year_df = pd.DataFrame({"Publications": year_counts})
                     year_df.index = year_df.index.astype(str)
-                    st.line_chart(
-                        year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
-                        )
+                    if plot_type == "line":
+                        st.line_chart(
+                            year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
+                            )
+                    elif plot_type == "bar":
+                        st.bar_chart(
+                            year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
+                            )
                 else:
                     # Group by year and selected category, count publications
                     plot_publications_over_time(
                         display_df,
                         None if selected_category == 'None' else selected_category,
                         label_tooltips,
-                        container=st
+                        container=st,
+                        plot_type=plot_type
                         )
 
             with col2:

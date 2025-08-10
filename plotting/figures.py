@@ -571,12 +571,14 @@ def generate_2d_cluster_plot(df, x_cat, y_cat, color_cat, jitter_scale=0.15):
 
 
 def plot_publications_over_time(
-        df, selected_category, label_tooltips, container=st
+        df, selected_category, label_tooltips, container=st, plot_type="line"
         ):
     """
     Plot publication counts over time, optionally split by a category.
     Handles columns with single strings, lists, or stringified lists.
     """
+    if plot_type not in ['line', 'bar']:
+        container.error(f"Selected plot type {plot_type} is not supported.")
     # --- Handle multi-label columns, stringified lists, etc. ---
     year_label_pairs = []
     for _, row in df.iterrows():
@@ -609,4 +611,11 @@ def plot_publications_over_time(
     pair_df = pd.DataFrame(year_label_pairs, columns=["year", "label"])
     pivot = pair_df.groupby(["year", "label"]).size().unstack(fill_value=0)
     pivot = pivot.sort_index()
-    container.line_chart(pivot, use_container_width=True, color=ColorMap[:len(pivot.columns)])
+    if plot_type == "line":
+        container.line_chart(pivot, use_container_width=True, color=ColorMap[:len(pivot.columns)])
+    elif plot_type == "bar":
+        container.bar_chart(
+            pivot,
+            use_container_width=True,
+            color=ColorMap[:len(pivot.columns)]
+        )
