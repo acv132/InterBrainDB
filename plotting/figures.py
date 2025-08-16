@@ -1,6 +1,13 @@
 from collections import defaultdict
-from itertools import combinations, product
+from itertools import combinations
 from threading import RLock
+
+try:
+    import altair as alt
+
+    alt.data_transformers.disable_max_rows()  # prevent silent failures on larger data
+except Exception:
+    pass
 
 import matplotlib.patches as mpatches
 import numpy as np
@@ -17,6 +24,7 @@ from data.config import ColorMap
 from plotting.plot_utils import *
 
 _lock = RLock()
+
 
 def generate_category_counts_figure(df, tab):
     """
@@ -134,10 +142,10 @@ def generate_interaction_figure(df, tab):
     # Base width for line thickness
     base_width = 1.5
     base_curvature = .4
-    line_styles = ['-', # solic
-                   '--', # dashed
-                   ':', # dotted
-                   '-.', # dash-dot
+    line_styles = ['-',  # solic
+                   '--',  # dashed
+                   ':',  # dotted
+                   '-.',  # dash-dot
                    (0, (1, 1)),  # densely dotted
                    (0, (5, 1)),  # loosely dashed
                    (0, (3, 5, 1, 5)),  # dash-dot-dot
@@ -211,8 +219,7 @@ def generate_interaction_figure(df, tab):
                         condition_rows.append([modality, s, m, doi])
 
     condition_df = pd.DataFrame(
-        condition_rows,
-        columns=["measurement modality", "interaction scenario", "interaction manipulation", "doi"]
+        condition_rows, columns=["measurement modality", "interaction scenario", "interaction manipulation", "doi"]
         )
     # Now count
     cross_section_counts = condition_df.groupby(
@@ -353,7 +360,7 @@ def generate_interaction_figure(df, tab):
             for j, manipulation in enumerate(manipulation_order):
                 # Filter cross_section_counts for this scenario-manipulation cell
                 cell_counts = cross_section_counts[(cross_section_counts['interaction scenario'] == scenario) & (
-                            cross_section_counts['interaction manipulation'] == manipulation)]
+                        cross_section_counts['interaction manipulation'] == manipulation)]
                 modality_counts = dict(zip(cell_counts['measurement modality'], cell_counts['count']))
 
                 if modality_counts:  # Only draw pie if something present
@@ -369,8 +376,7 @@ def generate_interaction_figure(df, tab):
                         colors=pie_colors,
                         center=(col_pos[j], row_pos[i]),
                         radius=radius,
-                        wedgeprops=dict(width=0.3),
-                    )
+                        wedgeprops=dict(width=0.3), )
                     ax.text(
                         col_pos[j],
                         row_pos[i],
@@ -380,9 +386,8 @@ def generate_interaction_figure(df, tab):
                         ha='center',
                         va='center',
                         bbox=dict(
-                            boxstyle="circle", facecolor="white", edgecolor="none", pad=radius + 0.3,
+                            boxstyle="circle", facecolor="white", edgecolor="none", pad=radius + 0.3, )
                         )
-                    )
         # Draw gray area in plot to highlight virtual row and digital IM columns
         plt.xlim(left=-1, right=12)
         plt.ylim(bottom=-1, top=12)
@@ -514,7 +519,7 @@ def generate_interaction_figure(df, tab):
         x_min, x_max = ax.get_xlim()
         ax.set_xlim(x_min, x_max + 1)
 
-        connection_df.drop(columns=["start","end"])
+        connection_df.drop(columns=["start", "end"])
         col = connection_df.pop("modality")
         connection_df.insert(0, col.name, col)
 
@@ -571,51 +576,178 @@ def generate_2d_cluster_plot(df, x_cat, y_cat, color_cat, jitter_scale=0.15):
 
 
 def plot_publications_over_time(
-        df, selected_category, label_tooltips, container=st, plot_type="line"
-        ):
-    """
-    Plot publication counts over time, optionally split by a category.
-    Handles columns with single strings, lists, or stringified lists.
-    """
-    if plot_type not in ['line', 'bar']:
-        container.error(f"Selected plot type {plot_type} is not supported.")
-    # --- Handle multi-label columns, stringified lists, etc. ---
-    year_label_pairs = []
+    df,
+    selected_category,
+    label_tooltips=None,
+    container=None,
+    count_mode="auto",          # 'auto' | 'study_weighted' | 'occurrence'
+    color_map=ColorMap,         # optional list of hex/rgb colors
+    year_col="year",
+):
+    # -- Resolve container --
+    if container is None:
+        try:
+            import streamlit as st
+            container = st
+        except Exception:
+            class _Null:
+                def __getattr__(self, _):
+                    def _noop(*a, **k): pass
+                    return _noop
+            container = _Null()
+
+    # Prevent silent failures on larger data (optional)
+    try:
+        alt.data_transformers.disable_max_rows()
+    except Exception:
+        pass
+
+    # -- Determine effective count mode --
+    effective_mode = "study_weighted" if count_mode == "auto" else count_mode
+    if effective_mode not in ["study_weighted", "occurrence"]:
+        container.error(f"Selected count_mode {count_mode} is not supported.")
+        return
+
+    # -- Parse labels robustly per row --
+    year_label_rows = []
     for _, row in df.iterrows():
-        year = str(row["year"])
-        col_val = row[selected_category]
+        year = row.get(year_col, np.nan)
+        if pd.isna(year):
+            continue
+        year = str(year)
+
+        col_val = row.get(selected_category, np.nan)
+
         if isinstance(col_val, list):
             labels = col_val
         elif pd.isna(col_val):
             labels = []
-        elif isinstance(col_val, str) and col_val.startswith("[") and col_val.endswith("]"):
-            # Fix case where lists are stored as string repr (e.g., "['ECG','EDA']")
+        elif isinstance(col_val, str) and col_val.strip().startswith("[") and col_val.strip().endswith("]"):
             try:
-                labels = ast.literal_eval(col_val)
-                if not isinstance(labels, list):
-                    labels = [labels]
+                parsed = ast.literal_eval(col_val)
+                labels = parsed if isinstance(parsed, list) else [parsed]
             except Exception:
                 labels = [col_val]
-        else:
+        elif isinstance(col_val, str) and col_val.strip():
             labels = [col_val]
-        for label in labels:
-            # Skip nan, empty strings, or lists (should not happen)
-            if pd.isna(label) or isinstance(label, list) or label == "":
-                continue
-            year_label_pairs.append((year, label))
+        else:
+            labels = []
 
-    if not year_label_pairs:
+        labels = [l if l is None else str(l) for l in labels]
+        labels = [l for l in labels if (l is not None) and (l != "") and (not pd.isna(l))]
+        labels = list(dict.fromkeys(labels))
+
+        if not labels:
+            continue
+
+        k = len(labels)
+        w = 1.0 / k
+        for label in labels:
+            year_label_rows.append({"year": year, "label": label, "weight": w, "raw": 1.0})
+
+    if not year_label_rows:
         container.warning("No data to plot for the selected category.")
         return
 
-    pair_df = pd.DataFrame(year_label_pairs, columns=["year", "label"])
-    pivot = pair_df.groupby(["year", "label"]).size().unstack(fill_value=0)
-    pivot = pivot.sort_index()
-    if plot_type == "line":
-        container.line_chart(pivot, use_container_width=True, color=ColorMap[:len(pivot.columns)])
-    elif plot_type == "bar":
-        container.bar_chart(
-            pivot,
-            use_container_width=True,
-            color=ColorMap[:len(pivot.columns)]
+    long_df = pd.DataFrame(year_label_rows)
+    label_tooltips = label_tooltips or {}
+    long_df["label_display"] = long_df["label"].map(lambda x: label_tooltips.get(x, x))
+
+    # Use weighted or raw values
+    value_field = "weight" if effective_mode == "study_weighted" else "raw"
+
+    # ---- Pre-aggregate in pandas (stable on rerun) ----
+    agg = (
+        long_df.groupby(["year", "label_display"], as_index=False)
+        .agg(value=(value_field, "sum"), raw=("raw", "sum"))
+    )
+    agg["year"] = agg["year"].astype(str)
+
+    # Totals per year (overlay line)
+    total_df = (
+        agg.groupby("year", as_index=False)
+           .agg(total_studies=("value", "sum"))
+           .assign(year=lambda d: d["year"].astype(str))
+           .sort_values("year")
+           .dropna(subset=["total_studies"])
+           .reset_index(drop=True)
+    )
+    if total_df.empty:
+        container.warning("No totals to plot.")
+        return
+
+    # Legend order by contribution
+    label_order = (
+        agg.groupby("label_display")["value"].sum()
+           .sort_values(ascending=False).index.tolist()
+    )
+
+    # Unified, explicit x-domain for BOTH layers
+    year_order = sorted(set(agg["year"]).union(set(total_df["year"])))
+    x_enc = alt.X(
+        "year:N",
+        title="Year",
+        sort=year_order,
+        scale=alt.Scale(domain=year_order),
+    )
+
+    # ---- Bars (can be commented out safely) ----
+    bars = (
+        alt.Chart(agg)
+        .mark_bar()
+        .encode(
+            x=x_enc,
+            y=alt.Y(
+                "value:Q",
+                title="Studies (study-weighted)" if effective_mode == "study_weighted" else "Label occurrences",
+            ),
+            color=alt.Color(
+                "label_display:N",
+                title="Category",
+                sort=label_order,
+                scale=alt.Scale(range=color_map) if color_map else alt.Undefined,
+            ),
+            tooltip=[
+                alt.Tooltip("year:N", title="Year"),
+                alt.Tooltip("label_display:N", title="Category"),
+                alt.Tooltip("value:Q",
+                            title="Stack value",
+                            format=".2f" if effective_mode == "study_weighted" else ".0f"),
+                alt.Tooltip("raw:Q", title="Raw count", format=".0f"),
+            ],
+            order=alt.Order("label_display", sort="ascending"),
         )
+    )
+
+    # ---- Line ----
+    line = (
+        alt.Chart(total_df)
+        .mark_line(point=True, strokeWidth=2.5, clip=True)
+        .encode(
+            x=x_enc,
+            y=alt.Y("total_studies:Q", title=None),
+            order=alt.Order("year:N", sort="ascending"),
+            tooltip=[
+                alt.Tooltip("year:N", title="Year"),
+                alt.Tooltip("total_studies:Q",
+                            title="Total studies (year)",
+                            format=".2f" if effective_mode == "study_weighted" else ".0f"),
+            ],
+        )
+        .transform_filter(alt.datum.total_studies != None)
+    )
+
+    # Layer plots
+    chart = (
+        alt.layer(bars, line)
+           .resolve_scale(x="shared", y="shared")
+           .properties(height=380)
+    )
+
+    # -- Render (force fresh rerender via key to beat Streamlit caching issues) --
+    try:
+        # change key when the selected category changes to avoid stale spec reuse
+        key = f"pubs_linebars_{selected_category or 'None'}"
+        container.altair_chart(chart, use_container_width=True, key=key)
+    except Exception:
+        pass

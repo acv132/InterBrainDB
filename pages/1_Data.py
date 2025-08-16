@@ -8,6 +8,12 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+try:
+    import altair as alt
+    alt.data_transformers.disable_max_rows()  # prevent silent failures on larger data
+except Exception:
+    pass
+
 import data.config
 from plotting.figures import generate_interaction_figure, generate_2d_cluster_plot, generate_category_counts_figure, \
     plot_publications_over_time
@@ -311,33 +317,29 @@ with (data_plots_tab):
                 selected_category = None
                 category_options = list(label_tooltips.keys())
                 selected_category = st.selectbox(
-                    "Choose a category to split lines:", options=['None'] + category_options, )
-                plot_type = st.radio(
-                    "Choose plot type:", options=["Line Plot", "Bar Plot"], index=0,  # default to line
-                    horizontal=True
-                    )
-                plot_type = plot_type.lower().replace(' plot', '')
+                    "Choose a category to display as stacked bars:", options=['None'] +
+                                                                                           category_options, )
                 if selected_category is None or selected_category == 'None':
-                    selected_category = None
                     year_counts = display_df["year"].value_counts().sort_index()
                     year_df = pd.DataFrame({"Publications": year_counts})
                     year_df.index = year_df.index.astype(str)
-                    if plot_type == "line":
-                        st.line_chart(
-                            year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
-                            )
-                    elif plot_type == "bar":
-                        st.bar_chart(
-                            year_df, x_label="Year", y_label="Number of Publications", use_container_width=True
-                            )
+                    chart = (alt.Chart(year_df.reset_index()).mark_line(point=True)
+                                                             .encode(
+                        x=alt.X("year:N", title="Year"),
+                        y=alt.Y("Publications:Q", title="Number of Publications"),
+                        tooltip=["year:N", "Publications:Q"], ).properties(height=380))
+
+                    st.altair_chart(chart, use_container_width=True)
+
                 else:
                     # Group by year and selected category, count publications
+                    # fixme lines are not rendered reliably
                     plot_publications_over_time(
                         display_df,
-                        None if selected_category == 'None' else selected_category,
-                        label_tooltips,
+                        None if selected_category == "None" else selected_category,
+                        label_tooltips=label_tooltips,
                         container=st,
-                        plot_type=plot_type
+                        count_mode="auto",  # bars -> study-weighted, lines -> raw (default)
                         )
 
             with col2:
