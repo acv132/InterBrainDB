@@ -1,3 +1,6 @@
+# ========================
+# 📦 Imports & Setup
+# ========================
 import os
 import re
 from datetime import datetime
@@ -13,9 +16,9 @@ from utils.data_loader import load_database, validate_doi
 # ========================
 # 💅 UI Configuration
 # ========================
-st.set_page_config(page_title="Living Literature Review",
-                   page_icon='assets/favicon.ico',
-                   layout="wide")
+st.set_page_config(
+    page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
+    )
 st.title("🆕 Submission of New Article")
 st.markdown(
     """
@@ -25,13 +28,12 @@ st.markdown(
     }
     </style>
     """, unsafe_allow_html=True
-)
+    )
 
 # Initialize session state defaults
 for key, default in {
-    'doi': '', 'year': datetime.now().year, 'authors': '',
-    'title': '', 'abstract': ''
-}.items():
+    'doi': '', 'year': datetime.now().year, 'authors': '', 'title': '', 'abstract': ''
+    }.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
@@ -61,7 +63,7 @@ with col2:
     # === Paste BibTeX Entry ===
     st.markdown("#### 📋 Paste BibTeX Entry")
     st.markdown("Paste a BibTeX entry here to auto-fill the required fields.")
-    bib_input = st.text_area(label="BibTeX", value='', height=150,)
+    bib_input = st.text_area(label="BibTeX", value='', height=150, )
     if st.button("Parse BibTeX"):
         try:
             bib_db = bibtexparser.loads(bib_input)
@@ -91,37 +93,36 @@ with col1:
     st.subheader("🔒 Required Information")
     st.markdown("Fill in the fields below to suggest a new article for inclusion in the database.")
 
-    doi = st.text_input("DOI",
-                        value=st.session_state.doi,
-                        placeholder="10.1234/example.doi",
-                        key='doi')
+    doi = st.text_input(
+        "DOI", value=st.session_state.doi, placeholder="10.1234/example.doi", key='doi'
+        )
 
     if not validate_doi(doi) and doi != "":
         st.error("Invalid DOI. Please ensure it is in the correct format and exists.")
 
-    year = st.number_input("Year",
-                            min_value=1900,
-                            max_value=datetime.now().year,
-                            value=st.session_state.year,
-                            step=1,
-                            key='year')
-    authors = st.text_area("Authors",
-                           value=st.session_state.authors,
-                           placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3",
-                           key='authors')
-    title = st.text_area("Title",
-                         value=st.session_state.title,
-                         key='title')
-    abstract = st.text_area("Abstract",
-                            value=st.session_state.abstract,
-                            key='abstract')
+    year = st.number_input(
+        "Year", min_value=1900, max_value=datetime.now().year, value=st.session_state.year, step=1, key='year'
+        )
+    authors = st.text_area(
+        "Authors",
+        value=st.session_state.authors,
+        placeholder="Lastname, Firstname;\nLastname2, Firstname2;\nLastname3, Firstname3",
+        key='authors'
+        )
+    title = st.text_area(
+        "Title", value=st.session_state.title, key='title'
+        )
+    abstract = st.text_area(
+        "Abstract", value=st.session_state.abstract, key='abstract'
+        )
 
     # === Optional Categorizations ===
     st.subheader("🏷️ Optional Categorization")
 
     st.markdown(
         "Optionally you may already categorize the article based on the categories below. If"
-        " you are unsure, you can leave these fields empty and the reviewers will categorize it for you.")
+        " you are unsure, you can leave these fields empty and the reviewers will categorize it for you."
+        )
     optional_inputs = {}
 
     for category, label_dict in label_tooltips.items():
@@ -135,13 +136,13 @@ with col1:
                 value=None,
                 help="Number of participants analysed in the study.",
                 key='sample_size'
-            )
+                )
 
         options = sorted(label_dict.keys())
         helptext = category_tooltips.get(category, "")
         label_info = "\n".join(
             [f"- **{label}**: {label_dict[label]}" for label in options if label in label_dict]
-        )
+            )
         full_help = f"{helptext}\n\n{label_info}".strip()
 
         selected = st.multiselect(
@@ -149,7 +150,7 @@ with col1:
             options=options,
             help=full_help,
             placeholder=f"Select {category.lower()} (optional)"
-        )
+            )
         optional_inputs[category] = selected
         if category == "measurement modality":
             if "fNIRS" in selected:
@@ -182,19 +183,23 @@ with col1:
 
     # === Other Labels ===
     other_separator = ','
-    other_labels = st.text_area("Other Labels",key='other_labels',help=f"Add any other relevant labels that do not fit "
-                                                                   f"into the "
-                                                        "categories above. Separate multiple labels with a comma "
-                                                        f"({other_separator}).",
-                                placeholder="label1, label2, ... (optional)",
-                                )
+    other_labels = st.text_area(
+        "Other Labels",
+        key='other_labels',
+        help=f"Add any other relevant labels that do not fit "
+             f"into the "
+             "categories above. Separate multiple labels with a comma "
+             f"({other_separator}).",
+        placeholder="label1, label2, ... (optional)", )
 
     optional_inputs['other_labels'] = [item for item in other_labels.split(other_separator) if item.strip()]
     if "fNIRS_channel_number" in optional_inputs:
-        optional_inputs["other_labels"] = [f"fNIRS channel number: {optional_inputs['fNIRS_channel_number']}"] + optional_inputs["other_labels"]
+        optional_inputs["other_labels"] = [f"fNIRS channel number: {optional_inputs['fNIRS_channel_number']}"] + \
+                                          optional_inputs["other_labels"]
         optional_inputs.pop("fNIRS_channel_number", None)
     if "EEG_electrode_number" in optional_inputs:
-        optional_inputs["other_labels"] = [f"EEG electrode number: {optional_inputs['EEG_electrode_number']}"] + optional_inputs["other_labels"]
+        optional_inputs["other_labels"] = [f"EEG electrode number: {optional_inputs['EEG_electrode_number']}"] + \
+                                          optional_inputs["other_labels"]
         optional_inputs.pop("EEG_electrode_number", None)
 
 with col2:
@@ -202,7 +207,8 @@ with col2:
     st.markdown("#### 🔍 Check Database for Existing DOIs")
     st.markdown(
         "You may want to check if the DOI you are submitting already exists in or has been submitted to "
-        "the database before filling in the remaining fields. You can do this quickly by clicking the button below. ")
+        "the database before filling in the remaining fields. You can do this quickly by clicking the button below. "
+        )
     if st.button("☑️ Check Database"):
         existing_dois = set()
         if "doi" in df.columns:
@@ -211,8 +217,10 @@ with col2:
             existing_dois.update(submitted_df["doi"].astype(str).str.lower())
         if doi:
             if doi.strip().lower() in existing_dois:
-                st.warning(f"⚠️ An article with the DOI {doi} has already been submitted or is part of the "
-                           f"database.")
+                st.warning(
+                    f"⚠️ An article with the DOI {doi} has already been submitted or is part of the "
+                    f"database."
+                    )
             else:
                 st.info("ℹ️ This DOI is not found in the database. You may proceed with submission.")
 
@@ -222,7 +230,8 @@ with col2:
     st.markdown(
         "Once you have filled in the required information, you can submit your article suggestion for review. "
         "The reviewers will then check the article and categorize it if necessary. "
-        "If you have any questions, do not hesitate to contact us.")
+        "If you have any questions, do not hesitate to contact us."
+        )
     if doi and title and authors and abstract:
         st.info("The required information is filled in. Click the button below to submit your article suggestion.")
     if st.button("📤 Submit Suggestion"):
@@ -253,7 +262,7 @@ with col2:
                 'included in paper review': 'False',
                 'exclusion_reasons': 'submission after publication',
 
-            }
+                }
             # Include optional labels
             new_entry.update(optional_inputs)
 

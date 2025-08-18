@@ -10,6 +10,7 @@ import yaml
 
 try:
     import altair as alt
+
     alt.data_transformers.disable_max_rows()  # prevent silent failures on larger data
 except Exception:
     pass
@@ -42,9 +43,8 @@ st.markdown(
 # ========================
 # 🗂️ Tabs
 # ========================
-data_overview_tab, data_plots_tab, data_plots_tab2, test_tab = st.tabs(
-    ["📋 Data Overview", "📈 Plots", "📈 Plots ("
-                                   "Slow)", "🔬 Test"]
+data_overview_tab, data_plots_tab, test_plots_tab = st.tabs(
+    ["📋 Data Overview", "📈 Plots", "🔬 Test Plots", ]
     )
 
 # ========================
@@ -54,9 +54,9 @@ df = load_database(data.config.data_dir, data.config.file)
 df.rename(columns={"ID": "BibTexID"}, inplace=True)
 
 # Create display-ready dataframe
+# todo remove exclusion reasons, user notes, and other labels before final release
 display_df = df.copy().drop(
-    columns=['rayyan_ID',
-             # 'exclusion_reasons',
+    columns=['rayyan_ID',  # 'exclusion_reasons',
              # 'user_notes',
              # 'other_labels'
              ]
@@ -240,6 +240,7 @@ with data_overview_tab:
     st.markdown("This table provides an overview of the studies included in the analysis.")
 
     # Column view selector
+    # todo remove dev mode before final release
     view_option = st.radio(
         "Select view mode:",
         options=["Dev Mode (temp)", "Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns"],
@@ -247,6 +248,7 @@ with data_overview_tab:
         )
 
     view_configs = {
+        # todo remove dev mode before final release
         'Dev Mode (temp)': ['article', 'DOI Link', 'included in paper review', 'exclusion_reasons', 'user_notes',
                             'other_labels', ],
         'Default': ['article', 'DOI Link', 'included in paper review', 'measurement modality', 'sample size',
@@ -304,7 +306,6 @@ with data_overview_tab:
 # ========================
 with (data_plots_tab):
     create_tab_header(df, display_df)
-    # todo add figure descriptions and download tips for all
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
 
@@ -317,14 +318,12 @@ with (data_plots_tab):
                 selected_category = None
                 category_options = list(label_tooltips.keys())
                 selected_category = st.selectbox(
-                    "Choose a category to display as stacked bars:", options=['None'] +
-                                                                                           category_options, )
+                    "Choose a category to display as stacked bars:", options=['None'] + category_options, )
                 if selected_category is None or selected_category == 'None':
                     year_counts = display_df["year"].value_counts().sort_index()
                     year_df = pd.DataFrame({"Publications": year_counts})
                     year_df.index = year_df.index.astype(str)
-                    chart = (alt.Chart(year_df.reset_index()).mark_line(point=True)
-                                                             .encode(
+                    chart = (alt.Chart(year_df.reset_index()).mark_line(point=True).encode(
                         x=alt.X("year:N", title="Year"),
                         y=alt.Y("Publications:Q", title="Number of Publications"),
                         tooltip=["year:N", "Publications:Q"], ).properties(height=380))
@@ -372,7 +371,7 @@ with (data_plots_tab):
             col3, col4 = st.columns([1, 1])
             with col3:
 
-                result = generate_interaction_figure(display_df, test_tab)
+                result = generate_interaction_figure(display_df, data_plots_tab)
                 if result is None:
                     st.warning("No figure was generated for interaction conditions.")
                 else:
@@ -413,9 +412,9 @@ with (data_plots_tab):
             st.error(f"❌ Could not generate figures: {e}")
 
 # ========================
-# 📈 Data Plots Tab (Slow)
+# 🔬 Test Plots Tab
 # ========================
-with data_plots_tab2:
+with test_plots_tab:
     create_tab_header(df, display_df)
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
@@ -458,22 +457,3 @@ with data_plots_tab2:
 
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")
-
-with test_tab:
-    create_tab_header(df, display_df)
-    try:
-        st.subheader(
-            "Test Space (under development)"
-            )
-
-        # correlate the occurences of labels within categories for display_df
-
-        # 2. Sunburst or Treemap Plots  # Show hierarchical relationships or proportions between categories and subcategories for a more intuitive overview.
-
-        # 3. Category Evolution Over Time  # Plot how the frequency of each category label changes by year to identify emerging or declining trends.
-
-        # 4. Category Diversity Metrics  # Calculate and visualize diversity indices (e.g., Shannon entropy) for each category to quantify heterogeneity.
-
-
-    except Exception as e:
-        st.error(f"❌ Could not generate funnel plot: {e}")
