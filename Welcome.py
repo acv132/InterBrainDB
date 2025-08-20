@@ -6,8 +6,12 @@ Here we just have the Welcome page, with a short description of the tabs, and so
 
 """
 
+# todo add impressum and data privacy aspects for web hosting
+
 import base64
 import streamlit as st
+
+from utils.app_utils import footer
 
 # ========================
 # 💅 UI Configuration
@@ -93,3 +97,11 @@ st.markdown(
 st.subheader("Funding and Support")
 logo = "./assets/logos.svg"
 st.image(logo, width=1000)
+# tno-ifl.svg
+# Logo-TNO.svg
+# FraunhoferIAO.svg
+# radboud.svg
+# IAT_de.svg
+# todo add logos separately with links to websites embedded in the images
+
+footer()

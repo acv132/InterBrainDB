@@ -8,6 +8,8 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+from utils.app_utils import footer
+
 try:
     import altair as alt
 
@@ -83,7 +85,6 @@ with st.sidebar:
     st.title("🔍 Filters")
 
     # --- Paper Filter ---
-    st.markdown("**Included in Paper Review**")
     # todo for final version: set default to False (show all)
     include_only = st.checkbox("Show only included papers", value=True)
     if include_only:
@@ -457,3 +458,6 @@ with test_plots_tab:
 
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")
+
+
+footer()

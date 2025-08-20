@@ -11,6 +11,7 @@ import streamlit as st
 import yaml
 
 from data.config import data_dir, file
+from utils.app_utils import footer
 from utils.data_loader import load_database, validate_doi
 
 # ========================
@@ -288,3 +289,6 @@ with col2:
 
                 st.success("✅ Article suggestion submitted successfully!")
                 st.balloons()
+
+
+footer()
