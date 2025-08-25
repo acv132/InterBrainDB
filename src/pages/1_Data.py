@@ -269,24 +269,22 @@ with data_overview_tab:
         full_help = f"{category_desc}\n\n" + "\n".join(label_lines) if label_lines else category_desc
         column_config[col] = st.column_config.Column(label=col, help=full_help.strip())
 
-    # 📋 Show filtered dataframe
+    # Show filtered dataframe
     st.dataframe(display_df, column_config=column_config, column_order=column_order, hide_index=False)
 
     # Create export dataframe
     export_columns = column_order + ["BibTexID"] if "BibTexID" in display_df.columns else column_order
     export_df = display_df.reset_index()[export_columns].copy()
 
-    # 📤 Export: BibTeX
+    # Export buttons
     bibtex_content = generate_bibtex_content(export_df)
     st.download_button(
         "📥 Download BibTeX", data=bibtex_content, file_name="BibExportReferences.bib", mime="application/x-bibtex"
         )
-    # 📤 Export: APA7 LaTeX
     latex_table = generate_apa7_latex_table(export_df)
     st.download_button(
         "📥 Download APA7-Style LaTeX Table", data=latex_table, file_name="LatexExportReferences.tex", mime="text/plain"
         )
-    # 📤 Export: CSV
     csv_table = generate_csv_table(export_df)
     st.download_button(
         "📥 Download CSV",
@@ -294,7 +292,6 @@ with data_overview_tab:
         file_name="CSVExportReferences.csv",
         mime="text/csv",
         )
-    # 📤 Export: Excel
     excel_table = generate_excel_table(export_df)
     st.download_button(
         "📥 Download Excel Table",
@@ -311,7 +308,7 @@ with (data_plots_tab):
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
 
-            # ▶️ Publication Year figure
+            # > Publication Year figure
             st.subheader("Publications over Time")
 
             col1, col2 = st.columns([1, 1], gap="medium")
@@ -355,7 +352,7 @@ with (data_plots_tab):
             st.error(f"❌ Could not generate figures: {e}")
 
         try:
-            # ▶️ Category counts
+            # > Category counts
             st.subheader("Category Counts")
             fig2 = generate_category_counts_figure(display_df, data_plots_tab)
             counts_df = export_all_category_counts(display_df)
@@ -369,7 +366,7 @@ with (data_plots_tab):
             st.error(f"❌ Could not generate figures: {e}")
 
         try:
-            # ▶️ Interaction figure
+            # > Interaction figure
             col3, col4 = st.columns([1, 1])
             with col3:
 
@@ -416,12 +413,12 @@ with (data_plots_tab):
 # ========================
 # 🔬 Test Plots Tab
 # ========================
-# todo before final release: remove this tab or make it a hidden dev tab
+# todo before final release: remove this tab
 with test_plots_tab:
     create_tab_header(df, display_df)
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
-            # ▶️ Cluster Plot figure
+            # > Cluster Plot figure
             st.subheader("Cluster Plot")
             available_cats = [col for col in display_df.columns if display_df[col].dtype == object]
             col1, col2 = st.columns([1, 1])
