@@ -9,7 +9,7 @@ Here we just have the Welcome page, with a short description of the tabs, and so
 from __future__ import annotations
 import base64
 import streamlit as st
-from plotting.plot_utils import current_bg_color
+# from plotting.plot_utils import current_bg_color
 from utils.app_utils import footer, clickable_image, set_mypage_config
 
 # ========================
@@ -17,7 +17,6 @@ from utils.app_utils import footer, clickable_image, set_mypage_config
 # ========================
 set_mypage_config()
 st.title("📚 Living Literature Review on Digital Hyperscanning")
-
 st.subheader("Welcome to the Living Literature Review")
 st.markdown(
     """
@@ -69,8 +68,7 @@ st.subheader("Code")
 st.markdown("Want to report an issue or suggest a feature? Post an issue on the GitHub repository.")
 label = "Git Repository"
 url = "https://github.com/acv132/Hyperscanning-Living-Review"
-# icon_path = "assets/github.svg" if st.get_option("theme.base") == "light" else "assets/github_dark.svg"
-icon_path = "assets/github.svg"
+icon_path = "assets/github.svg" if st.get_option("theme.base") == "light" else "assets/github_dark.svg"
 icon_width = 35  # in pixels
 with open(icon_path, "rb") as f:
     svg_bytes = f.read()
@@ -95,41 +93,35 @@ st.markdown(
     )
 
 st.subheader("Funding and Support")
-bg_color = current_bg_color()
 SPONSORS = [
     {
         "name": "Applied Neurocognitive Systems",
-        # "path": "./assets/logos/ANS_dark.svg" if st.get_option("theme.base") == "dark" else  "./assets/logos/ANS.svg",
-        "path": "./assets/logos/ANS.svg",
+        "path": "./assets/logos/ANS_dark.svg" if st.get_option("theme.base") == "dark" else  "./assets/logos/ANS.svg",
         "url": "https://linktr.ee/ans_iao",
         "alt": "Applied Neurocognitive Systems",
         },
     {
         "name": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
-        # "path": "./assets/logos/IAT_de_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/IAT_de.svg",
-        "path": "./assets/logos/IAT_de.svg" ,
+        "path": "./assets/logos/IAT_de_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/IAT_de.svg",
         "url": "https://www.iat.uni-stuttgart.de/",
         "alt": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
         },
     {
         "name": "Fraunhofer IAO",
-        # "path": "./assets/logos/FraunhoferIAO_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/FraunhoferIAO.svg",
-        "path": "./assets/logos/FraunhoferIAO.svg",
+        "path": "./assets/logos/FraunhoferIAO_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/FraunhoferIAO.svg",
         "url": "https://www.iao.fraunhofer.de/",
         "alt": "Fraunhofer IAO",
         },
     {
         "name": "Radboud University",
-        # "path": "./assets/logos/radboud_dark.svg" if st.get_option("theme.base") == "dark" else
-        # "./assets/logos/radboud.svg",
-        "path": "./assets/logos/radboud.svg",
+        "path": "./assets/logos/radboud_dark.svg" if st.get_option("theme.base") == "dark" else
+        "./assets/logos/radboud.svg",
         "url": "https://www.ru.nl/en",
         "alt": "Radboud University",
         },
     {
         "name": "TNO",
-        # "path": "./assets/logos/tno_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/tno.svg",
-        "path": "./assets/logos/tno.svg",
+        "path": "./assets/logos/tno_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/tno.svg",
         "url": "https://www.tno.nl/",
         "alt": "TNO",
         },

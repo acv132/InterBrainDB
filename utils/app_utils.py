@@ -17,48 +17,48 @@ def set_mypage_config():
         page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
         )
     # fixme light mode does not display markdown correctly
-    # ms = st.session_state
-    # if "themes" not in ms:
-    #     ms.themes = {"current_theme": "light",
-    #                  "refreshed": True,
-    #
-    #                  "dark": {"theme.base": "dark",
-    #                            "theme.backgroundColor": "#1e1f22",
-    #                            "theme.primaryColor": "#019879",
-    #                            "theme.secondaryBackgroundColor": "#2b2d30",
-    #                            "theme.textColor": "#FAFAFA",
-    #                            "theme.font" : "sans serif",
-    #                            "button_face": ":material/dark_mode:"},
-    #
-    #                  "light":  {"theme.base": "light",
-    #                            "theme.backgroundColor": "#FFFFFF",
-    #                            "theme.primaryColor": "#ADE1DC",
-    #                            "theme.secondaryBackgroundColor": "#F0F2F6",
-    #                            "theme.textColor": "#31333F",
-    #                            "theme.font" : "sans serif",
-    #                            "button_face": ":material/light_mode:"},
-    #                  }
-    #
-    #
-    # def ChangeTheme():
-    #     previous_theme = ms.themes["current_theme"]
-    #     st.write(previous_theme)
-    #     tdict = ms.themes["light"] if ms.themes["current_theme"] == "light" else ms.themes["dark"]
-    #     for vkey, vval in tdict.items():
-    #         if vkey.startswith("theme"): st._config.set_option(vkey, vval)
-    #
-    #     ms.themes["refreshed"] = False
-    #     if previous_theme == "dark": ms.themes["current_theme"] = "light"
-    #     elif previous_theme == "light": ms.themes["current_theme"] = "dark"
-    #
-    # btn_face = ms.themes["light"]["button_face"] if ms.themes["current_theme"] == "light" else ms.themes["dark"]["button_face"]
-    # col1,col2 = st.columns([10,1])
-    # with col2:
-    #     st.button(btn_face, on_click=ChangeTheme)
-    #
-    # if ms.themes["refreshed"] == False:
-    #     ms.themes["refreshed"] = True
-    #     st.rerun()
+    ms = st.session_state
+    if "themes" not in ms:
+        ms.themes = {"current_theme": "light",
+                     "refreshed": True,
+
+                     "dark": {"theme.base": "dark",
+                               "theme.backgroundColor": "#1e1f22",
+                               "theme.primaryColor": "#019879",
+                               "theme.secondaryBackgroundColor": "#2b2d30",
+                               "theme.textColor": "#FAFAFA",
+                               "theme.font" : "sans serif",
+                               "button_face": ":material/dark_mode:"},
+
+                     "light":  {"theme.base": "light",
+                               "theme.backgroundColor": "#FFFFFF",
+                               "theme.primaryColor": "#ADE1DC",
+                               "theme.secondaryBackgroundColor": "#F0F2F6",
+                               "theme.textColor": "#1e1f22",
+                               "theme.font" : "sans serif",
+                               "button_face": ":material/light_mode:"},
+                     }
+
+
+    def ChangeTheme():
+        previous_theme = ms.themes["current_theme"]
+        st.write(previous_theme)
+        tdict = ms.themes["light"] if ms.themes["current_theme"] == "light" else ms.themes["dark"]
+        for vkey, vval in tdict.items():
+            if vkey.startswith("theme"): st._config.set_option(vkey, vval)
+
+        ms.themes["refreshed"] = False
+        if previous_theme == "dark": ms.themes["current_theme"] = "light"
+        elif previous_theme == "light": ms.themes["current_theme"] = "dark"
+
+    btn_face = ms.themes["light"]["button_face"] if ms.themes["current_theme"] == "light" else ms.themes["dark"]["button_face"]
+    col1,col2 = st.columns([10,1])
+    with col2:
+        st.button(btn_face, on_click=ChangeTheme)
+
+    if ms.themes["refreshed"] == False:
+        ms.themes["refreshed"] = True
+        st.rerun()
 
 def image(src_as_string, **style):
     return img(src=src_as_string, style=styles(**style))
@@ -83,7 +83,7 @@ def layout(*args):
         bottom=0,
         margin=px(0, 0, 0, 0),
         width=percent(100),
-        color="black",
+        color=st.get_option("theme.textColor"),
         text_align="center",
         height="auto",
         opacity=1
@@ -120,10 +120,11 @@ def _svg_data_uri(path):
     return f"data:image/svg+xml;base64,{b64}"
 
 def footer():
-    svg_uri = _svg_data_uri("assets/streamlit.svg")  # no leading "./"
+    svg_uri = _svg_data_uri("assets/streamlit.svg")
     myargs = [
         "Made in ",
-        link("https://streamlit.io/", image(svg_uri, width=px(25), height=px(25))),
+        link("https://streamlit.io/", image(svg_uri, width=px(25), height=px(25))
+             ),
         br(),
         link("https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/", "Imprint"),
         " | ",

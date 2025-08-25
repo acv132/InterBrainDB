@@ -127,14 +127,14 @@ def ensure_list(val):
         return [val]
 
 
-def current_bg_color():
-    base = st.get_option("theme.base")  # "light" | "dark" | None
-    bg = st.get_option("theme.backgroundColor")
-    if bg:  # e.g. "#0e1117"
-        return bg
-    # Fallbacks if backgroundColor isn't explicitly set
-    if base == "dark":
-        return "#0e1117"
-    if base == "light":
-        return "#FFFFFF"
-    return "#FFFFFF"
+# def current_bg_color():
+#     base = st.get_option("theme.base")  # "light" | "dark" | None
+#     bg = st.get_option("theme.backgroundColor")
+#     if bg:  # e.g. "#0e1117"
+#         return bg
+#     # Fallbacks if backgroundColor isn't explicitly set
+#     if base == "dark":
+#         return "#0e1117"
+#     if base == "light":
+#         return "#FFFFFF"
+#     return "#FFFFFF"
