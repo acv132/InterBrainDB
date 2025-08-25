@@ -8,9 +8,13 @@ Here we just have the Welcome page, with a short description of the tabs, and so
 
 # todo add impressum and data privacy aspects for web hosting
 
+from __future__ import annotations
+import streamlit as st
 import base64
+from pathlib import Path
 import streamlit as st
 
+from plotting.plot_utils import is_dark_color
 from utils.app_utils import footer
 
 # ========================
@@ -103,5 +107,93 @@ st.image(logo, width=1000)
 # radboud.svg
 # IAT_de.svg
 # todo add logos separately with links to websites embedded in the images
+
+
+# ---------- Helpers ----------
+def _b64(path: Path) -> str:
+    """Read a file and return base64-encoded string."""
+    data = path.read_bytes()
+    return base64.b64encode(data).decode("utf-8")
+
+def clickable_image(path: str | Path, href: str, *, alt: str = "", width: int | None = 160):
+    """
+    Render a clickable image (SVG or raster) that opens in a new tab.
+    For SVG we embed as data URI to ensure reliable rendering.
+    """
+    p = Path(path)
+    ext = p.suffix.lower()
+
+    if ext == ".svg":
+        src = f"data:image/svg+xml;base64,{_b64(p)}"
+    elif ext in {".png", ".jpg", ".jpeg", ".gif", ".webp"}:
+        mime = "png" if ext == ".png" else "jpeg" if ext in {".jpg", ".jpeg"} else ext.strip(".")
+        src = f"data:image/{mime};base64,{_b64(p)}"
+    else:
+        # If unknown type, let Streamlit try rendering it directly
+        with st.container():
+            st.link_button(f"Open {alt or p.name}", href, use_container_width=True)
+            st.image(str(p), width=width)
+        return
+
+    style_w = f"width:{width}px;" if width else "max-width:100%;"
+    html = f"""
+    <a href="{href}" target="_blank" rel="noopener noreferrer" title="{alt}">
+      <img src="{src}" alt="{alt}" style="{style_w} display:block; margin:auto;" />
+    </a>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+
+# ---------- Data (paths + links) ----------
+# Update any URLs if your partners differ.
+SPONSORS = [{
+    "name": "Applied Neurocognitive Systems", "path": "./assets/ANS.svg", "url": "https://linktr.ee/ans_iao",
+    "alt": "Applied Neurocognitive Systems",
+    }, {
+    "name": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
+    "path": "./assets/IAT_de.svg",
+    "url": "https://www.iat.uni-stuttgart.de/",
+    "alt": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
+    },
+    {
+        "name": "Fraunhofer IAO",
+        "path": "./assets/FraunhoferIAO.svg",
+        "url": "https://www.iao.fraunhofer.de/",
+        "alt": "Fraunhofer IAO",
+    },
+    {
+        "name": "Radboud University",
+        "path": "./assets/radboud.svg",
+        "url": "https://www.ru.nl/en",
+        "alt": "Radboud University",
+    },
+    {
+        "name": "TNO",
+        "path": "./assets/tno-ifl.svg" if is_dark_color(st.get_option('theme.backgroundColor')) else "./assets/Logo-TNO.svg",
+        "url": "https://www.tno.nl/",
+        "alt": "TNO",
+    },
+]
+
+# ---------- Grid layout ----------
+cols_per_row = 5  # tweak to taste
+rows = [SPONSORS[i:i+cols_per_row] for i in range(0, len(SPONSORS), cols_per_row)]
+
+for row in rows:
+    cols = st.columns(len(row), gap="large")
+    for col, sponsor in zip(cols, row):
+        with col:
+            clickable_image(sponsor["path"], sponsor["url"], alt=sponsor["alt"], width=500)
+            st.caption(f"[{sponsor['name']}]({sponsor['url']})")
+
+# ---------- Optional: subtle hover style for images ----------
+st.markdown(
+    """
+    <style>
+      .stMarkdown a img { transition: transform .1s ease-in-out; }
+      .stMarkdown a:hover img { transform: scale(1.03); }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 footer()

@@ -22,7 +22,7 @@ from plotting.figures import generate_interaction_figure, generate_2d_cluster_pl
     plot_publications_over_time
 from plotting.plot_utils import export_all_category_counts
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
-                               normalize_cell, generate_excel_table, flatten_cell)
+                               normalize_cell, generate_excel_table, flatten_cell, create_tab_header)
 
 # ========================
 # 💅 UI Configuration
@@ -58,10 +58,7 @@ df.rename(columns={"ID": "BibTexID"}, inplace=True)
 # Create display-ready dataframe
 # todo remove exclusion reasons, user notes, and other labels before final release
 display_df = df.copy().drop(
-    columns=['rayyan_ID',  # 'exclusion_reasons',
-             # 'user_notes',
-             # 'other_labels'
-             ]
+    columns=['exclusion_reasons' ]
     )
 
 # Apply flattening to the entire DataFrame
@@ -185,7 +182,6 @@ with st.sidebar:
 # ========================
 # 🔍 Apply Filters
 # ========================
-
 # 1. Filter by year range
 filtered_df = display_df[(display_df["year"] >= selected_years[0]) & (display_df["year"] <= selected_years[1])].copy()
 
@@ -217,41 +213,21 @@ for category, selected_labels in selected_filters.items():
 # 6. Update global display_df
 display_df = filtered_df
 
-
 # ========================
 # 📄 Data Overview Tab
 # ========================
-def create_tab_header(df, display_df):
-    st.markdown(f"Total studies in database: N = {len(df)}")
-    st.markdown(f"Currently included studies: N = {len(display_df)}")
-    avg_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').mean()
-    sd_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').std()
-    sem_sample_size = round(sd_sample_size / (len(display_df) ** 0.5) if len(display_df) > 0 else 0, 2)
-    min_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').min()
-    max_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').max()
-    st.markdown(
-        f"Descriptives of sample size: Mean = {avg_sample_size:.1f} ± {sd_sample_size:.1f} (SEM = "
-        f"{sem_sample_size}), "
-        f"min: {min_sample_size}, max: {max_sample_size}"
-        )
-
-
 with data_overview_tab:
     create_tab_header(df, display_df)
     st.markdown("This table provides an overview of the studies included in the analysis.")
 
     # Column view selector
-    # todo remove dev mode before final release
     view_option = st.radio(
         "Select view mode:",
-        options=["Dev Mode (temp)", "Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns"],
+        options=["Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns"],
         horizontal=True
         )
 
     view_configs = {
-        # todo remove dev mode before final release
-        'Dev Mode (temp)': ['article', 'DOI Link', 'included in paper review', 'exclusion_reasons', 'user_notes',
-                            'other_labels', ],
         'Default': ['article', 'DOI Link', 'included in paper review', 'measurement modality', 'sample size',
                     'pairing configuration', 'paradigm', 'cognitive function'],
         'Participants': ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
@@ -415,6 +391,7 @@ with (data_plots_tab):
 # ========================
 # 🔬 Test Plots Tab
 # ========================
+# todo before final release: remove this tab or make it a hidden dev tab
 with test_plots_tab:
     create_tab_header(df, display_df)
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):

@@ -38,6 +38,9 @@ for key, default in {
     if key not in st.session_state:
         st.session_state[key] = default
 
+# ========================
+# 📥 Load & Prepare Data
+# ========================
 # === Load Database ===
 df = load_database(data_dir, file)
 
@@ -59,6 +62,9 @@ if "submitted_df" not in st.session_state:
 
 submitted_df = st.session_state.submitted_df
 
+# ========================
+# 📋 BibTeX Parser
+# ========================
 col1, col2 = st.columns([1, 1])
 with col2:
     # === Paste BibTeX Entry ===
@@ -89,6 +95,10 @@ with col2:
                 st.error("No entries found in BibTeX input.")
         except Exception as e:
             st.error(f"Error parsing BibTeX: {e}")
+
+# ========================
+# 🆕 Article Submission Form
+# ========================
 with col1:
     # === Mandatory Fields ===
     st.subheader("🔒 Required Information")
@@ -203,6 +213,9 @@ with col1:
                                           optional_inputs["other_labels"]
         optional_inputs.pop("EEG_electrode_number", None)
 
+# ========================
+# 📨 Database Check & Submission
+# ========================
 with col2:
     st.markdown('---')
     st.markdown("#### 🔍 Check Database for Existing DOIs")
@@ -289,6 +302,5 @@ with col2:
 
                 st.success("✅ Article suggestion submitted successfully!")
                 st.balloons()
-
 
 footer()

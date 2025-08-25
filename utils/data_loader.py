@@ -197,3 +197,18 @@ def hedges_g_within(subject_diffs, apply_correction=True):
         g_z = d_z
 
     return g_z, d_z
+
+
+def create_tab_header(df, display_df):
+    st.markdown(f"Total studies in database: N = {len(df)}")
+    st.markdown(f"Currently included studies: N = {len(display_df)}")
+    avg_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').mean()
+    sd_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').std()
+    sem_sample_size = round(sd_sample_size / (len(display_df) ** 0.5) if len(display_df) > 0 else 0, 2)
+    min_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').min()
+    max_sample_size = pd.to_numeric(display_df['sample size'].str.extract(r'(\d+)')[0], errors='coerce').max()
+    st.markdown(
+        f"Descriptives of sample size: Mean = {avg_sample_size:.1f} ± {sd_sample_size:.1f} (SEM = "
+        f"{sem_sample_size}), "
+        f"min: {min_sample_size}, max: {max_sample_size}"
+        )
