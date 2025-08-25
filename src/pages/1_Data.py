@@ -2,12 +2,13 @@
 # 📦 Imports & Setup
 # ========================
 import ast
-import base64
 import io
 
 import pandas as pd
 import streamlit as st
 import yaml
+
+from src.pages.utils.data_loader import custom_column_picker
 
 try:
     import altair as alt
@@ -18,7 +19,8 @@ except Exception:
 
 from utils.config import file, data_dir
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
-                               normalize_cell, generate_excel_table, flatten_cell, create_tab_header, generate_bibtexid)
+                               normalize_cell, generate_excel_table, flatten_cell, create_tab_header,
+                               generate_bibtexid, generate_csv_table)
 from utils.app_utils import footer, set_mypage_config
 from plotting.figures import (generate_interaction_figure, generate_2d_cluster_plot,
                                  generate_category_counts_figure, \
@@ -143,7 +145,7 @@ with st.sidebar:
         tooltip_text = intro + "\n\n" + "\n".join(list_items)
 
         st.markdown(f"**{category.capitalize()}**", help=tooltip_text)
-        col1, col2 = st.columns([1, 4], vertical_alignment="top")
+        col1, col2 = st.columns([1, 4], vertical_alignment="top", gap="small")
         with col1:
             if st.button("",icon=":material/checklist_rtl:", key=f"{category}_selectall"):
                 st.session_state[multi_key] = all_labels
@@ -166,7 +168,7 @@ with st.sidebar:
     st.markdown("**Select Individual Articles**")
     article_options = display_df.index.tolist()
     article_multiselect_key = "article_select"
-    col1, col2 = st.columns([1, 4], vertical_alignment="top")
+    col1, col2 = st.columns([1, 4], vertical_alignment="top", gap="small")
     with col1:
         if st.button("",icon=":material/checklist_rtl:", key=f"article_selectall"):
             st.session_state[article_multiselect_key] = article_options
@@ -247,33 +249,9 @@ with data_overview_tab:
                                    'cognitive function'],
         "All Columns": available_cols,
         }
-
     # Custom column picker (preserve selection in session_state)
     if view_option == "Custom":
-        custom_key = "custom_column_selection"
-        # Preselect previously chosen columns or default to all
-        preselected = st.session_state.get(custom_key, available_cols)
-
-        # Small helper row
-        col_1, col_2 = st.columns([1,19,], vertical_alignment="center")
-        with col_1:
-            if st.button("",icon=":material/checklist_rtl:"):
-                st.session_state[custom_key] = available_cols
-                custom_cols = available_cols
-        with col_2:
-            custom_cols = st.multiselect(
-                "Choose columns to display (order is preserved by selection):",
-                options=available_cols,
-                default=[c for c in preselected if c in available_cols],
-                key=custom_key,
-                placeholder="Select columns…",
-                )
-        # Fallback if user clears everything
-        if not custom_cols:
-            st.info("No columns selected. Showing all columns for now.")
-            column_order = available_cols
-        else:
-            column_order = custom_cols
+        column_order= custom_column_picker(available_cols)
     else:
         column_order = view_configs.get(view_option, view_configs["Default"])
 
@@ -308,6 +286,14 @@ with data_overview_tab:
     st.download_button(
         "📥 Download APA7-Style LaTeX Table", data=latex_table, file_name="LatexExportReferences.tex", mime="text/plain"
         )
+    # 📤 Export: CSV
+    csv_table = generate_csv_table(export_df)
+    st.download_button(
+        "📥 Download CSV",
+        data=csv_table,
+        file_name="CSVExportReferences.csv",
+        mime="text/csv",
+        )
     # 📤 Export: Excel
     excel_table = generate_excel_table(export_df)
     st.download_button(
@@ -328,7 +314,7 @@ with (data_plots_tab):
             # ▶️ Publication Year figure
             st.subheader("Publications over Time")
 
-            col1, col2 = st.columns([1, 1])
+            col1, col2 = st.columns([1, 1], gap="medium")
             with col1:
                 # Select category for line splitting
                 selected_category = None

@@ -85,6 +85,15 @@ def generate_apa7_latex_table(df):
     return tabulate.tabulate(df, headers="keys", tablefmt="latex_booktabs", showindex=False)
 
 
+def generate_csv_table(df: pd.DataFrame, encoding: str = "utf-8-sig") -> bytes:
+    """
+    Serialize a DataFrame to CSV bytes.
+    Uses 'utf-8-sig' so Excel detects UTF-8 correctly on Windows.
+    """
+    csv_str = df.to_csv(index=False, sep=";")
+    return csv_str.encode(encoding)
+
+
 def generate_excel_table(df):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -404,3 +413,31 @@ def generate_bibtexid(
         return work
     else:
         return ids
+
+
+def custom_column_picker(available_cols) -> list:
+    custom_key = "custom_column_selection"
+    # Preselect previously chosen columns or default to all
+    preselected = st.session_state.get(custom_key, available_cols)
+
+    # Small helper row
+    col_1, col_2 = st.columns([1,19,], vertical_alignment="center")
+    with col_1:
+        if st.button("",icon=":material/checklist_rtl:"):
+            st.session_state[custom_key] = available_cols
+            custom_cols = available_cols
+    with col_2:
+        custom_cols = st.multiselect(
+            "Choose columns to display (order is preserved by selection):",
+            options=available_cols,
+            default=[c for c in preselected if c in available_cols],
+            key=custom_key,
+            placeholder="Select columns…",
+            )
+    # Fallback if user clears everything
+    if not custom_cols:
+        st.info("No columns selected. Showing all columns for now.")
+        column_order = available_cols
+    else:
+        column_order = custom_cols
+    return column_order
