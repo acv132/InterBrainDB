@@ -1,6 +1,9 @@
+import ast
 from collections import defaultdict
 from itertools import combinations
 from threading import RLock
+import yaml
+import pandas as pd
 
 try:
     import altair as alt
@@ -743,11 +746,9 @@ def plot_publications_over_time(
            .resolve_scale(x="shared", y="shared")
            .properties(height=380)
     )
-
     # -- Render (force fresh rerender via key to beat Streamlit caching issues) --
+    key = f"pubs_{selected_category}_{effective_mode}_{len(agg)}_{len(label_order)}_{year_order[0]}_{year_order[-1]}"
     try:
-        # change key when the selected category changes to avoid stale spec reuse
-        key = f"pubs_linebars_{selected_category or 'None'}"
         container.altair_chart(chart, use_container_width=True, key=key)
     except Exception:
         pass
