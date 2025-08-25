@@ -155,7 +155,7 @@ with st.sidebar:
             defaults = [val for val in defaults if val in all_labels]
 
             selected = st.multiselect(
-                label="",
+                label=f"{multi_key}",
                 options=all_labels,
                 default=defaults,
                 key=multi_key,
