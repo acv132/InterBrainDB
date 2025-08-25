@@ -72,17 +72,22 @@ def layout(*args):
     st.markdown(str(foot), unsafe_allow_html=True)
 
 
+def _svg_data_uri(path):
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    return f"data:image/svg+xml;base64,{b64}"
+
 def footer():
-    myargs = ["Made in ", link(
-        "https://streamlit.io/", image(
-            'https://avatars3.githubusercontent.com/u/45109972?s=400&v=4', width=px(25), height=px(25)
-            )
-        ), br(), link(
-        "https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/",
-        "Imprint"
-        ), " | ", link(
-        "https://dsi-generator.fraunhofer.de/dsi/view/en/ff12fb5e-3c20-4155-b7e6-7fdaf82ee9d5/", "Privacy Policy"
-        ), br(), ]
+    svg_uri = _svg_data_uri("assets/streamlit.svg")  # no leading "./"
+    myargs = [
+        "Made in ",
+        link("https://streamlit.io/", image(svg_uri, width=px(25), height=px(25))),
+        br(),
+        link("https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/", "Imprint"),
+        " | ",
+        link("https://dsi-generator.fraunhofer.de/dsi/view/en/ff12fb5e-3c20-4155-b7e6-7fdaf82ee9d5/", "Privacy Policy"),
+        br(),
+        ]
     layout(*myargs)
 
 
