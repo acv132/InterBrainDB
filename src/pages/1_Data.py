@@ -62,7 +62,7 @@ display_df = df.copy().drop(
     )
 
 # Apply flattening to the entire DataFrame
-display_df = display_df.applymap(flatten_cell)
+display_df = display_df.map(flatten_cell)
 
 display_df["article"] = df.apply(create_article_handle, axis=1)
 display_df["DOI Link"] = "https://doi.org/" + df["doi"]
