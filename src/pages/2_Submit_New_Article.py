@@ -10,16 +10,14 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from data.config import data_dir, file
-from utils.app_utils import footer
-from utils.data_loader import load_database, validate_doi
+from utils.config import data_dir, file
+from utils.app_utils import footer, set_mypage_config
+from utils.data_loader import load_database, validate_doi, generate_bibtexid
 
 # ========================
 # 💅 UI Configuration
 # ========================
-st.set_page_config(
-    page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
-    )
+set_mypage_config()
 st.title("🆕 Submission of New Article")
 st.markdown(
     """
@@ -65,7 +63,7 @@ submitted_df = st.session_state.submitted_df
 # ========================
 # 📋 BibTeX Parser
 # ========================
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns([1, 1], gap="medium")
 with col2:
     # === Paste BibTeX Entry ===
     st.markdown("#### 📋 Paste BibTeX Entry")
@@ -266,16 +264,24 @@ with col2:
             tk = re.sub(r"[ \-\(\):']", "", title[:20].lower())
             unique_id = f"{fa}{year}{tk}"
 
+            # new_entry = {
+            #     "doi": doi,
+            #     "authors": authors,
+            #     "year": year,
+            #     "title": title,
+            #     "abstract": abstract,
+            #     'BibTexID': unique_id,
+            #     'included in paper review': 'False',
+            #     'exclusion_reasons': 'submission after publication',
+            #     }
             new_entry = {
                 "doi": doi,
                 "authors": authors,
                 "year": year,
                 "title": title,
                 "abstract": abstract,
-                'ID': unique_id,
-                'included in paper review': 'False',
-                'exclusion_reasons': 'submission after publication',
-
+                "included in paper review": "False",
+                "exclusion_reasons": "submission after publication",
                 }
             # Include optional labels
             new_entry.update(optional_inputs)
@@ -293,9 +299,40 @@ with col2:
             if new_doi in existing_dois:
                 st.info("ℹ️ This article has already been submitted or is part of the database.")
             else:
+                # Create DataFrame for the new row (BibTexID will be set after generating)
                 new_row = pd.DataFrame([new_entry])
-                # submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
-                # submitted_df.to_excel(submission_file, index=False)
+
+                # ---- Generate a unique BibTexID using the helper on the combined data ----
+                frames = []
+
+                def _normalize_author_col(frame: pd.DataFrame) -> pd.DataFrame:
+                    f = frame.copy()
+                    if "authors" not in f.columns and "author" in f.columns:
+                        f = f.rename(columns={"author": "authors"})
+                    return f
+
+                if isinstance(df, pd.DataFrame) and not df.empty:
+                    frames.append(_normalize_author_col(df))
+                if isinstance(submitted_df, pd.DataFrame) and not submitted_df.empty:
+                    frames.append(_normalize_author_col(submitted_df))
+                frames.append(new_row)  # append last so we can grab its generated ID
+
+                combined = pd.concat(frames, ignore_index=True, sort=False)
+
+                # Use the robust generator (assumes it's defined/imported above)
+                combined = generate_bibtexid(
+                    combined,
+                    author_col="authors",
+                    year_col="year",
+                    title_col="title",
+                    out_col="BibTexID",
+                    inplace=True,
+                    )
+
+                # Pull the BibTexID for the newly added row (last row)
+                bib_id = combined.iloc[-1]["BibTexID"]
+                new_row["BibTexID"] = bib_id
+
                 submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
                 st.session_state.submitted_df = submitted_df  # persist in session
                 submitted_df.to_excel(submission_file, index=False)

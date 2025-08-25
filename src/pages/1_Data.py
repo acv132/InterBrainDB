@@ -2,13 +2,12 @@
 # 📦 Imports & Setup
 # ========================
 import ast
+import base64
 import io
 
 import pandas as pd
 import streamlit as st
 import yaml
-
-from utils.app_utils import footer
 
 try:
     import altair as alt
@@ -17,19 +16,19 @@ try:
 except Exception:
     pass
 
-import data.config
-from plotting.figures import generate_interaction_figure, generate_2d_cluster_plot, generate_category_counts_figure, \
-    plot_publications_over_time
-from plotting.plot_utils import export_all_category_counts
+from utils.config import file, data_dir
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
-                               normalize_cell, generate_excel_table, flatten_cell, create_tab_header)
+                               normalize_cell, generate_excel_table, flatten_cell, create_tab_header, generate_bibtexid)
+from utils.app_utils import footer, set_mypage_config
+from plotting.figures import (generate_interaction_figure, generate_2d_cluster_plot,
+                                 generate_category_counts_figure, \
+    plot_publications_over_time)
+from plotting.plot_utils import export_all_category_counts
 
 # ========================
 # 💅 UI Configuration
 # ========================
-st.set_page_config(
-    page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
-    )
+set_mypage_config()
 
 st.title("📖 Database")
 st.markdown(
@@ -52,11 +51,10 @@ data_overview_tab, data_plots_tab, test_plots_tab = st.tabs(
 # ========================
 # 📥 Load & Prepare Data
 # ========================
-df = load_database(data.config.data_dir, data.config.file)
-df.rename(columns={"ID": "BibTexID"}, inplace=True)
+df = load_database(data_dir, file)
+df = generate_bibtexid(df)
 
 # Create display-ready dataframe
-# todo remove exclusion reasons, user notes, and other labels before final release
 display_df = df.copy().drop(
     columns=['exclusion_reasons' ]
     )
@@ -68,6 +66,9 @@ display_df["article"] = df.apply(create_article_handle, axis=1)
 display_df["DOI Link"] = "https://doi.org/" + df["doi"]
 display_df["sample size"] = df.apply(lambda row: f"N = {row['sample size']}", axis=1)
 display_df.set_index("article", inplace=True)
+# Move DOI Link column to first position in df
+cols = ["DOI Link"] + [c for c in display_df.columns if c != "DOI Link"]
+display_df = display_df[cols]
 
 # 🏷️ Load tooltips
 with open("./data/info_yamls/categories.yaml", "r") as f:
@@ -82,8 +83,7 @@ with st.sidebar:
     st.title("🔍 Filters")
 
     # --- Paper Filter ---
-    # todo for final version: set default to False (show all)
-    include_only = st.checkbox("Show only included papers", value=True)
+    include_only = st.checkbox("Show only included papers", value=False)
     if include_only:
         filtered_df = display_df[display_df['included in paper review'] == True]
     else:
@@ -142,65 +142,71 @@ with st.sidebar:
         list_items = [f"- **{lbl}**: {label_dict.get(lbl, '')}" for lbl in all_labels if lbl in label_dict]
         tooltip_text = intro + "\n\n" + "\n".join(list_items)
 
-        st.markdown(f"**{category.capitalize()}**️", help=tooltip_text)
+        st.markdown(f"**{category.capitalize()}**", help=tooltip_text)
+        col1, col2 = st.columns([1, 4], vertical_alignment="top")
+        with col1:
+            if st.button("",icon=":material/checklist_rtl:", key=f"{category}_selectall"):
+                st.session_state[multi_key] = all_labels
 
-        # Select all button
-        if st.button("Select all", key=f"{category}_selectall"):
-            st.session_state[multi_key] = all_labels
+        with col2:
+            defaults = st.session_state.get(multi_key, [])
+            defaults = [val for val in defaults if val in all_labels]
 
-        # Set default to empty unless something is stored
-        defaults = st.session_state.get(multi_key, [])
-        defaults = [val for val in defaults if val in all_labels]
-
-        selected = st.multiselect(
-            label="", options=all_labels, default=defaults, key=multi_key, placeholder="Choose a label"
-            )
+            selected = st.multiselect(
+                label="",
+                options=all_labels,
+                default=defaults,
+                key=multi_key,
+                placeholder="Choose a label",
+                label_visibility="collapsed"
+                )
         selected_filters[category] = selected
 
     # --- Article Filter ---
-    st.markdown("**Select Articles**")
+    st.markdown("**Select Individual Articles**")
     article_options = display_df.index.tolist()
     article_multiselect_key = "article_select"
+    col1, col2 = st.columns([1, 4], vertical_alignment="top")
+    with col1:
+        if st.button("",icon=":material/checklist_rtl:", key=f"article_selectall"):
+            st.session_state[article_multiselect_key] = article_options
 
-    # Button to select all articles
-    if st.button("Select all articles", key="article_selectall"):
-        st.session_state[article_multiselect_key] = article_options
+    with col2:
+        # Set default to empty unless session state holds selected articles
+        article_defaults = st.session_state.get(article_multiselect_key, [])
+        article_defaults = [a for a in article_defaults if a in article_options]
 
-    # Set default to empty unless session state holds selected articles
-    article_defaults = st.session_state.get(article_multiselect_key, [])
-    article_defaults = [a for a in article_defaults if a in article_options]
-
-    selected_articles = st.multiselect(
-        "Choose individual articles",
-        options=article_options,
-        default=article_defaults,
-        key=article_multiselect_key,
-        label_visibility="collapsed",
-        placeholder="Choose an article"
-        )
+        selected_articles = st.multiselect(
+            "Choose individual articles",
+            options=article_options,
+            default=article_defaults,
+            key=article_multiselect_key,
+            label_visibility="collapsed",
+            placeholder="Choose an article",
+            )
 
 # ========================
 # 🔍 Apply Filters
 # ========================
-# 1. Filter by year range
+# Filter by year range
 filtered_df = display_df[(display_df["year"] >= selected_years[0]) & (display_df["year"] <= selected_years[1])].copy()
 
-# 2. Filter by inclusion in paper review
+# Filter by inclusion in paper review
 if include_only:
     filtered_df = filtered_df[filtered_df['included in paper review'] == True]
 
-# 3. Keyword filter: keep only rows where any column contains the keyword
+# Keyword filter: keep only rows where any column contains the keyword
 if keyword:
     # convert all columns to string, do a case‐insensitive contains, and any() across columns
     mask = filtered_df.astype(str).apply(
         lambda row: row.str.contains(keyword, case=False, na=False).any(), axis=1
         )
     filtered_df = filtered_df[mask]
-# 4. Filter by article selection
+# Filter by article selection
 if selected_articles:
     filtered_df = filtered_df[filtered_df.index.isin(selected_articles)]
 
-# 5. Apply category filters
+# Apply category filters
 for category, selected_labels in selected_filters.items():
     if category not in filtered_df.columns or not selected_labels:
         continue
@@ -210,7 +216,7 @@ for category, selected_labels in selected_filters.items():
         lambda x: any(tag in normalize_cell(x) for tag in selected_labels)
         )]
 
-# 6. Update global display_df
+# Update global display_df
 display_df = filtered_df
 
 # ========================
@@ -220,27 +226,60 @@ with data_overview_tab:
     create_tab_header(df, display_df)
     st.markdown("This table provides an overview of the studies included in the analysis.")
 
-    # Column view selector
+    # # Column view selector
     view_option = st.radio(
         "Select view mode:",
-        options=["Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns"],
-        horizontal=True
+        options=["Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns", "Custom"],
+        horizontal=True,
         )
 
-    view_configs = {
-        'Default': ['article', 'DOI Link', 'included in paper review', 'measurement modality', 'sample size',
-                    'pairing configuration', 'paradigm', 'cognitive function'],
-        'Participants': ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
-                         'relationship pair'],
-        'Paradigm': ['article', 'DOI Link', 'condition design', 'interaction scenario', 'interaction manipulation',
-                     'transfer of information', 'type of communication', 'paradigm', 'task symmetry'],
-        'Measurement & Analysis': ['article', 'DOI Link', 'measurement modality', 'analysis method',
-                                   'cognitive function'],
-        'All Columns': list(display_df.columns)
-        }
-    column_order = view_configs.get(view_option, view_configs["Default"])
+    # Available columns (note: 'article' is your index)
+    available_cols = list(display_df.columns)
 
-    # 🔧 Configure column help tooltips
+    view_configs = {
+        "Default": ['article', 'DOI Link', 'included in paper review', 'measurement modality', 'sample size',
+                    'pairing configuration', 'paradigm', 'cognitive function'],
+        "Participants": ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
+                         'relationship pair'],
+        "Paradigm": ['article', 'DOI Link', 'condition design', 'interaction scenario', 'interaction manipulation',
+                     'transfer of information', 'type of communication', 'paradigm', 'task symmetry'],
+        "Measurement & Analysis": ['article', 'DOI Link', 'measurement modality', 'analysis method',
+                                   'cognitive function'],
+        "All Columns": available_cols,
+        }
+
+    # Custom column picker (preserve selection in session_state)
+    if view_option == "Custom":
+        custom_key = "custom_column_selection"
+        # Preselect previously chosen columns or default to all
+        preselected = st.session_state.get(custom_key, available_cols)
+
+        # Small helper row
+        col_1, col_2 = st.columns([1,19,], vertical_alignment="center")
+        with col_1:
+            if st.button("",icon=":material/checklist_rtl:"):
+                st.session_state[custom_key] = available_cols
+                custom_cols = available_cols
+        with col_2:
+            custom_cols = st.multiselect(
+                "Choose columns to display (order is preserved by selection):",
+                options=available_cols,
+                default=[c for c in preselected if c in available_cols],
+                key=custom_key,
+                placeholder="Select columns…",
+                )
+        # Fallback if user clears everything
+        if not custom_cols:
+            st.info("No columns selected. Showing all columns for now.")
+            column_order = available_cols
+        else:
+            column_order = custom_cols
+    else:
+        column_order = view_configs.get(view_option, view_configs["Default"])
+
+    column_order = [c for c in column_order if c in display_df.columns]
+
+    # Configure column help tooltips
     column_config = {}
     for col in column_order:
         if col == "DOI Link":

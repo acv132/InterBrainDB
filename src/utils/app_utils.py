@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import base64
+from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
@@ -6,6 +10,12 @@ from bs4 import BeautifulSoup
 from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles
 from htbuilder.funcs import rgba, rgb
 from htbuilder.units import percent, px
+
+
+def set_mypage_config():
+    st.set_page_config(
+        page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
+        )
 
 
 def image(src_as_string, **style):
@@ -142,3 +152,38 @@ def render_fraunhofer_privacy_policy(url: str):
         st.warning("Error retrieving the legal notice. You may find the direct link below.")
         st.write(f"[Directly open privacy policy]({url})")
         st.caption(f"Technical details: {e}")
+
+
+def _b64(path: Path) -> str:
+    """Read a file and return base64-encoded string."""
+    data = path.read_bytes()
+    return base64.b64encode(data).decode("utf-8")
+
+
+def clickable_image(path: str | Path, href: str, *, alt: str = "", width: int | None = 160):
+    """
+    Render a clickable image (SVG or raster) that opens in a new tab.
+    For SVG we embed as data URI to ensure reliable rendering.
+    """
+    p = Path(path)
+    ext = p.suffix.lower()
+
+    if ext == ".svg":
+        src = f"data:image/svg+xml;base64,{_b64(p)}"
+    elif ext in {".png", ".jpg", ".jpeg", ".gif", ".webp"}:
+        mime = "png" if ext == ".png" else "jpeg" if ext in {".jpg", ".jpeg"} else ext.strip(".")
+        src = f"data:image/{mime};base64,{_b64(p)}"
+    else:
+        # If unknown type, let Streamlit try rendering it directly
+        with st.container():
+            st.link_button(f"Open {alt or p.name}", href, use_container_width=True)
+            st.image(str(p), width=width)
+        return
+
+    style_w = f"width:{width}px;" if width else "max-width:100%;"
+    html = f"""
+    <a href="{href}" target="_blank" rel="noopener noreferrer" title="{alt}">
+      <img src="{src}" alt="{alt}" style="{style_w} display:block; margin:auto;" />
+    </a>
+    """
+    st.markdown(html, unsafe_allow_html=True)

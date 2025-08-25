@@ -20,7 +20,7 @@ from matplotlib.path import Path
 from plotly import express as px
 from sklearn.preprocessing import LabelEncoder
 
-from data.config import ColorMap
+from utils.config import ColorMap
 from plotting.plot_utils import *
 
 _lock = RLock()

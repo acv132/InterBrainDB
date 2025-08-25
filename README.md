@@ -33,7 +33,7 @@ pip install -r requirements.txt
 ```
 3. Start the Streamlit app
 ```bash
-streamlit run Welcome.py --server.port 8501
+streamlit run .\src\Welcome.py --server.port 8501
 ```
 4. You can now view the streamlit app in your browser via a local URL: 
 http://localhost:8501

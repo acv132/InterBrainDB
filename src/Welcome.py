@@ -1,29 +1,24 @@
 """
-
 This is the main page, that you have to run with "streamlit run" to launch the app locally.
 Streamlit automatically create the tabs in the left sidebar from the .py files located in /pages
 Here we just have the Welcome page, with a short description of the tabs, and some images
-
 """
-
-# todo add impressum and data privacy aspects for web hosting
-
+# ========================
+# 📦 Imports & Setup
+# ========================
 from __future__ import annotations
-import streamlit as st
 import base64
-from pathlib import Path
 import streamlit as st
 
-from plotting.plot_utils import is_dark_color
-from utils.app_utils import footer
+from plotting.plot_utils import is_dark_color, current_bg_color
+from utils.app_utils import footer, clickable_image, set_mypage_config
 
 # ========================
 # 💅 UI Configuration
 # ========================
-st.set_page_config(
-    page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
-    )
+set_mypage_config()
 st.title("📚 Living Literature Review on Digital Hyperscanning")
+
 st.subheader("Welcome to the Living Literature Review")
 st.markdown(
     """
@@ -37,6 +32,7 @@ st.markdown(
     ---
     """
     )
+
 st.subheader("Purpose")
 st.markdown(
     """
@@ -49,6 +45,7 @@ st.markdown(
     extending the scope to include other population groups, such as children or clinical populations.
     """
     )
+
 st.subheader("Adding New Articles")
 st.markdown(
     "A living review means a growing database. Therefore, if we either missed a paper or you published "
@@ -61,7 +58,7 @@ st.subheader("Paper")
 st.markdown(
     f"""
 Read the original literature review here:
-[Link Button]
+[Link Button](https://github.com/acv132/Hyperscanning-Living-Review)
 ```
 [citation with doi]
 ```
@@ -86,7 +83,6 @@ html = f"""
 </a>
 """
 st.markdown(html, unsafe_allow_html=True)
-
 st.markdown(
     """
     ### Contact
@@ -99,82 +95,37 @@ st.markdown(
     )
 
 st.subheader("Funding and Support")
-logo = "./assets/logos.svg"
-st.image(logo, width=1000)
-# tno-ifl.svg
-# Logo-TNO.svg
-# FraunhoferIAO.svg
-# radboud.svg
-# IAT_de.svg
-# todo add logos separately with links to websites embedded in the images
-
-
-# ---------- Helpers ----------
-def _b64(path: Path) -> str:
-    """Read a file and return base64-encoded string."""
-    data = path.read_bytes()
-    return base64.b64encode(data).decode("utf-8")
-
-def clickable_image(path: str | Path, href: str, *, alt: str = "", width: int | None = 160):
-    """
-    Render a clickable image (SVG or raster) that opens in a new tab.
-    For SVG we embed as data URI to ensure reliable rendering.
-    """
-    p = Path(path)
-    ext = p.suffix.lower()
-
-    if ext == ".svg":
-        src = f"data:image/svg+xml;base64,{_b64(p)}"
-    elif ext in {".png", ".jpg", ".jpeg", ".gif", ".webp"}:
-        mime = "png" if ext == ".png" else "jpeg" if ext in {".jpg", ".jpeg"} else ext.strip(".")
-        src = f"data:image/{mime};base64,{_b64(p)}"
-    else:
-        # If unknown type, let Streamlit try rendering it directly
-        with st.container():
-            st.link_button(f"Open {alt or p.name}", href, use_container_width=True)
-            st.image(str(p), width=width)
-        return
-
-    style_w = f"width:{width}px;" if width else "max-width:100%;"
-    html = f"""
-    <a href="{href}" target="_blank" rel="noopener noreferrer" title="{alt}">
-      <img src="{src}" alt="{alt}" style="{style_w} display:block; margin:auto;" />
-    </a>
-    """
-    st.markdown(html, unsafe_allow_html=True)
-
-# ---------- Data (paths + links) ----------
-# Update any URLs if your partners differ.
+# todo: add dark-mode version of all logos (white fonts)
+bg_color = current_bg_color()
 SPONSORS = [{
-    "name": "Applied Neurocognitive Systems", "path": "./assets/ANS.svg", "url": "https://linktr.ee/ans_iao",
+    "name": "Applied Neurocognitive Systems", "path": "./assets/logos/ANS.svg", "url": "https://linktr.ee/ans_iao",
     "alt": "Applied Neurocognitive Systems",
     }, {
     "name": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
-    "path": "./assets/IAT_de.svg",
+    "path": "./assets/logos/IAT_de.svg",
     "url": "https://www.iat.uni-stuttgart.de/",
     "alt": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
     },
     {
         "name": "Fraunhofer IAO",
-        "path": "./assets/FraunhoferIAO.svg",
+        "path": "./assets/logos/FraunhoferIAO.svg",
         "url": "https://www.iao.fraunhofer.de/",
         "alt": "Fraunhofer IAO",
     },
     {
         "name": "Radboud University",
-        "path": "./assets/radboud.svg",
+        "path": "./assets/logos/radboud.svg",
         "url": "https://www.ru.nl/en",
         "alt": "Radboud University",
     },
     {
         "name": "TNO",
-        "path": "./assets/tno-ifl.svg" if is_dark_color(st.get_option('theme.backgroundColor')) else "./assets/Logo-TNO.svg",
+        "path": "./assets/logos/tno-dark.svg" if is_dark_color(bg_color) else "./assets/logos/tno-light.svg",
         "url": "https://www.tno.nl/",
         "alt": "TNO",
     },
 ]
 
-# ---------- Grid layout ----------
 cols_per_row = 5  # tweak to taste
 rows = [SPONSORS[i:i+cols_per_row] for i in range(0, len(SPONSORS), cols_per_row)]
 
@@ -183,9 +134,6 @@ for row in rows:
     for col, sponsor in zip(cols, row):
         with col:
             clickable_image(sponsor["path"], sponsor["url"], alt=sponsor["alt"], width=500)
-            st.caption(f"[{sponsor['name']}]({sponsor['url']})")
-
-# ---------- Optional: subtle hover style for images ----------
 st.markdown(
     """
     <style>

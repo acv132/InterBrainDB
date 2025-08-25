@@ -1,9 +1,15 @@
+# ========================
+# 📦 Imports & Setup
+# ========================
 import streamlit as st
+from src.utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_privacy_policy, set_mypage_config
 
-from utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_privacy_policy
+# ========================
+# 💅 UI Configuration
+# ========================
+set_mypage_config()
 
-st.set_page_config(page_title="Imprint / Impressum", page_icon="🧾", layout="centered")
-
+st.title("🧾 Imprint / Impressum")
 if __name__ == "__main__":
     render_fraunhofer_impressum(
         "https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/"
