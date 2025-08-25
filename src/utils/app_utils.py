@@ -132,7 +132,6 @@ def footer():
         ]
     layout(*myargs)
 
-
 @st.cache_data(ttl=60 * 60)  # cache for 1 hour
 def _fetch_imprint_html(url: str) -> str:
     # Fetch with a friendly UA; some servers block default python user agents
