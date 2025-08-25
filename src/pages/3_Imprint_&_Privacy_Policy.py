@@ -9,7 +9,7 @@ from utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_priva
 # ========================
 set_mypage_config()
 
-st.title("🧾 Imprint / Impressum")
+st.title("Imprint / Impressum & Privacy Policy")
 if __name__ == "__main__":
     render_fraunhofer_impressum(
         "https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/"
