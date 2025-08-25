@@ -599,7 +599,7 @@ def plot_publications_over_time(
     # Prevent silent failures on larger data (optional)
     try:
         alt.data_transformers.disable_max_rows()
-    except Exception:
+    except Exception as e:
         pass
 
     # -- Determine effective count mode --
