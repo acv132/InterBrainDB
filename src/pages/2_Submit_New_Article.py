@@ -260,10 +260,11 @@ with col2:
         if missing_fields:
             st.error(f"❗Please fill in the required fields: {', '.join(missing_fields)}")
         else:
-            fa = authors.split(';')[0].split(',')[0].replace(' ', '').lower()
-            tk = re.sub(r"[ \-\(\):']", "", title[:20].lower())
-            unique_id = f"{fa}{year}{tk}"
+            # todo check functionality of new bibtexid generation
 
+            # fa = authors.split(';')[0].split(',')[0].replace(' ', '').lower()
+            # tk = re.sub(r"[ \-\(\):']", "", title[:20].lower())
+            # unique_id = f"{fa}{year}{tk}"
             # new_entry = {
             #     "doi": doi,
             #     "authors": authors,
