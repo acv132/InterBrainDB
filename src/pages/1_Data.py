@@ -8,8 +8,6 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from src.pages.utils.data_loader import custom_column_picker
-
 try:
     import altair as alt
 
@@ -20,7 +18,7 @@ except Exception:
 from utils.config import file, data_dir
 from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
                                normalize_cell, generate_excel_table, flatten_cell, create_tab_header,
-                               generate_bibtexid, generate_csv_table)
+                               generate_bibtexid, generate_csv_table, custom_column_picker)
 from utils.app_utils import footer, set_mypage_config
 from plotting.figures import (generate_interaction_figure, generate_2d_cluster_plot,
                                  generate_category_counts_figure, \
