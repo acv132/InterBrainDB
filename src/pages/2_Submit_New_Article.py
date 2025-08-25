@@ -41,20 +41,17 @@ for key, default in {
 # ========================
 # === Load Database ===
 df = load_database(data_dir, file)
-
-# === Load Tooltips ===
 with open("./data/info_yamls/categories.yaml", "r") as f:
     label_tooltips = yaml.safe_load(f)
 with open("./data/info_yamls/category_descriptions.yaml", 'r') as f:
     category_tooltips = yaml.safe_load(f)
 
-# === File Path to Save Submissions ===
-submission_file = os.path.join(data_dir, "submitted_articles.xlsx")
-
 # === Load or Initialize Submission Data ===
+submission_file_name = "submitted_articles"
+submission_file = os.path.join(data_dir, "%s.csv" % submission_file_name)
 if "submitted_df" not in st.session_state:
     if os.path.exists(submission_file):
-        st.session_state.submitted_df = load_database(data_dir, "submitted_articles.xlsx")
+        st.session_state.submitted_df = load_database(data_dir, submission_file_name)
     else:
         st.session_state.submitted_df = pd.DataFrame()
 
@@ -277,7 +274,7 @@ with col2:
             #     }
             new_entry = {
                 "doi": doi,
-                "authors": authors,
+                "author": authors,
                 "year": year,
                 "title": title,
                 "abstract": abstract,
@@ -286,6 +283,9 @@ with col2:
                 }
             # Include optional labels
             new_entry.update(optional_inputs)
+            # Replace ; in entry to avoid errors during df extension
+            for key in new_entry.keys():
+                new_entry[key].replace(";", " and")
 
             # Normalize for comparison
             new_doi = new_entry["doi"].strip().lower()
@@ -305,17 +305,10 @@ with col2:
 
                 # ---- Generate a unique BibTexID using the helper on the combined data ----
                 frames = []
-
-                def _normalize_author_col(frame: pd.DataFrame) -> pd.DataFrame:
-                    f = frame.copy()
-                    if "authors" not in f.columns and "author" in f.columns:
-                        f = f.rename(columns={"author": "authors"})
-                    return f
-
                 if isinstance(df, pd.DataFrame) and not df.empty:
-                    frames.append(_normalize_author_col(df))
+                    frames.append(df)
                 if isinstance(submitted_df, pd.DataFrame) and not submitted_df.empty:
-                    frames.append(_normalize_author_col(submitted_df))
+                    frames.append(submitted_df)
                 frames.append(new_row)  # append last so we can grab its generated ID
 
                 combined = pd.concat(frames, ignore_index=True, sort=False)
@@ -336,7 +329,7 @@ with col2:
 
                 submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
                 st.session_state.submitted_df = submitted_df  # persist in session
-                submitted_df.to_excel(submission_file, index=False)
+                submitted_df.to_csv(submission_file, index=False, sep=";", encoding="utf-8")
 
                 st.success("✅ Article suggestion submitted successfully!")
                 st.balloons()
