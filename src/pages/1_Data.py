@@ -339,7 +339,12 @@ with (data_plots_tab):
                         container=st,
                         count_mode="auto",  # bars -> study-weighted, lines -> raw (default)
                         )
-
+                st.markdown(
+                    """
+                    💡 **Tip:** Sometimes this plot takes a while to render completely, even though the figure is 
+                    already generated.
+                    """
+                    )
             with col2:
                 st.markdown(
                     """
