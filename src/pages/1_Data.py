@@ -329,14 +329,20 @@ with (data_plots_tab):
 
                 else:
                     # Group by year and selected category, count publications
-                    # fixme lines are not rendered reliably
-                    plot_publications_over_time(
-                        display_df,
-                        None if selected_category == "None" else selected_category,
-                        label_tooltips=label_tooltips,
-                        container=st,
-                        count_mode="auto",  # bars -> study-weighted, lines -> raw (default)
+                    # plot_publications_over_time(
+                    #     display_df,
+                    #     None if selected_category == "None" else selected_category,
+                    #     label_tooltips=label_tooltips,
+                    #     container=st,
+                    #     count_mode="auto",  # bars -> study-weighted, lines -> raw (default)
+                    #     )
+                    comps = plot_publications_over_time(
+                        display_df, selected_category, label_tooltips=label_tooltips, container=st,
+                        count_mode="auto", return_components=True
                         )
+                    if comps and comps["chart"] is not None:
+                        st.altair_chart(comps["chart"], use_container_width=True)
+
                 st.markdown(
                     """
                     💡 **Tip:** Sometimes this plot takes a while to render completely, even though the figure is 
@@ -344,6 +350,8 @@ with (data_plots_tab):
                     """
                     )
             with col2:
+                if selected_category not in (None, "None") and comps and comps["legend_chart"] is not None:
+                    st.altair_chart(comps["legend_chart"], use_container_width=True)
                 st.markdown(
                     """
                     💡 **Tip:** To save the figure, 

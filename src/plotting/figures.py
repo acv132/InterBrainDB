@@ -585,7 +585,7 @@ def plot_publications_over_time(
     container=None,
     count_mode="auto",          # 'auto' | 'study_weighted' | 'occurrence'
     color_map=ColorMap,         # optional list of hex/rgb colors
-    year_col="year",
+    year_col="year",return_components=False,
 ):
     # -- Resolve container --
     if container is None:
@@ -709,6 +709,7 @@ def plot_publications_over_time(
                 title="Category",
                 sort=label_order,
                 scale=alt.Scale(range=color_map) if color_map else alt.Undefined,
+                legend=None
             ),
             tooltip=[
                 alt.Tooltip("year:N", title="Year"),
@@ -746,6 +747,25 @@ def plot_publications_over_time(
            .resolve_scale(x="shared", y="shared")
            .properties(height=380)
     )
+    legend_df = pd.DataFrame({"label_display": label_order})
+
+    legend_chart = (alt.Chart(legend_df).mark_point(size=0)  # invisible points; just to trigger the legend
+                                        .encode(
+        color=alt.Color(
+            "label_display:N",
+            title="Category",
+            sort=label_order,
+            scale=alt.Scale(range=color_map) if color_map else alt.Undefined,
+            legend=alt.Legend(
+                orient="none",  # free legend (not docked to a side)
+                legendX=0, legendY=0, direction="vertical", labelLimit=0,  # no truncation
+                ), )
+        ).properties(width=300, height=380))
+
+    if return_components:
+        return {
+            "chart": chart, "legend_chart": legend_chart, "label_order": label_order,
+            }
     # -- Render (force fresh rerender via key to beat Streamlit caching issues) --
     key = f"pubs_{selected_category}_{effective_mode}_{len(agg)}_{len(label_order)}_{year_order[0]}_{year_order[-1]}"
     try:
