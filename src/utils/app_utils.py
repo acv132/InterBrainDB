@@ -14,7 +14,7 @@ from htbuilder.units import percent, px
 
 def set_mypage_config():
     st.set_page_config(
-        page_title="Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
+        page_title="InterBrainDB - Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
         )
     # fixme light mode does not display markdown correctly
     ms = st.session_state
