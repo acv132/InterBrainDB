@@ -381,7 +381,16 @@ with (data_plots_tab):
             col3, col4 = st.columns([1, 1])
             with col3:
 
-                result = generate_interaction_figure(display_df, data_plots_tab)
+                # result = generate_interaction_figure(display_df, data_plots_tab)
+
+                st.subheader("Interaction Conditions")
+                combine_modalities = st.checkbox(
+                    "Combine across modalities",
+                    value=False,
+                    help=("When enabled, cells in the figure do not distinguish modalities.")
+                    )
+
+                result = generate_interaction_figure(display_df, data_plots_tab, combine_modalities=combine_modalities)
                 if result is None:
                     st.warning("No figure was generated for interaction conditions.")
                 else:
@@ -389,7 +398,7 @@ with (data_plots_tab):
                     buf = io.BytesIO()
                     fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
                     buf.seek(0)
-                    st.subheader("Interaction Conditions")
+
                     st.image(buf, use_container_width=True)
                 st.markdown(
                     f"""
@@ -408,7 +417,7 @@ with (data_plots_tab):
             with col4:
                 st.markdown(
                     """
-                    💡 **Tip:** The interaction figure is not based on streamlit-compatible plotting libraries, 
+                    💡 **Tip:** The interaction figure is not based on streamlit-compatible plotting libraries,
                     therefore you may use this download button to save the figure as a high-resolution image.
                     """
                     )
@@ -420,54 +429,5 @@ with (data_plots_tab):
                     )
         except Exception as e:
             st.error(f"❌ Could not generate figures: {e}")
-
-# ========================
-# 🔬 Test Plots Tab
-# ========================
-# todo before final release: remove this tab
-with test_plots_tab:
-    create_tab_header(df, display_df)
-    with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
-        try:
-            # > Cluster Plot figure
-            st.subheader("Cluster Plot")
-            available_cats = [col for col in display_df.columns if display_df[col].dtype == object]
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                # Select 2 axes
-                selected_cats = st.multiselect(
-                    "Select 2 categorical axes (x and y)",
-                    options=available_cats,
-                    max_selections=2,
-                    default=['type of communication', 'transfer of information']
-                    )
-
-                # Select color category with default "paradigm" if available
-                filtered_cats = [c for c in available_cats if c not in selected_cats]
-                color_default_index = filtered_cats.index("paradigm") if "paradigm" in filtered_cats else 0
-                color_cat = st.selectbox(
-                    "Select category to color points",
-                    options=[c for c in available_cats if c not in selected_cats],
-                    index=color_default_index
-                    )
-
-                generate_plot = st.button("🎨 Generate Plot")
-
-                if generate_plot and len(selected_cats) == 2 and color_cat:
-                    fig = generate_2d_cluster_plot(display_df, selected_cats[0], selected_cats[1], color_cat)
-                    st.plotly_chart(fig, use_container_width=True)
-            with col2:
-                if generate_plot and len(selected_cats) == 2 and color_cat:
-                    csv_data = display_df[selected_cats + [color_cat]].dropna().copy()
-                    st.download_button(
-                        label="📥 Download Plot Data (CSV)",
-                        data=csv_data.to_csv(index=True),
-                        file_name="2d_category_plot_data.csv",
-                        mime="text/csv"
-                        )
-
-        except Exception as e:
-            st.error(f"❌ Could not generate figures: {e}")
-
 
 footer()
