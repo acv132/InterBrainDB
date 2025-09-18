@@ -39,8 +39,7 @@ streamlit run .\src\Welcome.py --server.port 8501
 http://localhost:8501
 
 
-### TODO
+#### TODO
+- potentially build FastAPI version https://medium.com/@obaff/building-a-website-with-python-fastapi-and-streamlit-418f48c41af2
 - add respiration as own category measurement modality
 - add fMRI as own category measurement modality
-- add more details to "included" studies through other_labels 
-  - double-check number of fNIRS channels and number of EEG-channels info exists for all of them
