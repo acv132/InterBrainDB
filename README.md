@@ -1,5 +1,5 @@
 
-# Living Literature Review on Hyperscanning with Digital Components
+# InterBrainDB - Living Literature Review Database on Hyperscanning
 
 ## Purpose
 This repository is dedicated to hosting a living literature review tracks emerging research on multimodal hyperscanning in contexts with a digital 
@@ -10,7 +10,7 @@ enabling researchers to stay informed about the latest developments in the field
 
 The code is based on the [streamlit](https://streamlit.io/) library.
 
-## Living Literature Review on Hyperscanning with Digital Components
+## Living Literature Review Database on Hyperscanning
 Find the server-hosted version of the living review here:
 [Link]()
 
@@ -33,13 +33,8 @@ pip install -r requirements.txt
 ```
 3. Start the Streamlit app
 ```bash
-streamlit run .\src\Welcome.py --server.port 8501
+streamlit run .\src\app.py --server.port 8501
 ```
 4. You can now view the streamlit app in your browser via a local URL: 
 http://localhost:8501
 
-
-#### TODO
-- potentially build FastAPI version https://medium.com/@obaff/building-a-website-with-python-fastapi-and-streamlit-418f48c41af2
-- add respiration as own category measurement modality
-- add fMRI as own category measurement modality
