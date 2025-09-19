@@ -2,7 +2,7 @@
 # 📦 Imports & Setup
 # ========================
 import streamlit as st
-from utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_privacy_policy, set_mypage_config
+from utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_privacy_policy, set_mypage_config, footer
 
 # ========================
 # 💅 UI Configuration
@@ -18,3 +18,5 @@ if __name__ == "__main__":
     render_fraunhofer_privacy_policy(
         "https://dsi-generator.fraunhofer.de/dsi/view/en/ff12fb5e-3c20-4155-b7e6-7fdaf82ee9d5/"
         )
+
+footer()

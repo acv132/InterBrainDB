@@ -16,8 +16,8 @@ from utils.app_utils import footer, clickable_image, set_mypage_config
 # 💅 UI Configuration
 # ========================
 set_mypage_config()
-st.title("📚 InterBrainDB - The Living Literature Review Database on Hyperscanning")
-st.subheader("Welcome to the Living Literature Review")
+st.title("📚 InterBrainDB")
+st.subheader("Welcome to the Living Literature Review Database on Hyperscanning")
 st.markdown(
     """
     This tool is designed to visualize up-to-date research body related to hyperscanning with digital components by:
@@ -50,13 +50,13 @@ st.markdown(
     "results, please consider submitting your article. Click the button below to submit a new article for "
     "review:"
     )
-st.page_link(label="Submit New Article", page="pages/2_Submit_New_Article.py", icon="🆕")
+st.page_link(label="Submit New Article", page="pages/3_Submit_New_Article.py", icon="🆕")
 
 st.subheader("Paper")
 st.markdown(
     f"""
 Read the original literature review here:
-[Link Button](https://github.com/acv132/Hyperscanning-Living-Review)
+[Link Button](tbd)
 ```
 [citation with doi]
 ```
@@ -67,7 +67,7 @@ If you use this resource, please consider citing our paper.
 st.subheader("Code")
 st.markdown("Want to report an issue or suggest a feature? Post an issue on the GitHub repository.")
 label = "Git Repository"
-url = "https://github.com/acv132/Hyperscanning-Living-Review"
+url = "https://github.com/acv132/InterBrainDB"
 icon_path = "assets/github.svg" if st.get_option("theme.base") == "light" else "assets/github_dark.svg"
 icon_width = 35  # in pixels
 with open(icon_path, "rb") as f:
@@ -87,8 +87,8 @@ st.markdown(
     The app is maintained by the Applied Neurocognitive Systems Team, Department of Human-Computer Interaction, 
     University of Stuttgart & Fraunhofer IAO.
     
-    Contact: Anna Vorreuther [anna.vorreuther@iat.universität-stuttgart.de](mailto:anna.vorreuther@iat.universität-stuttgart.de,
-    "Subject: Living Literature Review Contact Request")
+    Contact: Anna Vorreuther [anna.vorreuther@iat.uni-stuttgart.de](mailto:anna.vorreuther@iat.uni-stuttgart.de,
+    "Subject: InterBrainDB Contact Request")
     """
     )
 
