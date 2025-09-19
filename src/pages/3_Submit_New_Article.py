@@ -244,93 +244,79 @@ with col2:
     if doi and title and authors and abstract:
         st.info("The required information is filled in. Click the button below to submit your article suggestion.")
     if st.button("📤 Submit Suggestion"):
-        missing_fields = []
-        if not doi:
-            missing_fields.append("DOI")
-        if not title:
-            missing_fields.append("Title")
-        if not authors:
-            missing_fields.append("Authors")
-        if not abstract:
-            missing_fields.append("Abstract")
+        try:
+            missing_fields = []
+            if not doi:
+                missing_fields.append("DOI")
+            if not title:
+                missing_fields.append("Title")
+            if not authors:
+                missing_fields.append("Authors")
+            if not abstract:
+                missing_fields.append("Abstract")
 
-        if missing_fields:
-            st.error(f"❗Please fill in the required fields: {', '.join(missing_fields)}")
-        else:
-            # todo check functionality of new bibtexid generation
-
-            # fa = authors.split(';')[0].split(',')[0].replace(' ', '').lower()
-            # tk = re.sub(r"[ \-\(\):']", "", title[:20].lower())
-            # unique_id = f"{fa}{year}{tk}"
-            # new_entry = {
-            #     "doi": doi,
-            #     "authors": authors,
-            #     "year": year,
-            #     "title": title,
-            #     "abstract": abstract,
-            #     'BibTexID': unique_id,
-            #     'included in paper review': 'False',
-            #     'exclusion_reasons': 'submission after publication',
-            #     }
-            new_entry = {
-                "doi": doi,
-                "author": authors,
-                "year": year,
-                "title": title,
-                "abstract": abstract,
-                "included in paper review": "False",
-                "exclusion_reasons": "submission after publication",
-                }
-            # Include optional labels
-            new_entry.update(optional_inputs)
-            # Replace ; in entry to avoid errors during df extension
-            for key in new_entry.keys():
-                new_entry[key].replace(";", " and")
-
-            # Normalize for comparison
-            new_doi = new_entry["doi"].strip().lower()
-
-            # === Check if DOI exists in main database or submitted suggestions ===
-            existing_dois = set()
-            if "doi" in df.columns:
-                existing_dois.update(df["doi"].astype(str).str.lower())
-            if "doi" in submitted_df.columns:
-                existing_dois.update(submitted_df["doi"].astype(str).str.lower())
-
-            if new_doi in existing_dois:
-                st.info("ℹ️ This article has already been submitted or is part of the database.")
+            if missing_fields:
+                st.error(f"❗Please fill in the required fields: {', '.join(missing_fields)}")
             else:
-                # Create DataFrame for the new row (BibTexID will be set after generating)
-                new_row = pd.DataFrame([new_entry])
+                new_entry = {
+                    "doi": doi,
+                    "authors": authors,
+                    "year": year,
+                    "title": title,
+                    "abstract": abstract,
+                    "included in paper review": "False",
+                    "exclusion_reasons": "submission after publication",
+                    }
+                # Include optional labels
+                new_entry.update(optional_inputs)
+                # Replace ; in entry to avoid errors during df extension
+                for key in new_entry.keys():
+                    if isinstance(new_entry[key], str):
+                        new_entry[key].replace(";", " and")
+                # Normalize for comparison
+                new_doi = new_entry["doi"].strip().lower()
 
-                # ---- Generate a unique BibTexID using the helper on the combined data ----
-                frames = []
-                if isinstance(df, pd.DataFrame) and not df.empty:
-                    frames.append(df)
-                if isinstance(submitted_df, pd.DataFrame) and not submitted_df.empty:
-                    frames.append(submitted_df)
-                frames.append(new_row)  # append last so we can grab its generated ID
+                # === Check if DOI exists in main database or submitted suggestions ===
+                existing_dois = set()
+                if "doi" in df.columns:
+                    existing_dois.update(df["doi"].astype(str).str.lower())
+                if "doi" in submitted_df.columns:
+                    existing_dois.update(submitted_df["doi"].astype(str).str.lower())
 
-                combined = pd.concat(frames, ignore_index=True, sort=False)
+                if new_doi in existing_dois:
+                    st.info("ℹ️ This article has already been submitted or is part of the database.")
+                else:
+                    # Create DataFrame for the new row (BibTexID will be set after generating)
+                    new_row = pd.DataFrame([new_entry])
 
-                # Use the robust generator (assumes it's defined/imported above)
-                combined = generate_bibtexid(
-                    combined,
-                    author_col="authors",
-                    year_col="year",
-                    title_col="title",
-                    out_col="BibTexID",
-                    inplace=True, )
+                    # ---- Generate a unique BibTexID using the helper on the combined data ----
+                    frames = []
+                    if isinstance(df, pd.DataFrame) and not df.empty:
+                        frames.append(df)
+                    if isinstance(submitted_df, pd.DataFrame) and not submitted_df.empty:
+                        frames.append(submitted_df)
+                    frames.append(new_row)  # append last so we can grab its generated ID
 
-                # Pull the BibTexID for the newly added row (last row)
-                bib_id = combined.iloc[-1]["BibTexID"]
-                new_row["BibTexID"] = bib_id
+                    combined = pd.concat(frames, ignore_index=True, sort=False)
 
-                submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
-                st.session_state.submitted_df = submitted_df  # persist in session
-                submitted_df.to_csv(submission_file, index=False, sep=";", encoding="utf-8")
+                    # Use the robust generator (assumes it's defined/imported above)
+                    combined = generate_bibtexid(
+                        combined,
+                        author_col="authors",
+                        year_col="year",
+                        title_col="title",
+                        out_col="BibTexID",
+                        inplace=True, )
 
-                st.success("✅ Article suggestion submitted successfully!")
-                st.balloons()
+                    # Pull the BibTexID for the newly added row (last row)
+                    bib_id = combined.iloc[-1]["BibTexID"]
+                    new_row["BibTexID"] = bib_id
+                    submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
+                    st.session_state.submitted_df = submitted_df  # persist in session
+                    submitted_df.to_csv(submission_file, index=False, sep=";", encoding="utf-8")
 
+                    st.success("✅ Article suggestion submitted successfully!")
+                    st.balloons()
+        except Exception as e:
+            st.error(f"Error during submission: {e}")
 footer()
