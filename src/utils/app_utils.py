@@ -19,26 +19,29 @@ def set_mypage_config():
     # fixme light mode does not display markdown correctly
     ms = st.session_state
     if "themes" not in ms:
-        ms.themes = {"current_theme": "light",
-                     "refreshed": True,
+        ms.themes = {
+            "current_theme": "light", "refreshed": True,
 
-                     "dark": {"theme.base": "dark",
-                               "theme.backgroundColor": "#1e1f22",
-                               "theme.primaryColor": "#019879",
-                               "theme.secondaryBackgroundColor": "#2b2d30",
-                               "theme.textColor": "#FAFAFA",
-                               "theme.font" : "sans serif",
-                               "button_face": ":material/dark_mode:"},
+            "dark": {
+                "theme.base": "dark",
+                "theme.backgroundColor": "#1e1f22",
+                "theme.primaryColor": "#019879",
+                "theme.secondaryBackgroundColor": "#2b2d30",
+                "theme.textColor": "#FAFAFA",
+                "theme.font": "sans serif",
+                "button_face": ":material/dark_mode:"
+                },
 
-                     "light":  {"theme.base": "light",
-                               "theme.backgroundColor": "#FFFFFF",
-                               "theme.primaryColor": "#ADE1DC",
-                               "theme.secondaryBackgroundColor": "#F0F2F6",
-                               "theme.textColor": "#1e1f22",
-                               "theme.font" : "sans serif",
-                               "button_face": ":material/light_mode:"},
-                     }
-
+            "light": {
+                "theme.base": "light",
+                "theme.backgroundColor": "#FFFFFF",
+                "theme.primaryColor": "#ADE1DC",
+                "theme.secondaryBackgroundColor": "#F0F2F6",
+                "theme.textColor": "#1e1f22",
+                "theme.font": "sans serif",
+                "button_face": ":material/light_mode:"
+                },
+            }
 
     def ChangeTheme():
         previous_theme = ms.themes["current_theme"]
@@ -48,17 +51,21 @@ def set_mypage_config():
             if vkey.startswith("theme"): st._config.set_option(vkey, vval)
 
         ms.themes["refreshed"] = False
-        if previous_theme == "dark": ms.themes["current_theme"] = "light"
-        elif previous_theme == "light": ms.themes["current_theme"] = "dark"
+        if previous_theme == "dark":
+            ms.themes["current_theme"] = "light"
+        elif previous_theme == "light":
+            ms.themes["current_theme"] = "dark"
 
-    btn_face = ms.themes["light"]["button_face"] if ms.themes["current_theme"] == "light" else ms.themes["dark"]["button_face"]
-    col1,col2 = st.columns([10,1])
+    btn_face = ms.themes["light"]["button_face"] if ms.themes["current_theme"] == "light" else ms.themes["dark"][
+        "button_face"]
+    col1, col2 = st.columns([10, 1])
     with col2:
         st.button(btn_face, on_click=ChangeTheme)
 
     if ms.themes["refreshed"] == False:
         ms.themes["refreshed"] = True
         st.rerun()
+
 
 def image(src_as_string, **style):
     return img(src=src_as_string, style=styles(**style))
@@ -119,19 +126,19 @@ def _svg_data_uri(path):
         b64 = base64.b64encode(f.read()).decode()
     return f"data:image/svg+xml;base64,{b64}"
 
+
 def footer():
     svg_uri = _svg_data_uri("assets/streamlit.svg")
-    myargs = [
-        "Made in ",
-        link("https://streamlit.io/", image(svg_uri, width=px(25), height=px(25))
-             ),
-        br(),
-        link("https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/", "Imprint"),
-        " | ",
+    myargs = ["Made in ", link(
+        "https://streamlit.io/", image(svg_uri, width=px(25), height=px(25))
+        ), br(), link(
+        "https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/",
+        "Imprint"
+        ), " | ",
         link("https://dsi-generator.fraunhofer.de/dsi/view/en/ff12fb5e-3c20-4155-b7e6-7fdaf82ee9d5/", "Privacy Policy"),
-        br(),
-        ]
+        br(), ]
     layout(*myargs)
+
 
 @st.cache_data(ttl=60 * 60)  # cache for 1 hour
 def _fetch_imprint_html(url: str) -> str:

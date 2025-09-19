@@ -9,8 +9,8 @@ Here we just have the Welcome page, with a short description of the tabs, and so
 from __future__ import annotations
 import base64
 import streamlit as st
-# from plotting.plot_utils import current_bg_color
-from utils.app_utils import footer, clickable_image, set_mypage_config
+
+from src.utils.app_utils import footer, clickable_image, set_mypage_config
 
 # ========================
 # 💅 UI Configuration
@@ -50,7 +50,7 @@ st.markdown(
     "results, please consider submitting your article. Click the button below to submit a new article for "
     "review:"
     )
-st.page_link(label="Submit New Article", page="pages/3_Submit_New_Article.py", icon="🆕")
+st.page_link(label="Submit New Article", page="src/pages/3_Submit_New_Article.py", icon="🆕")
 
 st.subheader("Paper")
 st.markdown(
@@ -93,42 +93,39 @@ st.markdown(
     )
 
 st.subheader("Funding and Support")
-SPONSORS = [
-    {
-        "name": "Applied Neurocognitive Systems",
-        "path": "./assets/logos/ANS_dark.svg" if st.get_option("theme.base") == "dark" else  "./assets/logos/ANS.svg",
-        "url": "https://linktr.ee/ans_iao",
-        "alt": "Applied Neurocognitive Systems",
-        },
-    {
-        "name": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
-        "path": "./assets/logos/IAT_de_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/IAT_de.svg",
-        "url": "https://www.iat.uni-stuttgart.de/",
-        "alt": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
-        },
-    {
-        "name": "Fraunhofer IAO",
-        "path": "./assets/logos/FraunhoferIAO_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/FraunhoferIAO.svg",
-        "url": "https://www.iao.fraunhofer.de/",
-        "alt": "Fraunhofer IAO",
-        },
-    {
-        "name": "Radboud University",
-        "path": "./assets/logos/radboud_dark.svg" if st.get_option("theme.base") == "dark" else
-        "./assets/logos/radboud.svg",
-        "url": "https://www.ru.nl/en",
-        "alt": "Radboud University",
-        },
-    {
-        "name": "TNO",
-        "path": "./assets/logos/tno_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/tno.svg",
-        "url": "https://www.tno.nl/",
-        "alt": "TNO",
-        },
-    ]
+SPONSORS = [{
+    "name": "Applied Neurocognitive Systems",
+    "path": "./assets/logos/ANS_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/ANS.svg",
+    "url": "https://linktr.ee/ans_iao",
+    "alt": "Applied Neurocognitive Systems",
+    }, {
+    "name": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
+    "path": "./assets/logos/IAT_de_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/IAT_de.svg",
+    "url": "https://www.iat.uni-stuttgart.de/",
+    "alt": "Institut für Arbeitswissenschaft und Technologiemanagement (IAT)",
+    }, {
+    "name": "Fraunhofer IAO",
+    "path": "./assets/logos/FraunhoferIAO_dark.svg" if st.get_option(
+        "theme.base"
+        ) == "dark" else "./assets/logos/FraunhoferIAO.svg",
+    "url": "https://www.iao.fraunhofer.de/",
+    "alt": "Fraunhofer IAO",
+    }, {
+    "name": "Radboud University",
+    "path": "./assets/logos/radboud_dark.svg" if st.get_option(
+        "theme.base"
+        ) == "dark" else "./assets/logos/radboud.svg",
+    "url": "https://www.ru.nl/en",
+    "alt": "Radboud University",
+    }, {
+    "name": "TNO",
+    "path": "./assets/logos/tno_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/tno.svg",
+    "url": "https://www.tno.nl/",
+    "alt": "TNO",
+    }, ]
 
 cols_per_row = 5  # tweak to taste
-rows = [SPONSORS[i:i+cols_per_row] for i in range(0, len(SPONSORS), cols_per_row)]
+rows = [SPONSORS[i:i + cols_per_row] for i in range(0, len(SPONSORS), cols_per_row)]
 
 for row in rows:
     cols = st.columns(len(row), gap="large")
@@ -141,8 +138,6 @@ st.markdown(
       .stMarkdown a img { transition: transform .1s ease-in-out; }
       .stMarkdown a:hover img { transform: scale(1.03); }
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+    """, unsafe_allow_html=True, )
 
 footer()

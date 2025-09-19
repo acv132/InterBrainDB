@@ -2,7 +2,7 @@
 # 📦 Imports & Setup
 # ========================
 import streamlit as st
-from utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_privacy_policy, set_mypage_config, footer
+from src.utils.app_utils import render_fraunhofer_impressum, render_fraunhofer_privacy_policy, set_mypage_config, footer
 
 # ========================
 # 💅 UI Configuration

@@ -15,15 +15,14 @@ try:
 except Exception:
     pass
 
-from utils.config import file, data_dir
-from utils.data_loader import (load_database, create_article_handle, generate_bibtex_content, generate_apa7_latex_table,
-                               normalize_cell, generate_excel_table, flatten_cell, create_tab_header,
-                               generate_bibtexid, generate_csv_table, custom_column_picker)
-from utils.app_utils import footer, set_mypage_config
-from plotting.figures import (generate_interaction_figure, generate_2d_cluster_plot,
-                                 generate_category_counts_figure, \
-    plot_publications_over_time)
-from plotting.plot_utils import export_all_category_counts
+from src.utils.config import file, data_dir
+from src.utils.data_loader import (load_database, create_article_handle, generate_bibtex_content,
+                                   generate_apa7_latex_table, normalize_cell, generate_excel_table, flatten_cell,
+                                   create_tab_header, generate_bibtexid, generate_csv_table, custom_column_picker)
+from src.utils.app_utils import footer, set_mypage_config
+from src.plotting.figures import (generate_interaction_figure, generate_2d_cluster_plot,
+                                  generate_category_counts_figure, plot_publications_over_time)
+from src.plotting.plot_utils import export_all_category_counts
 
 # ========================
 # 💅 UI Configuration
@@ -44,8 +43,8 @@ st.markdown(
 # ========================
 # 🗂️ Tabs
 # ========================
-data_overview_tab, data_plots_tab, test_plots_tab = st.tabs(
-    ["📋 Data Overview", "📈 Plots", "🔬 Test Plots", ]
+data_overview_tab, data_plots_tab = st.tabs(
+    ["📋 Data Overview", "📈 Plots", ]
     )
 
 # ========================
@@ -56,7 +55,7 @@ df = generate_bibtexid(df)
 
 # Create display-ready dataframe
 display_df = df.copy().drop(
-    columns=['exclusion_reasons' ]
+    columns=['exclusion_reasons']
     )
 
 # Apply flattening to the entire DataFrame
@@ -145,7 +144,7 @@ with st.sidebar:
         st.markdown(f"**{category.capitalize()}**", help=tooltip_text)
         col1, col2 = st.columns([1, 4], vertical_alignment="top", gap="small")
         with col1:
-            if st.button("",icon=":material/checklist_rtl:", key=f"{category}_selectall"):
+            if st.button("", icon=":material/checklist_rtl:", key=f"{category}_selectall"):
                 st.session_state[multi_key] = all_labels
 
         with col2:
@@ -168,7 +167,7 @@ with st.sidebar:
     article_multiselect_key = "article_select"
     col1, col2 = st.columns([1, 4], vertical_alignment="top", gap="small")
     with col1:
-        if st.button("",icon=":material/checklist_rtl:", key=f"article_selectall"):
+        if st.button("", icon=":material/checklist_rtl:", key=f"article_selectall"):
             st.session_state[article_multiselect_key] = article_options
 
     with col2:
@@ -182,8 +181,7 @@ with st.sidebar:
             default=article_defaults,
             key=article_multiselect_key,
             label_visibility="collapsed",
-            placeholder="Choose an article",
-            )
+            placeholder="Choose an article", )
 
 # ========================
 # 🔍 Apply Filters
@@ -230,8 +228,7 @@ with data_overview_tab:
     view_option = st.radio(
         "Select view mode:",
         options=["Default", "Participants", "Paradigm", "Measurement & Analysis", "All Columns", "Custom"],
-        horizontal=True,
-        )
+        horizontal=True, )
 
     # Available columns (note: 'article' is your index)
     available_cols = list(display_df.columns)
@@ -249,7 +246,7 @@ with data_overview_tab:
         }
     # Custom column picker (preserve selection in session_state)
     if view_option == "Custom":
-        column_order= custom_column_picker(available_cols)
+        column_order = custom_column_picker(available_cols)
     else:
         column_order = view_configs.get(view_option, view_configs["Default"])
 
@@ -285,11 +282,7 @@ with data_overview_tab:
         )
     csv_table = generate_csv_table(export_df)
     st.download_button(
-        "📥 Download CSV",
-        data=csv_table,
-        file_name="CSVExportReferences.csv",
-        mime="text/csv",
-        )
+        "📥 Download CSV", data=csv_table, file_name="CSVExportReferences.csv", mime="text/csv", )
     excel_table = generate_excel_table(export_df)
     st.download_button(
         "📥 Download Excel Table",
@@ -337,8 +330,12 @@ with (data_plots_tab):
                     #     count_mode="auto",  # bars -> study-weighted, lines -> raw (default)
                     #     )
                     comps = plot_publications_over_time(
-                        display_df, selected_category, label_tooltips=label_tooltips, container=st,
-                        count_mode="auto", return_components=True
+                        display_df,
+                        selected_category,
+                        label_tooltips=label_tooltips,
+                        container=st,
+                        count_mode="auto",
+                        return_components=True
                         )
                     if comps and comps["chart"] is not None:
                         st.altair_chart(comps["chart"], use_container_width=True)

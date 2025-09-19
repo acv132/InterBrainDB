@@ -23,8 +23,8 @@ from matplotlib.path import Path
 from plotly import express as px
 from sklearn.preprocessing import LabelEncoder
 
-from utils.config import ColorMap
-from plotting.plot_utils import *
+from src.utils.config import ColorMap
+from src.plotting.plot_utils import *
 
 _lock = RLock()
 
@@ -372,7 +372,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
         for i, scenario in enumerate(scenario_order):
             for j, manipulation in enumerate(manipulation_order):
                 cell_counts = cross_section_counts[(cross_section_counts['interaction scenario'] == scenario) & (
-                            cross_section_counts['interaction manipulation'] == manipulation)]
+                        cross_section_counts['interaction manipulation'] == manipulation)]
                 modality_counts = dict(zip(cell_counts['measurement modality'], cell_counts['count']))
 
                 if modality_counts:
@@ -516,13 +516,12 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
         y_top = y_positions[0]
         y_low = y_positions[-1]
         if len(filtered_modality_handles) == len(filtered_area_handle):
-            y_mid = y_positions[len(y_positions) //2]
+            y_mid = y_positions[len(y_positions) // 2]
         else:
             # take middle value between last modality and y_positions[-1]
-            bottom_line_modality = y_positions[len(filtered_modality_handles)-1]
-            top_line_area = y_positions[-len(filtered_style_handles)- len(filtered_area_handle)]
+            bottom_line_modality = y_positions[len(filtered_modality_handles) - 1]
+            top_line_area = y_positions[-len(filtered_style_handles) - len(filtered_area_handle)]
             y_mid = (bottom_line_modality + top_line_area) / 2.0
-
 
         # Modality Legend (Fixed at top)
         mod_legend = ax.legend(

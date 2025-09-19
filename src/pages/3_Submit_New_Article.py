@@ -10,9 +10,9 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from utils.config import data_dir, file
-from utils.app_utils import footer, set_mypage_config
-from utils.data_loader import load_database, validate_doi, generate_bibtexid
+from src.utils.config import data_dir, file
+from src.utils.app_utils import footer, set_mypage_config
+from src.utils.data_loader import load_database, validate_doi, generate_bibtexid
 
 # ========================
 # 💅 UI Configuration
@@ -320,8 +320,7 @@ with col2:
                     year_col="year",
                     title_col="title",
                     out_col="BibTexID",
-                    inplace=True,
-                    )
+                    inplace=True, )
 
                 # Pull the BibTexID for the newly added row (last row)
                 bib_id = combined.iloc[-1]["BibTexID"]

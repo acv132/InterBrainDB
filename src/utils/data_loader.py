@@ -10,13 +10,12 @@ import requests
 import streamlit as st
 import tabulate
 
-
-
 import re
 import unicodedata
 from typing import Iterable, Optional
 
 import pandas as pd
+
 
 def create_article_handle(row):
     author_snippet = row['author'].replace(",", "").split(" ")
@@ -232,17 +231,16 @@ def create_tab_header(df, display_df):
 
 
 def generate_bibtexid(
-    df: pd.DataFrame,
-    *,
-    author_col: str = "author",
-    year_col: str = "year",
-    title_col: str = "title",
-    out_col: str = "BibTexID",
-    min_title_len: int = 12,
-    max_title_len: int = 40,
-    prefer_ascii: bool = True,
-    inplace: bool = True,
-) -> pd.DataFrame | pd.Series:
+        df: pd.DataFrame,
+        *,
+        author_col: str = "author",
+        year_col: str = "year",
+        title_col: str = "title",
+        out_col: str = "BibTexID",
+        min_title_len: int = 12,
+        max_title_len: int = 40,
+        prefer_ascii: bool = True,
+        inplace: bool = True, ) -> pd.DataFrame | pd.Series:
     """
     Create unique BibTeX-like IDs from author, year, and title.
 
@@ -421,9 +419,9 @@ def custom_column_picker(available_cols) -> list:
     preselected = st.session_state.get(custom_key, available_cols)
 
     # Small helper row
-    col_1, col_2 = st.columns([1,19,], vertical_alignment="center")
+    col_1, col_2 = st.columns([1, 19, ], vertical_alignment="center")
     with col_1:
-        if st.button("",icon=":material/checklist_rtl:"):
+        if st.button("", icon=":material/checklist_rtl:"):
             st.session_state[custom_key] = available_cols
             custom_cols = available_cols
     with col_2:
@@ -432,8 +430,7 @@ def custom_column_picker(available_cols) -> list:
             options=available_cols,
             default=[c for c in preselected if c in available_cols],
             key=custom_key,
-            placeholder="Select columns…",
-            )
+            placeholder="Select columns…", )
     # Fallback if user clears everything
     if not custom_cols:
         st.info("No columns selected. Showing all columns for now.")
