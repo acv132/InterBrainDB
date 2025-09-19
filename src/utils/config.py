@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 load_dotenv()
-data_dir = Path(os.getenv('data_dir'))
-file = os.getenv('file')
+data_dir = Path(os.getenv("data"))
+file = "database.csv"
 
 # plots and visuals
 # ColorMap = ['#00928f', '#00567c', '#6d90a0', '#38b6c0', '#728128', '#bad23c', '#81c5cb', '#19bdff', '#bcbec0', ]
