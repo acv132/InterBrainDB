@@ -16,7 +16,7 @@ from utils.app_utils import footer, clickable_image, set_mypage_config
 # 💅 UI Configuration
 # ========================
 set_mypage_config()
-st.title("📚 Living Literature Review on Digital Hyperscanning")
+st.title("📚 InterBrainDB - The Living Literature Review Database on Hyperscanning")
 st.subheader("Welcome to the Living Literature Review")
 st.markdown(
     """
