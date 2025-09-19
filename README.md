@@ -25,7 +25,7 @@ If you use this resource, please consider citing our paper.
 ## Hosting the App Locally
 1. Clone the repository
 ```bash
-git clone gitlink_to_your_repo.git
+git clone https://github.com/acv132/InterBrainDB
 ```
 2. Install dependencies
 ```bash
