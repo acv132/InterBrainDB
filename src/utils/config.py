@@ -1,9 +1,6 @@
-import os
-from dotenv import load_dotenv
 from pathlib import Path
 
-load_dotenv()
-data_dir = Path(os.getenv("data"))
+data_dir = Path("data")
 file = "database.csv"
 
 # plots and visuals
