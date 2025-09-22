@@ -399,7 +399,7 @@ with (data_plots_tab):
                     st.image(buf, use_container_width=True)
                 st.markdown(
                     f"""
-                *Note*. The cross-sectional distribution all {condition_count} hyperscanning conditions of 
+                *Note*. The cross-sectional distribution of all {condition_count} hyperscanning conditions of 
                 {number_studies} studies across interaction manipulation and interaction scenario axes. The 
                 numbers provide the counted occurrences of the combination of an interaction manipulation and 
                 scenario (n = {connection_df['count'].sum()} simultaneous condition occurences). The colors 
