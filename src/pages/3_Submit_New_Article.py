@@ -47,12 +47,11 @@ with open("./data/info_yamls/category_descriptions.yaml", 'r') as f:
     category_tooltips = yaml.safe_load(f)
 
 # === Load or Initialize Submission Data ===
-submission_file_name = "submitted_articles"
-submission_file = os.path.join(data_dir, "%s.csv" % submission_file_name)
+submission_file_name = "submitted_articles.csv"
 if "submitted_df" not in st.session_state:
-    if os.path.exists(submission_file):
+    try:
         st.session_state.submitted_df = load_database(data_dir, submission_file_name)
-    else:
+    except FileNotFoundError:
         st.session_state.submitted_df = pd.DataFrame()
 
 submitted_df = st.session_state.submitted_df
@@ -258,6 +257,8 @@ with col2:
             if missing_fields:
                 st.error(f"❗Please fill in the required fields: {', '.join(missing_fields)}")
             else:
+                authors = authors.replace('\n', ' ').replace(";", " and ").replace("  ", " ")
+                # Create new entry dictionary
                 new_entry = {
                     "doi": doi,
                     "authors": authors,
@@ -272,7 +273,7 @@ with col2:
                 # Replace ; in entry to avoid errors during df extension
                 for key in new_entry.keys():
                     if isinstance(new_entry[key], str):
-                        new_entry[key].replace(";", " and")
+                        new_entry[key].replace(";", ",")
                 # Normalize for comparison
                 new_doi = new_entry["doi"].strip().lower()
 
@@ -313,7 +314,8 @@ with col2:
                     new_row["BibTexID"] = bib_id
                     submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
                     st.session_state.submitted_df = submitted_df  # persist in session
-                    submitted_df.to_csv(submission_file, index=False, sep=";", encoding="utf-8")
+                    submitted_df.to_csv(os.path.join(data_dir, submission_file_name), index=False, sep=";",
+                                        encoding="utf-8")
 
                     st.success("✅ Article suggestion submitted successfully!")
                     st.balloons()
