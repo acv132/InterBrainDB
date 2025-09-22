@@ -184,3 +184,5 @@ cython_debug/
 # Project-specific ignores
 database.csv
 database.xlsx
+submitted_articles.csv
+submitted_articles.xlsx
