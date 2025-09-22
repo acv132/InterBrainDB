@@ -2,10 +2,10 @@
 # InterBrainDB - Living Literature Review Database on Hyperscanning
 
 ## Purpose
-This repository is dedicated to hosting a living literature review tracks emerging research on multimodal hyperscanning in contexts with a digital 
-component. The platform includes various categories, such as interaction scenario, type of tasks, measurement 
+This repository is dedicated to hosting a living literature review tracking emerging research on multimodal 
+hyperscanning in contexts with a digital component. The platform includes various categories, such as interaction scenario, type of tasks, measurement 
 modalities, and analysis approaches, serving as a dynamic open-access resource. 
-The aim is to provide a comprehensive overview of the current state of digital hyperscanning research, 
+The aim is to provide a comprehensive overview of the current state of hyperscanning research, 
 enabling researchers to stay informed about the latest developments in the field.
 
 The code is based on the [streamlit](https://streamlit.io/) library.
