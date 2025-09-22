@@ -20,12 +20,16 @@ st.title("📚 InterBrainDB")
 st.subheader("Welcome to the Living Literature Review Database on Hyperscanning")
 st.markdown(
     """
-    This tool is designed to visualize up-to-date research body related to hyperscanning with digital components by:
+    This tool is designed to visualize up-to-date research body related to hyperscanning. The following features are 
+    included:
     
-    - **Displaying included studies** and their characteristics.
-    - **Visualizing trends** and (subjective) categorization.
-    - Integrating **user-submitted studies**.
-    - Providing **transparent inclusion/exclusion** overviews related to the original paper.
+    - **Displaying studies:** An overview of included studies can be found in table format and descriptive 
+    information is visualized, including filters for specific searches.
+    - **Categorization:** Studies are categorized based on population, design, analyses, and outcomes to derive 
+    clusters and shared traits.
+    - **Submission system:** Further studies may be submitted by the community.
+    - **Replication of original review:** An overview of studies included in the original review paper is provided to 
+    replicate reported findings and extend analyses with updated versions of the database.
     
     ---
     """
@@ -39,15 +43,15 @@ st.markdown(
     modalities, and analysis approaches, serving as a dynamic open-access resource. 
     The aim is to provide a comprehensive overview of the current state of digital hyperscanning research, 
     enabling researchers to stay informed about the latest developments in the field.
-    Eventually, the platform will also include hyperscanning studies that do not involve a digital component, as well as 
-    extending the scope to include other population groups, such as children or clinical populations.
+    Eventually, the platform will also include additional tags, e.g., “open-source dataset available” and the 
+    scope will be extended to include further categories, such as studies with under-aged or clinical populations.
     """
     )
 
 st.subheader("Adding New Articles")
 st.markdown(
     "A living review means a growing database. Therefore, if we either missed a paper or you published "
-    "results, please consider submitting your article. Click the button below to submit a new article for "
+    "new results, please consider submitting your article. Click the button below to submit a new article for "
     "review:"
     )
 st.page_link(label="Submit New Article", page="src/pages/3_Submit_New_Article.py", icon="🆕")
