@@ -20,7 +20,8 @@ from src.utils.data_loader import (load_database, create_article_handle, generat
                                    generate_apa7_latex_table, normalize_cell, generate_excel_table, flatten_cell,
                                    create_tab_header, generate_bibtexid, generate_csv_table, custom_column_picker)
 from src.utils.app_utils import footer, set_mypage_config
-from src.plotting.figures import (generate_interaction_figure, generate_category_counts_figure, plot_publications_over_time)
+from src.plotting.figures import (generate_interaction_figure, generate_category_counts_figure,
+                                  plot_publications_over_time)
 from src.plotting.plot_utils import export_all_category_counts
 
 # ========================
@@ -321,13 +322,6 @@ with (data_plots_tab):
 
                 else:
                     # Group by year and selected category, count publications
-                    # plot_publications_over_time(
-                    #     display_df,
-                    #     None if selected_category == "None" else selected_category,
-                    #     label_tooltips=label_tooltips,
-                    #     container=st,
-                    #     count_mode="auto",  # bars -> study-weighted, lines -> raw (default)
-                    #     )
                     comps = plot_publications_over_time(
                         display_df,
                         selected_category,
@@ -376,9 +370,6 @@ with (data_plots_tab):
             # > Interaction figure
             col3, col4 = st.columns([1, 1])
             with col3:
-
-                # result = generate_interaction_figure(display_df, data_plots_tab)
-
                 st.subheader("Interaction Conditions")
                 combine_modalities = st.checkbox(
                     "Combine across modalities",

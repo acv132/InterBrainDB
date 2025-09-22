@@ -301,7 +301,7 @@ with col2:
 
                     # Use the robust generator (assumes it's defined/imported above)
                     combined = generate_bibtexid(
-                        combined,
+                        df=combined,
                         author_col="authors",
                         year_col="year",
                         title_col="title",
