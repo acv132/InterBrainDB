@@ -134,9 +134,10 @@ def footer():
         ), br(), link(
         "https://dsi-generator.fraunhofer.de/impressum/impressum_view/en/ff3d5595-4141-4548-9b79-40cb3bb71a91/",
         "Imprint"
-        ), " | ",
-        link("https://dsi-generator.fraunhofer.de/dsi/view/en/ff12fb5e-3c20-4155-b7e6-7fdaf82ee9d5/", "Privacy Policy"),
-        br(), ]
+        ), " | ", link(
+        "https://dsi-generator.fraunhofer.de/dsi/view/en/ff12fb5e-3c20-4155-b7e6-7fdaf82ee9d5/",
+        "Privacy Policy"
+        ), br(), ]
     layout(*myargs)
 
 

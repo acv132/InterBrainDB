@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import ast
 import io
 import os
@@ -9,12 +10,7 @@ import pandas as pd
 import requests
 import streamlit as st
 import tabulate
-
-import re
 import unicodedata
-from typing import Iterable, Optional
-
-import pandas as pd
 
 
 def create_article_handle(row):
@@ -33,11 +29,12 @@ def create_article_handle(row):
 def load_database(data_dir, file):
     # load data
     if file.endswith(".csv"):
-        return pd.read_csv(os.path.join(data_dir, file), sep=";", keep_default_na=False)
-    elif file.endswith(".xlsx"):
-        return pd.read_excel(os.path.join(data_dir, file), keep_default_na=False)
+        df = pd.read_csv(os.path.join(data_dir, file), sep=";", keep_default_na=False)
+        return df
+    # elif file.endswith(".xlsx"):
+    #     return pd.read_excel(os.path.join(data_dir, file), keep_default_na=False)
     else:
-        raise ValueError("Unsupported file format. Please use either .csv or .xlsx.")
+        raise ValueError("Unsupported file format. Please use either .csv.")
 
 
 def generate_bibtex_content(df: pd.DataFrame) -> str:
@@ -52,32 +49,32 @@ def generate_bibtex_content(df: pd.DataFrame) -> str:
     return output.getvalue()
 
 
-def extract_unique_tags(series):
-    """Split comma-separated strings into a flat unique list."""
-    tags = set()
-    for entry in series.dropna():
-        if isinstance(entry, str):
-            if entry.startswith("[") and entry.endswith("]"):
-                # Handle lists stored as strings like "['EEG', 'ECG']"
-                entry = ast.literal_eval(entry)
-            else:
-                entry = [tag.strip() for tag in entry.split(",")]
-            tags.update(entry)
-    return sorted(tags)
+# def extract_unique_tags(series):
+#     """Split comma-separated strings into a flat unique list."""
+#     tags = set()
+#     for entry in series.dropna():
+#         if isinstance(entry, str):
+#             if entry.startswith("[") and entry.endswith("]"):
+#                 # Handle lists stored as strings like "['EEG', 'ECG']"
+#                 entry = ast.literal_eval(entry)
+#             else:
+#                 entry = [tag.strip() for tag in entry.split(",")]
+#             tags.update(entry)
+#     return sorted(tags)
 
 
-def matches_any_tag(row_val, selected):
-    """Returns True if any selected tag is in the row's list of tags."""
-    if pd.isna(row_val):
-        return False
-    if isinstance(row_val, str):
-        if row_val.startswith("[") and row_val.endswith("]"):
-            tags = ast.literal_eval(row_val)
-        else:
-            tags = [t.strip() for t in row_val.split(",")]
-    else:
-        tags = [row_val]
-    return any(tag in tags for tag in selected)
+# def matches_any_tag(row_val, selected):
+#     """Returns True if any selected tag is in the row's list of tags."""
+#     if pd.isna(row_val):
+#         return False
+#     if isinstance(row_val, str):
+#         if row_val.startswith("[") and row_val.endswith("]"):
+#             tags = ast.literal_eval(row_val)
+#         else:
+#             tags = [t.strip() for t in row_val.split(",")]
+#     else:
+#         tags = [row_val]
+#     return any(tag in tags for tag in selected)
 
 
 def generate_apa7_latex_table(df):
@@ -150,69 +147,69 @@ def flatten_cell(x):
     return x
 
 
-def hedges_g_between(groups, apply_correction=True):
-    """
-    Compute Hedges' g from any number of groups.
+# def hedges_g_between(groups, apply_correction=True):
+#     """
+#     Compute Hedges' g from any number of groups.
+#
+#     Parameters:
+#     - groups: list of tuples (mean, std, n)
+#     - apply_correction: whether to apply small sample correction (default: True)
+#
+#     Returns:
+#     - g: Hedges' g (standardized mean difference between first two groups)
+#     - s_pooled: pooled standard deviation
+#     """
+#
+#     if len(groups) < 2:
+#         raise ValueError("At least two groups are needed to compute Hedges' g.")
+#
+#     # Extract values
+#     means = [m for m, s, n in groups]
+#     variances = [(n - 1) * (s ** 2) for m, s, n in groups]
+#     total_df = sum(n - 1 for _, _, n in groups)
+#
+#     # Compute pooled standard deviation
+#     s_pooled = np.sqrt(sum(variances) / total_df)
+#
+#     # Difference between first two means
+#     mean_diff = means[0] - means[1]
+#
+#     # Raw Hedges' g
+#     g = mean_diff / s_pooled
+#
+#     if apply_correction:
+#         N_total = sum(n for _, _, n in groups)
+#         correction = 1 - (3 / (4 * N_total - 9)) if N_total > 9 else 1
+#         g *= correction
+#
+#     return g, s_pooled
 
-    Parameters:
-    - groups: list of tuples (mean, std, n)
-    - apply_correction: whether to apply small sample correction (default: True)
 
-    Returns:
-    - g: Hedges' g (standardized mean difference between first two groups)
-    - s_pooled: pooled standard deviation
-    """
-
-    if len(groups) < 2:
-        raise ValueError("At least two groups are needed to compute Hedges' g.")
-
-    # Extract values
-    means = [m for m, s, n in groups]
-    variances = [(n - 1) * (s ** 2) for m, s, n in groups]
-    total_df = sum(n - 1 for _, _, n in groups)
-
-    # Compute pooled standard deviation
-    s_pooled = np.sqrt(sum(variances) / total_df)
-
-    # Difference between first two means
-    mean_diff = means[0] - means[1]
-
-    # Raw Hedges' g
-    g = mean_diff / s_pooled
-
-    if apply_correction:
-        N_total = sum(n for _, _, n in groups)
-        correction = 1 - (3 / (4 * N_total - 9)) if N_total > 9 else 1
-        g *= correction
-
-    return g, s_pooled
-
-
-def hedges_g_within(subject_diffs, apply_correction=True):
-    """
-    Computes Hedges' g for within-subjects (paired) designs.
-
-    Parameters:
-    - subject_diffs: array-like of difference scores (Condition A - Condition B)
-    - apply_correction: apply small-sample correction (default True)
-
-    Returns:
-    - g_z: bias-corrected standardized mean difference
-    - d_z: raw effect size (Cohen's d_z)
-    """
-    diffs = np.asarray(subject_diffs)
-    M_D = np.mean(diffs)
-    SD_D = np.std(diffs, ddof=1)
-    d_z = M_D / SD_D
-
-    n = len(diffs)
-    if apply_correction:
-        correction = 1 - (3 / (4 * n - 1))
-        g_z = d_z * correction
-    else:
-        g_z = d_z
-
-    return g_z, d_z
+# def hedges_g_within(subject_diffs, apply_correction=True):
+#     """
+#     Computes Hedges' g for within-subjects (paired) designs.
+#
+#     Parameters:
+#     - subject_diffs: array-like of difference scores (Condition A - Condition B)
+#     - apply_correction: apply small-sample correction (default True)
+#
+#     Returns:
+#     - g_z: bias-corrected standardized mean difference
+#     - d_z: raw effect size (Cohen's d_z)
+#     """
+#     diffs = np.asarray(subject_diffs)
+#     M_D = np.mean(diffs)
+#     SD_D = np.std(diffs, ddof=1)
+#     d_z = M_D / SD_D
+#
+#     n = len(diffs)
+#     if apply_correction:
+#         correction = 1 - (3 / (4 * n - 1))
+#         g_z = d_z * correction
+#     else:
+#         g_z = d_z
+#
+#     return g_z, d_z
 
 
 def create_tab_header(df, display_df):

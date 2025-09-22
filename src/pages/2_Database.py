@@ -20,8 +20,7 @@ from src.utils.data_loader import (load_database, create_article_handle, generat
                                    generate_apa7_latex_table, normalize_cell, generate_excel_table, flatten_cell,
                                    create_tab_header, generate_bibtexid, generate_csv_table, custom_column_picker)
 from src.utils.app_utils import footer, set_mypage_config
-from src.plotting.figures import (generate_interaction_figure, generate_2d_cluster_plot,
-                                  generate_category_counts_figure, plot_publications_over_time)
+from src.plotting.figures import (generate_interaction_figure, generate_category_counts_figure, plot_publications_over_time)
 from src.plotting.plot_utils import export_all_category_counts
 
 # ========================

@@ -7,7 +7,9 @@ Here we just have the Welcome page, with a short description of the tabs, and so
 # 📦 Imports & Setup
 # ========================
 from __future__ import annotations
+
 import base64
+
 import streamlit as st
 
 from src.utils.app_utils import footer, clickable_image, set_mypage_config
@@ -115,12 +117,9 @@ SPONSORS = [{
     "url": "https://www.iao.fraunhofer.de/",
     "alt": "Fraunhofer IAO",
     }, {
-    "name": "Radboud University",
-    "path": "./assets/logos/radboud_dark.svg" if st.get_option(
+    "name": "Radboud University", "path": "./assets/logos/radboud_dark.svg" if st.get_option(
         "theme.base"
-        ) == "dark" else "./assets/logos/radboud.svg",
-    "url": "https://www.ru.nl/en",
-    "alt": "Radboud University",
+        ) == "dark" else "./assets/logos/radboud.svg", "url": "https://www.ru.nl/en", "alt": "Radboud University",
     }, {
     "name": "TNO",
     "path": "./assets/logos/tno_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/tno.svg",

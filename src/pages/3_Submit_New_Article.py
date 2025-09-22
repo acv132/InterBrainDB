@@ -2,7 +2,6 @@
 # 📦 Imports & Setup
 # ========================
 import os
-import re
 from datetime import datetime
 
 import bibtexparser
@@ -10,8 +9,8 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from src.utils.config import data_dir, file
 from src.utils.app_utils import footer, set_mypage_config
+from src.utils.config import data_dir, file
 from src.utils.data_loader import load_database, validate_doi, generate_bibtexid
 
 # ========================
@@ -314,8 +313,9 @@ with col2:
                     new_row["BibTexID"] = bib_id
                     submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
                     st.session_state.submitted_df = submitted_df  # persist in session
-                    submitted_df.to_csv(os.path.join(data_dir, submission_file_name), index=False, sep=";",
-                                        encoding="utf-8")
+                    submitted_df.to_csv(
+                        os.path.join(data_dir, submission_file_name), index=False, sep=";", encoding="utf-8"
+                        )
 
                     st.success("✅ Article suggestion submitted successfully!")
                     st.balloons()
