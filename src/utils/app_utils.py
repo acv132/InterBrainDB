@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import re
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -16,7 +17,6 @@ def set_mypage_config():
     st.set_page_config(
         page_title="InterBrainDB - Living Literature Review", page_icon='assets/favicon.ico', layout="wide"
         )
-    # fixme light mode does not display markdown correctly
     ms = st.session_state
     if "themes" not in ms:
         ms.themes = {
@@ -141,13 +141,37 @@ def footer():
     layout(*myargs)
 
 
-@st.cache_data(ttl=60 * 60)  # cache for 1 hour
+@st.cache_data(ttl=0)  # cache for 1 hour
 def _fetch_imprint_html(url: str) -> str:
     # Fetch with a friendly UA; some servers block default python user agents
     headers = {"User-Agent": "Mozilla/5.0 (Streamlit-Impressum/1.0)"}
     r = requests.get(url, headers=headers, timeout=20)
     r.raise_for_status()
-    return r.text
+    # return r.text
+    html = r.text
+
+    # CSS style to enforce font
+    color = st.get_option("theme.textColor")
+    style_block = (
+        '<style>body { '
+        'font-family: "Source Sans Pro", sans-serif; '
+        'line-height: 1.6;'
+        ' color: ' + color +
+        '}</style>'
+    )
+
+    # Try to insert inside <head>, otherwise prepend
+    if re.search(r"<head.*?>", html, flags=re.IGNORECASE | re.DOTALL):
+        html = re.sub(
+            r"(<head.*?>)",
+            r"\1\n" + style_block,
+            html,
+            count=1,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+    else:
+        html = style_block + html
+    return html
 
 
 def _absolutize_links(html: str, base_url: str) -> str:
