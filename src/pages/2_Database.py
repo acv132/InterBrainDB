@@ -54,9 +54,11 @@ df = load_database(data_dir, file)
 df = generate_bibtexid(df)
 
 # Create display-ready dataframe
-display_df = df.copy().drop(
-    columns=['exclusion_reasons']
-    )
+if "exclusion_reasons" in df.columns:
+    df = df.drop(
+        columns=['exclusion_reasons']
+        )
+display_df = df.copy()
 
 # Apply flattening to the entire DataFrame
 display_df = display_df.map(flatten_cell)
@@ -274,20 +276,20 @@ with data_overview_tab:
     # Export buttons
     bibtex_content = generate_bibtex_content(export_df)
     st.download_button(
-        "📥 Download BibTeX", data=bibtex_content, file_name="BibExportReferences.bib", mime="application/x-bibtex"
+        "📥 Download BibTeX", data=bibtex_content, file_name="database.bib", mime="application/x-bibtex"
         )
     latex_table = generate_apa7_latex_table(export_df)
     st.download_button(
-        "📥 Download APA7-Style LaTeX Table", data=latex_table, file_name="LatexExportReferences.tex", mime="text/plain"
+        "📥 Download APA7-Style LaTeX Table", data=latex_table, file_name="database.tex", mime="text/plain"
         )
     csv_table = generate_csv_table(export_df)
     st.download_button(
-        "📥 Download CSV", data=csv_table, file_name="CSVExportReferences.csv", mime="text/csv", )
+        "📥 Download CSV", data=csv_table, file_name="database.csv", mime="text/csv", )
     excel_table = generate_excel_table(export_df)
     st.download_button(
         "📥 Download Excel Table",
         data=excel_table,
-        file_name="ExcelExportReferences.xlsx",
+        file_name="database.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
