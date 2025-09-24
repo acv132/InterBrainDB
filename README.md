@@ -31,7 +31,7 @@ git clone https://github.com/acv132/InterBrainDB
 ```bash
 pip install -r requirements.txt
 ```
-4. Use the `Download CSV` button in the Database tab to download the latest version of the database as a CSV file. 
+4. Use the `Download CSV` button in the Database tab of the server-hosted version to download the latest version of the database as a CSV file. 
    Hint: select the radio button "All Columns" to get the full database and avoid errors.
 5. Copy the `database.csv` file into the `data` folder.
 6. Start the Streamlit app
