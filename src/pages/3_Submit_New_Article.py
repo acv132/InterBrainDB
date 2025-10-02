@@ -319,6 +319,17 @@ with col2:
 
                     st.success("✅ Article suggestion submitted successfully!")
                     st.balloons()
+                    # Reset input fields
+                    st.session_state["doi_input"] = ""
+                    st.session_state["title_input"] = ""
+                    st.session_state["authors_input"] = ""
+                    st.session_state["abstract_input"] = ""
+
+                    # If you have optional_inputs bound with session_state keys, reset them too:
+                    for key in optional_inputs.keys():
+                        if key in st.session_state:
+                            st.session_state[key] = ""
+
         except Exception as e:
             st.error(f"Error during submission: {e}")
 footer()
