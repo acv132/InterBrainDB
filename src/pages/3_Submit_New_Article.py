@@ -311,7 +311,16 @@ with col2:
                     # Pull the BibTexID for the newly added row (last row)
                     bib_id = combined.iloc[-1]["BibTexID"]
                     new_row["BibTexID"] = bib_id
+
                     submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
+                    # Move BibTexID to pos after abstract
+                    cols = submitted_df.columns.tolist()
+                    cols.remove("BibTexID")
+                    abstract_index = cols.index("Abstract")
+                    cols.insert(abstract_index + 1, "BibTexID")
+
+                    submitted_df = submitted_df[cols]
+
                     st.session_state.submitted_df = submitted_df  # persist in session
                     submitted_df.to_csv(
                         os.path.join(data_dir, submission_file_name), index=False, sep=";", encoding="utf-8"
