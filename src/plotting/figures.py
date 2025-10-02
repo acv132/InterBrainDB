@@ -159,40 +159,35 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
     # prepare data
     ###############
     prefix = "_"
-    df_orig = df.copy()
-    # check if df contains any non-default entries and skip those rows when generating the figure with a warning
-    non_default_rows = df[
-        ~df['interaction scenario'].apply(lambda x: all(s in default_scenario_order for s in ensure_list(x))) |
-        ~df['interaction manipulation'].apply(
+    df_raw = df.copy()
+
+    # detect rows to drop on the raw df
+    non_default_rows = df_raw[
+        ~df_raw['interaction scenario'].apply(lambda x: all(s in default_scenario_order for s in ensure_list(x))) | ~
+        df_raw['interaction manipulation'].apply(
             lambda x: all(m in default_manipulation_order for m in ensure_list(x))
-            ) |
-        ~df['measurement modality'].apply(
+            ) | ~df_raw['measurement modality'].apply(
             lambda x: all(m in default_modalities_order for m in ensure_list(x))
-            )
-        ]
+            )]
+
     if not non_default_rows.empty:
         tab.warning(
-            f"⚠️ Some studies contain non-default entries in interaction scenario, manipulation, or modality. "
-            f"These studies are skipped in the figure generation. Please check the data table for details."
+            f"⚠️ Some studies contain non-default entries in interaction scenario, manipulation, or modality. These studies are excluded from the figure. (DOIs: {', '.join(non_default_rows['doi'].unique())})"
             )
-        df = df.drop(non_default_rows.index)
+        df_work = df_raw.drop(non_default_rows.index)
+    else:
+        df_work = df_raw
 
-    df = decode_one_hot(df, prefix)
+    # df_orig = filtered, *unmodified* copy for grouping/metadata
+    df_orig = df_work.copy()
+
+    # df = filtered, *decoded* working copy for plotting
+    df = decode_one_hot(df_work, prefix)
     number_studies = len(df)
 
-    scenario_columns = [col for col in df.columns if col.startswith(f"interaction scenario{prefix}")]
-    manipulation_columns = [col for col in df.columns if col.startswith(f"interaction manipulation{prefix}")]
-    modality_columns = [col for col in df.columns if col.startswith(f"measurement modality{prefix}")]
-
-    df['interaction scenario'] = df[scenario_columns].apply(
-        lambda row: [col.replace(f"interaction scenario{prefix}", "") for col, val in row.items() if val], axis=1
-        )
-    df['interaction manipulation'] = df[manipulation_columns].apply(
-        lambda row: [col.replace(f"interaction manipulation{prefix}", "") for col, val in row.items() if val], axis=1
-        )
-    df['measurement modality'] = df[modality_columns].apply(
-        lambda row: [col.replace(f"measurement modality{prefix}", "") for col, val in row.items() if val], axis=1
-        )
+    scenario_columns = [c for c in df.columns if c.startswith(f"interaction scenario{prefix}")]
+    manipulation_columns = [c for c in df.columns if c.startswith(f"interaction manipulation{prefix}")]
+    modality_columns = [c for c in df.columns if c.startswith(f"measurement modality{prefix}")]
 
     ####################
     # Count conditions #
