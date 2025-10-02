@@ -160,6 +160,23 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
     ###############
     prefix = "_"
     df_orig = df.copy()
+    # check if df contains any non-default entries and skip those rows when generating the figure with a warning
+    non_default_rows = df_orig[
+        ~df_orig['interaction scenario'].apply(lambda x: all(s in default_scenario_order for s in ensure_list(x))) |
+        ~df_orig['interaction manipulation'].apply(
+            lambda x: all(m in default_manipulation_order for m in ensure_list(x))
+            ) |
+        ~df_orig['measurement modality'].apply(
+            lambda x: all(m in default_modalities_order for m in ensure_list(x))
+            )
+        ]
+    if not non_default_rows.empty:
+        tab.warning(
+            f"⚠️ Some studies contain non-default entries in interaction scenario, manipulation, or modality. "
+            f"These studies are skipped in the figure generation. Please check the data table for details."
+            )
+        df_orig = df_orig.drop(non_default_rows.index)
+
     df = decode_one_hot(df, prefix)
     number_studies = len(df)
 
