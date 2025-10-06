@@ -30,7 +30,7 @@ st.markdown(
 
 # Initialize session state defaults
 for key, default in {
-    'doi': '', 'year': datetime.now().year, 'authors': '', 'title': '', 'abstract': ''
+    'doi': '', 'year': datetime.now().year, 'authors': '', 'title': '',
     }.items():
     if key not in st.session_state:
         st.session_state[key] = default
@@ -80,9 +80,6 @@ with col2:
                 year = entry.get('year')
                 if year and year.isdigit():
                     st.session_state.year = int(year)
-                # Abstract
-                if 'abstract' in entry:
-                    st.session_state.abstract = entry.get('abstract')
                 st.success("✅ Parsed BibTeX and updated fields!")
             else:
                 st.error("No entries found in BibTeX input.")
@@ -115,9 +112,6 @@ with col1:
         )
     title = st.text_area(
         "Title", value=st.session_state.title, key='title'
-        )
-    abstract = st.text_area(
-        "Abstract", value=st.session_state.abstract, key='abstract'
         )
 
     # === Optional Categorizations ===
@@ -239,7 +233,7 @@ with col2:
         "The reviewers will then check the article and categorize it if necessary. "
         "If you have any questions, do not hesitate to contact us."
         )
-    if doi and title and authors and abstract:
+    if doi and title and authors:
         st.info("The required information is filled in. Click the button below to submit your article suggestion.")
     if st.button("📤 Submit Suggestion"):
         try:
@@ -250,8 +244,6 @@ with col2:
                 missing_fields.append("Title")
             if not authors:
                 missing_fields.append("Authors")
-            if not abstract:
-                missing_fields.append("Abstract")
 
             if missing_fields:
                 st.error(f"❗Please fill in the required fields: {', '.join(missing_fields)}")
@@ -263,7 +255,6 @@ with col2:
                     "authors": authors,
                     "year": year,
                     "title": title,
-                    "abstract": abstract,
                     "included in paper review": "False",
                     "exclusion_reasons": "submission after publication",
                     }
@@ -313,11 +304,11 @@ with col2:
                     new_row["BibTexID"] = bib_id
 
                     submitted_df = pd.concat([submitted_df, new_row], ignore_index=True)
-                    # Move BibTexID to pos after abstract
+                    # Move BibTexID to pos after title
                     cols = submitted_df.columns.tolist()
                     cols.remove("BibTexID")
-                    abstract_index = cols.index("Abstract")
-                    cols.insert(abstract_index + 1, "BibTexID")
+                    title_index = cols.index("title")
+                    cols.insert(title_index + 1, "BibTexID")
 
                     submitted_df = submitted_df[cols]
 
@@ -332,7 +323,6 @@ with col2:
                     st.session_state["doi_input"] = ""
                     st.session_state["title_input"] = ""
                     st.session_state["authors_input"] = ""
-                    st.session_state["abstract_input"] = ""
 
                     # If you have optional_inputs bound with session_state keys, reset them too:
                     for key in optional_inputs.keys():
