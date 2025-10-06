@@ -120,12 +120,8 @@ SPONSORS = [{
     "name": "Radboud University", "path": "./assets/logos/radboud_dark.svg" if st.get_option(
         "theme.base"
         ) == "dark" else "./assets/logos/radboud.svg", "url": "https://www.ru.nl/en", "alt": "Radboud University",
-    }, {
-    "name": "TNO",
-    "path": "./assets/logos/tno_dark.svg" if st.get_option("theme.base") == "dark" else "./assets/logos/tno.svg",
-    "url": "https://www.tno.nl/",
-    "alt": "TNO",
-    }, ]
+    },
+    ]
 
 cols_per_row = 5  # tweak to taste
 rows = [SPONSORS[i:i + cols_per_row] for i in range(0, len(SPONSORS), cols_per_row)]
