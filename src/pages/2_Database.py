@@ -51,6 +51,7 @@ data_overview_tab, data_plots_tab = st.tabs(
 # 📥 Load & Prepare Data
 # ========================
 df = load_database(data_dir, file)
+
 df = generate_bibtexid(df)
 
 # Create display-ready dataframe
@@ -64,6 +65,8 @@ display_df = df.copy()
 display_df = display_df.map(flatten_cell)
 
 display_df["article"] = df.apply(create_article_handle, axis=1)
+# sort display df alphabetically by article, then by year descending
+display_df = display_df.sort_values(by=["article", "year"], ascending=[True, False])
 display_df["DOI Link"] = "https://doi.org/" + df["doi"]
 display_df["sample size"] = df.apply(lambda row: f"N = {row['sample size']}", axis=1)
 display_df.set_index("article", inplace=True)
