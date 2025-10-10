@@ -326,8 +326,10 @@ with col2:
 
                     # If you have optional_inputs bound with session_state keys, reset them too:
                     for key in optional_inputs.keys():
-                        if key in st.session_state:
+                        if key in st.session_state and not key in ['sample_size']:
                             st.session_state[key] = ""
+                        if key in ['sample_size']:
+                            st.session_state[key] = None
 
         except Exception as e:
             st.error(f"Error during submission: {e}")
