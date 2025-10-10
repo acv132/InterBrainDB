@@ -219,6 +219,9 @@ for category, selected_labels in selected_filters.items():
         lambda x: any(tag in normalize_cell(x) for tag in selected_labels)
         )]
 
+if filtered_df.empty:
+    st.warning("No studies match the selected filters. Please adjust your filter settings.")
+
 # Update global display_df
 display_df = filtered_df
 
