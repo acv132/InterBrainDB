@@ -48,7 +48,7 @@ interaction scenario:
   BTB: Back-to-back
   FTF v-b: Face-to-face with visual barriers
   SBS v-b: Side-by-side with visual barriers
-  virtual: Interaction via a virtual environment
+  virtual: Interaction via a virtual divide or environment
 
 interaction manipulation:
   shared physical IM and verbal IM: Shared physical objects and verbal interaction
