@@ -1,6 +1,12 @@
-from collections import defaultdict
+import itertools
+from collections import defaultdict, Counter
 from itertools import combinations
 from threading import RLock
+from typing import List, Tuple
+
+import pandas as pd
+
+from src.plotting.plot_utils import _norm_list, _rgba, _norm_list_safe_str
 
 try:
     import altair as alt
@@ -87,7 +93,6 @@ def generate_category_counts_figure(df, tab):
                 if (counts > 0).sum() > 1:
                     st.markdown(f"**{cat}**")
                     # st.bar_chart(counts, horizontal=True, color=st.get_option('theme.primaryColor'))
-                    import altair as alt
                     chart_df = pd.DataFrame(
                         {
                             "label": counts.index, "count": counts.values
@@ -637,7 +642,6 @@ def plot_publications_over_time(
     # -- Resolve container --
     if container is None:
         try:
-            import streamlit as st
             container = st
         except Exception:
             class _Null:
@@ -785,3 +789,320 @@ def plot_publications_over_time(
         container.altair_chart(chart, use_container_width=True, key=key)
     except Exception:
         pass
+
+
+def generate_parallel_sets_figure_colored(
+        display_df: pd.DataFrame,
+        chosen_parset_cols: List[str],
+        *,
+        min_count: int = 1,
+        ColorMap: List[str] = None,
+        color_by: str | None = None,  # can be any column in display_df (not just a stage)
+        color_palette: List[str] | None = None,
+        figure_background_color: str = None,
+        primary_color: str = None,
+        font_color: str = None, ) -> Tuple["go.Figure", int, int, pd.DataFrame]:
+    """
+    Build a Plotly Sankey figure (Parallel Sets) where link colors come from one chosen category.
+    - If `color_by` is provided, it can be ANY column in `display_df` (not limited to `chosen_parset_cols`).
+    - Counts reflect the expanded cartesian product across multi-label cells (same as original behavior).
+
+    Returns
+    -------
+    fig : plotly.graph_objects.Figure
+    link_count : int
+    node_count : int
+    links_df : pd.DataFrame
+        Columns:
+        ['source_stage','source_value','target_stage','target_value','count']
+        plus ['color_by_stage','color_by_value'] when `color_by` is not None.
+    """
+    # Local imports
+    try:
+        import plotly.graph_objects as go
+    except Exception as e:
+        raise RuntimeError("Plotly is required to build the parallel sets figure.") from e
+
+    # --- enforce correct type ---
+    if isinstance(color_by, pd.Series):
+        # likely user passed display_df[column] instead of column name
+        color_by = color_by.name
+    elif isinstance(color_by, (list, tuple)) and len(color_by) == 1:
+        color_by = color_by[0]
+
+    # ---- defaults / theming ----
+    if ColorMap is None:
+        ColorMap = ["#ADE1DC", "#C5C2E4", "#F28C8C", "#9FCBE1", "#F8BC63", "#CBEA7B", "#F5C6DA", "#BFD8B8", "#F9D9B6"]
+
+    if color_palette is None:
+        color_palette = ["#ADE1DC", "#C5C2E4", "#F28C8C", "#9FCBE1", "#F8BC63", "#CBEA7B", "#F5C6DA", "#BFD8B8",
+                         "#F9D9B6"]
+
+    # If running inside Streamlit, pick up theme values when not provided
+    try:
+        if figure_background_color is None:
+            figure_background_color = st.get_option("theme.backgroundColor") or "#FFFFFF"
+        if primary_color is None:
+            primary_color = st.get_option("theme.primaryColor") or "#2C7BE5"
+        if font_color is None:
+            font_color = "#FFFFFF" if is_dark_color(figure_background_color) else "#000000"
+    except Exception:
+        figure_background_color = figure_background_color or "#FFFFFF"
+        primary_color = primary_color or "#2C7BE5"
+        font_color = font_color or ("#FFFFFF" if is_dark_color(figure_background_color) else "#000000")
+
+    # ---- validate inputs ----
+    if len(chosen_parset_cols) < 2:
+        raise ValueError("chosen_parset_cols must contain at least two category columns.")
+
+    if color_by is not None and color_by not in display_df.columns:
+        raise ValueError("`color_by` must be a column in the currently selected data (it does not need to be in the "
+                         "chosen columns).")
+
+    # ---- build expanded tuples ----
+    # We keep original behavior: expand FULL cartesian tuples across chosen stages for each row.
+    # When `color_by` is set, we duplicate each tuple for every color value in that row (supports multi-label).
+    tuples = []  # if color_by None: stores (v0, v1, ..., vk); else: stores (v0, ..., vk, cval)
+
+    for _, row in display_df[chosen_parset_cols + ([color_by] if color_by else [])].iterrows():
+        # stage_lists = [_norm_list(row[c]) for c in chosen_parset_cols]
+        stage_lists = [_norm_list_safe_str(row[c]) for c in chosen_parset_cols]
+        if any(len(lst) == 0 for lst in stage_lists):
+            continue
+
+        full_stage_combos = list(itertools.product(*stage_lists))
+
+        if color_by is None:
+            tuples.extend(full_stage_combos)
+        else:
+            # raw_val = row[color_by]
+            # cvals = _norm_list_safe_str(raw_val)
+            # if len(cvals) == 0:
+            #     cvals = ["(missing)"]
+            # for combo in full_stage_combos:
+            #     for c in cvals:
+            #         tuples.append((*combo, c))
+
+            raw_val = row[color_by]
+            if isinstance(raw_val, (list, tuple, set, np.ndarray)):
+                cvals = list(raw_val)
+            elif pd.isna(raw_val):
+
+                cvals = ["(missing)"]
+            else:
+                cvals = _norm_list(raw_val)
+                if len(cvals) == 0:
+                    cvals = ["(missing)"]
+            for combo in full_stage_combos:
+                for c in cvals:
+                    tuples.append((*combo, c))
+
+    # Quick exit if no data
+    if not tuples:
+        empty_fig = go.Figure()
+        empty_fig.update_layout(paper_bgcolor=figure_background_color, plot_bgcolor=figure_background_color)
+        return empty_fig, 0, 0, pd.DataFrame(
+            columns=["source_stage", "source_value", "target_stage", "target_value", "count"]
+            )
+
+    # ---- nodes (unique per stage), and value-only labels for display ----
+    stage_labels_full, stage_labels_display = [], []
+    for i, col in enumerate(chosen_parset_cols):
+        vals = sorted({t[i] for t in tuples})  # positions 0..k are always stages
+        stage_labels_full.append([f"{col}: {v}" for v in vals])
+        stage_labels_display.append([str(v) for v in vals])
+
+    node_labels_full = list(itertools.chain.from_iterable(stage_labels_full))
+    node_labels_display = list(itertools.chain.from_iterable(stage_labels_display))
+    node_index = {lab: idx for idx, lab in enumerate(node_labels_full)}
+
+    # ---- links (adjacent stages), counts ----
+    link_rows = []
+    if color_by is None:
+        for i in range(len(chosen_parset_cols) - 1):
+            pair_counter = Counter((t[i], t[i + 1]) for t in tuples)
+            for (left, right), count in pair_counter.items():
+                link_rows.append(
+                    {
+                        "source_stage": chosen_parset_cols[i],
+                        "source_value": left,
+                        "target_stage": chosen_parset_cols[i + 1],
+                        "target_value": right,
+                        "count": count
+                        }
+                    )
+    else:
+        # color value is stored at t[-1]
+        for i in range(len(chosen_parset_cols) - 1):
+            trip_counter = Counter((t[i], t[i + 1], t[-1]) for t in tuples)
+            for (left, right, cval), count in trip_counter.items():
+                link_rows.append(
+                    {
+                        "source_stage": chosen_parset_cols[i],
+                        "source_value": left,
+                        "target_stage": chosen_parset_cols[i + 1],
+                        "target_value": right,
+                        "count": count,
+                        "color_by_stage": color_by,
+                        "color_by_value": cval
+                        }
+                    )
+
+    links_df = pd.DataFrame(link_rows)
+
+    # ---- filter links by min_count ----
+    mask = links_df["count"] >= max(1, int(min_count))
+    if not mask.any():
+        stage_colors = [ColorMap[i % len(ColorMap)] for i in range(len(chosen_parset_cols))]
+        node_colors = []
+        for stage_idx, labels_this_stage in enumerate(stage_labels_full):
+            node_colors.extend([stage_colors[stage_idx]] * len(labels_this_stage))
+
+        fig = go.Figure(
+            data=[go.Sankey(
+                arrangement="snap", node=dict(
+                    pad=12,
+                    thickness=16,
+                    line=dict(width=1, color=primary_color),
+                    label=node_labels_display,
+                    color=node_colors
+                    ), link=dict(source=[], target=[], value=[], color=[]), )]
+            )
+        annotations = []
+        n_stages = len(chosen_parset_cols)
+        for i, col in enumerate(chosen_parset_cols):
+            x = (i / (n_stages - 1)) if n_stages > 1 else 0.5
+            annotations.append(
+                dict(
+                    x=x,
+                    y=1.08,
+                    xref="paper",
+                    yref="paper",
+                    text=f"<b>{col}</b>",
+                    showarrow=False,
+                    font=dict(size=14, color=font_color)
+                    )
+                )
+        fig.update_layout(
+            height=520,
+            margin=dict(l=10, r=10, t=40, b=10),
+            paper_bgcolor=figure_background_color,
+            plot_bgcolor=figure_background_color,
+            font=dict(color=font_color, size=12, family="Arial"),
+            annotations=annotations
+            )
+        fig.update_traces(textfont=dict(color=font_color, size=12, family="Arial"))
+        return fig, 0, len(node_labels_full), links_df.iloc[0:0]
+
+    links_df = links_df.loc[mask].copy()
+
+    # ---- node colors (by stage), link colors (by chosen `color_by` or source stage fallback) ----
+    stage_colors = [ColorMap[i % len(ColorMap)] for i in range(len(chosen_parset_cols))]
+
+    node_colors, stage_index_per_node = [], []
+    for stage_idx, labels_this_stage in enumerate(stage_labels_full):
+        node_colors.extend([stage_colors[stage_idx]] * len(labels_this_stage))
+        stage_index_per_node.extend([stage_idx] * len(labels_this_stage))
+
+    value_to_color, legend_items = {}, []
+    if color_by is not None:
+        ordered_vals = sorted(links_df["color_by_value"].unique(), key=lambda x: str(x))
+        for i, v in enumerate(ordered_vals):
+            value_to_color[v] = color_palette[i % len(color_palette)]
+        legend_items = [(str(v), value_to_color[v]) for v in ordered_vals]
+
+    # ---- derive filtered arrays in node-index space + colors ----
+    fs, ft, fv, fcolors, hovertext = [], [], [], [], []
+    for _, r in links_df.iterrows():
+        src_full = f"{r['source_stage']}: {r['source_value']}"
+        tgt_full = f"{r['target_stage']}: {r['target_value']}"
+        s_idx = node_index[src_full]
+        t_idx = node_index[tgt_full]
+
+        fs.append(s_idx)
+        ft.append(t_idx)
+        fv.append(int(r["count"]))
+
+        if color_by is None:
+            s_stage_idx = stage_index_per_node[s_idx]
+            fcolors.append(_rgba(stage_colors[s_stage_idx], 0.35))
+            hovertext.append(
+                f"<b>{r['source_stage']}</b>: {r['source_value']} → "
+                f"<b>{r['target_stage']}</b>: {r['target_value']}<br>"
+                f"Studies: {r['count']}"
+                )
+        else:
+            cval = r["color_by_value"]
+            base = value_to_color.get(cval, "#888888")
+            fcolors.append(_rgba(base, 0.7))
+            hovertext.append(
+                f"<b>{r['source_stage']}</b>: {r['source_value']} → "
+                f"<b>{r['target_stage']}</b>: {r['target_value']}<br>"
+                f"<b>{color_by}</b>: {cval}<br>"
+                f"Studies: {r['count']}"
+                )
+
+    # ---- build figure ----
+    fig = go.Figure()
+    fig.add_trace(
+        go.Sankey(
+            arrangement="snap", node=dict(
+                pad=12, thickness=16, line=dict(width=1, color=font_color), label=node_labels_display, color=node_colors
+                ), link=dict(
+                source=list(fs), target=list(ft), value=list(fv),  # thickness = number of studies (expanded)
+                color=fcolors, customdata=[[t] for t in hovertext], hovertemplate="%{customdata[0]}<extra></extra>", )
+            )
+        )
+
+    # Stage headers as annotations
+    annotations = []
+    n_stages = len(chosen_parset_cols)
+    for i, col in enumerate(chosen_parset_cols):
+        x = (i / (n_stages - 1)) if n_stages > 1 else 0.5
+        annotations.append(
+            dict(
+                x=x,
+                y=1.08,
+                xref="paper",
+                yref="paper",
+                text=f"<b>{col}</b>",
+                showarrow=False,
+                font=dict(size=14, color=font_color)
+                )
+            )
+
+    fig.update_layout(
+        height=520,
+        margin=dict(l=10, r=10, t=48, b=10),
+        paper_bgcolor=figure_background_color,
+        plot_bgcolor=figure_background_color,
+        font=dict(color=font_color, size=12, family="Arial"),
+        annotations=annotations
+        )
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    fig.update_traces(textfont=dict(color=font_color, size=12, family="Arial"))
+
+    # ---- (optional) legend for link colors ----
+    if color_by is not None and legend_items:
+        for name, colhex in legend_items:
+            fig.add_trace(
+                go.Scatter(
+                    x=[None],
+                    y=[None],
+                    mode="markers",
+                    marker=dict(size=10, color=colhex),
+                    name=f"{name}",
+                    showlegend=True,
+                    hoverinfo="skip",
+                    )
+                )
+        fig.update_layout(
+            legend=dict(
+                title=dict(text=f"{color_by}"), orientation="h", yanchor="bottom", y=-0.15,
+                # moves it below the plot
+                xanchor="center", x=0.5, font=dict(size=12), )
+            )
+    link_count = len(links_df)
+    node_count = len(node_labels_full)
+    return fig, link_count, node_count, links_df

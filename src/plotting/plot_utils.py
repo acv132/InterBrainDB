@@ -1,10 +1,24 @@
 from __future__ import annotations
 
 import ast
+import re
 
 import pandas as pd
 import yaml
 
+from src.utils.data_loader import normalize_cell
+
+# new: src/utils/data_loader_safe.py (or place near your plotting code)
+from ast import literal_eval
+from typing import List
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_list_like
+# New: robust normalizer that never evaluates list-like NA in a boolean context
+from ast import literal_eval
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_list_like
 
 def safe_literal_eval(value):
     try:
@@ -124,3 +138,99 @@ def ensure_list(val):
             return [val]
     else:
         return [val]
+
+
+def _norm_list(val):
+    vals = normalize_cell(val)
+    if vals is None:
+        return []
+    return vals
+
+def _hex_to_rgb(hx: str):
+    hx = (hx or "").lstrip("#")
+    if len(hx) == 3:  # e.g. #abc
+        hx = "".join(ch * 2 for ch in hx)
+    try:
+        return tuple(int(hx[i:i + 2], 16) for i in (0, 2, 4))
+    except Exception:
+        return (255, 255, 255)
+
+
+def _rgba(hx: str, a: float) -> str:
+    r, g, b = _hex_to_rgb(hx)
+    return f"rgba({r},{g},{b},{a})"
+
+
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9]+", "-", str(s)).strip("-").lower()
+
+
+
+def _norm_list_safe(val) -> list:
+    """
+    Robustly normalize a dataframe cell into a list, handling:
+      - Strings like "[EEG, EDA]" or "['EEG','EDA']"
+      - Plain scalars/strings
+      - List-like objects (list/tuple/set/np.array/Series/Index)
+    Never evaluates array-like NA in a boolean context.
+    """
+    def _isna_scalar(x) -> bool:
+        try:
+            res = pd.isna(x)
+        except Exception:
+            return False
+        return bool(res) if isinstance(res, (bool, np.bool_)) else False
+
+    def _dedupe_preserve_order(seq):
+        seen = set()
+        out = []
+        for x in seq:
+            if x not in seen:
+                seen.add(x)
+                out.append(x)
+        return out
+
+    # --- Strings ---
+    if isinstance(val, str):
+        s = val.strip()
+        if s == "":
+            return []
+        if s.startswith("[") and s.endswith("]"):
+            inner = s[1:-1].strip()
+            if inner == "":
+                return []
+            # 1) Try Python literal first (handles "['EEG','EDA']")
+            try:
+                parsed = literal_eval(s)
+                if is_list_like(parsed) and not isinstance(parsed, (str, bytes)):
+                    seq = list(parsed)
+                else:
+                    seq = [parsed]
+            except Exception:
+                # 2) Fallback for unquoted items: "[EEG, EDA]" -> ["EEG","EDA"]
+                #    Split on commas not inside nested brackets (rare here)
+                parts = [p.strip() for p in inner.split(",")]
+                # strip any stray quotes
+                parts = [re.sub(r"""^['"]|['"]$""", "", p) for p in parts]
+                # remove empties and NA-like
+                seq = [p for p in parts if p and p.lower() not in ("nan", "none")]
+            # filter scalar-NA and dedupe
+            seq = [x for x in seq if not _isna_scalar(x)]
+            return _dedupe_preserve_order(seq)
+        # plain scalar string
+        return [] if _isna_scalar(s) else [s]
+
+    # --- List-like but not strings/bytes ---
+    if is_list_like(val) and not isinstance(val, (str, bytes)):
+        try:
+            seq = list(val)
+        except Exception:
+            seq = [val]
+        seq = [x for x in seq if not _isna_scalar(x)]
+        return _dedupe_preserve_order(seq)
+
+    # --- Scalar (incl. None/NaT) ---
+    return [] if _isna_scalar(val) else [val]
+
+def _norm_list_safe_str(val) -> list[str]:
+    return [str(x) for x in _norm_list_safe(val)]

@@ -3,10 +3,16 @@
 # ========================
 import ast
 import io
+import traceback
 
 import pandas as pd
 import streamlit as st
 import yaml
+
+try:
+    import plotly.graph_objects as go
+except Exception as _:
+    go = None
 
 try:
     import altair as alt
@@ -15,14 +21,14 @@ try:
 except Exception:
     pass
 
-from src.utils.config import file, data_dir
+from src.utils.config import file, data_dir, ColorMap
 from src.utils.data_loader import (load_database, create_article_handle, generate_bibtex_content,
                                    generate_apa7_latex_table, normalize_cell, generate_excel_table, flatten_cell,
                                    create_tab_header, generate_bibtexid, generate_csv_table, custom_column_picker)
 from src.utils.app_utils import footer, set_mypage_config
 from src.plotting.figures import (generate_interaction_figure, generate_category_counts_figure,
-                                  plot_publications_over_time)
-from src.plotting.plot_utils import export_all_category_counts
+                                  plot_publications_over_time, generate_parallel_sets_figure_colored)
+from src.plotting.plot_utils import export_all_category_counts, _slug
 
 # ========================
 # 💅 UI Configuration
@@ -423,6 +429,80 @@ with (data_plots_tab):
                     mime="image/jpg"
                     )
         except Exception as e:
-            st.error(f"❌ Could not generate figures: {e}")
+            st.error(f"❌ Could not generate figure: {e}")
 
+        try:
+            st.subheader("Alluvial Plot")
+
+            if go is None:
+                st.error("Plotly is required for this chart but could not be imported.")
+            else:
+                # ---------- selection UI (uses your custom picker) ----------
+                available_parset_cols = [c for c in label_tooltips.keys() if c in display_df.columns]
+
+                st.markdown("It is recommended to choose 2–5 categories to visualize the flow.")
+                # Use your app’s custom picker so selection is preserved & ordered:
+                chosen_parset_cols = custom_column_picker(
+                    available_parset_cols, custom_key="parset_cols", default_select="none"
+                    )
+                if len(chosen_parset_cols) < 2:
+                    st.info("Select at least two categories to draw the flow.")
+                else:
+                    # 1) Precompute max link count (no filtering)
+                    _fig_probe, _link_count_probe, _node_count_probe, _links_df_probe = generate_parallel_sets_figure_colored(
+                        display_df=display_df,
+                        chosen_parset_cols=chosen_parset_cols,
+                        min_count=1,
+                        ColorMap=ColorMap,
+                        color_by=None,  # don't split for the probe
+                        )
+
+                    max_count = int(_links_df_probe["count"].max()) if not _links_df_probe.empty else 1
+
+                    # New: pick the category to color by (optional)
+                    # color_by = st.selectbox(
+                    #     "Color links by (optional)",
+                    #     options=["(none)"] + available_parset_cols,
+                    #     index=0,
+                    #     help="Pick one category to color the link flows. Leave as '(none)' to color by source stage."
+                    #     )
+                    # color_by = None if color_by == "(none)" else color_by
+                    color_by = None
+
+                    # 2) Slider
+                    min_count = st.slider(
+                        "Minimum link count",
+                        min_value=1,
+                        max_value=max_count,
+                        value=min(1, max_count),
+                        help="Hide thin links to declutter.",
+                        key="parset_min_link_count", )
+
+                    # 3) Build the actual figure
+                    fig, link_count, node_count, links_df = generate_parallel_sets_figure_colored(
+                        display_df=display_df,
+                        chosen_parset_cols=chosen_parset_cols,
+                        min_count=min_count,
+                        ColorMap=ColorMap,
+                        color_by=color_by, )
+
+                    sankey_key = "sankey_" + _slug(
+                        "_".join(chosen_parset_cols)
+                        ) + f"_{min_count}_{link_count}_{color_by or 'stage'}"
+                    st.plotly_chart(fig, use_container_width=True, key=sankey_key)
+                    st.caption("Link thickness = number of studies (rows), expanded across multi-label cells.")
+
+        except Exception as e:
+            st.error(f"❌ Could not generate figure: {e}")
+            if isinstance(e, ValueError) and "The truth value of a Series is ambiguous" in str(e):
+                st.error(
+                    "❌ Could not generate figure: A Pandas Series was evaluated as a boolean.\n\n"
+                    "💡 **Tip:** This often happens when a column name or parameter (like `color_by`) "
+                    "was passed as an entire Series instead of a string column name. "
+                    "Please ensure all selected parameters are column *names*, not Series objects."
+                    )
+            else:
+                # Generic fallback: show clean error message and log traceback to console
+                st.error(f"❌ Could not generate figure: {type(e).__name__}: {e}")
+            st.write(traceback.print_exc())
 footer()
