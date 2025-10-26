@@ -410,48 +410,17 @@ def generate_bibtexid(
         return ids
 
 
-def custom_column_picker(available_cols, custom_key=None, default_select="all") -> list:
-    """
-    A reusable Streamlit column picker with persistent session state and 'select all' button.
-
-    Parameters
-    ----------
-    available_cols : list
-        The list of available column names.
-    custom_key : str, optional
-        A unique key identifying this picker (for Streamlit session state).
-    default_select : str, optional
-        "all" → preselect all columns initially.
-        "none" → start with no columns selected.
-
-    Returns
-    -------
-    list
-        Ordered list of selected columns.
-    """
-    if custom_key is None:
-        custom_key = "custom_column_selection"
-
-    # Determine default selection based on the argument and session state
-    if custom_key in st.session_state:
-        preselected = st.session_state[custom_key]
-    else:
-        if default_select.lower() == "none":
-            preselected = []
-        else:  # default = "all"
-            preselected = available_cols
-        st.session_state[custom_key] = preselected
+def custom_column_picker(available_cols) -> list:
+    custom_key = "custom_column_selection"
+    # Preselect previously chosen columns or default to all
+    preselected = st.session_state.get(custom_key, available_cols)
 
     # Small helper row
-    col_1, col_2 = st.columns([1, 19], vertical_alignment="center")
+    col_1, col_2 = st.columns([1, 19, ], vertical_alignment="center")
     with col_1:
-        select_all_key = f"{custom_key}_select_all"
-        if st.button("", icon=":material/checklist_rtl:", key=select_all_key):
+        if st.button("", icon=":material/checklist_rtl:"):
             st.session_state[custom_key] = available_cols
             custom_cols = available_cols
-        else:
-            custom_cols = preselected
-
     with col_2:
         custom_cols = st.multiselect(
             "Choose columns to display (order is preserved by selection):",
@@ -459,16 +428,10 @@ def custom_column_picker(available_cols, custom_key=None, default_select="all") 
             default=[c for c in preselected if c in available_cols],
             key=custom_key,
             placeholder="Select columns…", )
-
     # Fallback if user clears everything
     if not custom_cols:
-        if default_select.lower() == "none":
-            st.info("No columns selected.")
-            column_order = []
-        else:
-            st.info("No columns selected. Showing all columns for now.")
-            column_order = available_cols
+        st.info("No columns selected. Showing all columns for now.")
+        column_order = available_cols
     else:
         column_order = custom_cols
-
     return column_order
