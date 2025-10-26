@@ -88,7 +88,7 @@ analysis method:
   connectivity functional: Measures correlation of two signals
   spatial domain sensor: Sensor-level analysis
   spatial domain source: Source-localized analysis
-  temporal domain frequency: Frequency-based synchrony
+  temporal domain frequency: Frequency-based components of signals
   temporal domain time: Changes in signals over time
   machine learning supervised: Labeled data used to classify outcomes
   machine learning unsupervised: Unlabeled data used to detect patterns
