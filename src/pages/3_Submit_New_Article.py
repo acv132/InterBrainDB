@@ -188,7 +188,7 @@ with col1:
              f"into the "
              "categories above. Separate multiple labels with a comma "
              f"({other_separator}).",
-        placeholder="label1, label2, ... (optional)", )
+        placeholder=f"label1{other_separator} label2{other_separator} ... (optional)", )
 
     optional_inputs['other_labels'] = [item for item in other_labels.split(other_separator) if item.strip()]
     if "fNIRS_channel_number" in optional_inputs:
