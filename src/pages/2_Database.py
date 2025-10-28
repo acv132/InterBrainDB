@@ -3,6 +3,7 @@
 # ========================
 import ast
 import io
+import traceback
 
 import pandas as pd
 import streamlit as st
@@ -423,6 +424,5 @@ with (data_plots_tab):
                     mime="image/jpg"
                     )
         except Exception as e:
-            st.error(f"❌ Could not generate figures: {e}")
-
+            st.error(f"❌ Could not generate figures.")
 footer()
