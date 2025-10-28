@@ -7,12 +7,16 @@ measurement modality:
   EMG: Electromyography
   PPG: Photoplethysmography
   camera-based tracking: Motion tracking using video/camera
+  fMRI: Functional Magnetic Resonance Imaging
+  MEG: Magnetoencephalography
   other: Any other measurement modality not listed
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 condition design:
   within-subjects: Same participants in all conditions
   between-subjects: Different participants in each condition
   mixed: Combination of within- and between-subject designs
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 sample:
   healthy adults: Adults participants without known neurological or psychiatric conditions
@@ -21,18 +25,21 @@ sample:
   infants: Participants aged 0-2 years
   older adults: Participants aged 60 years and older
   patient group: Participants with specific health conditions (e.g., autism, schizophrenia, epilepsy)
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 pairing configuration:
   dyad: Two participants
   triad: Three participants
   tetrad: Four participants
   more (n group = x): More than four; group size indicated by n
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 pairing setup:
   ff: female-female
   mm: male-male
   fm: female-male
   n/s: not specified
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 relationship pair:
   parent-child: Parent and child relationship
@@ -40,6 +47,7 @@ relationship pair:
   familiar: Participants are familiar with each other
   unfamiliar: Participants do not know each other
   n/s: not specified
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 interaction scenario:
   FTF: Face-to-face
@@ -49,6 +57,7 @@ interaction scenario:
   FTF v-b: Face-to-face with visual barriers
   SBS v-b: Side-by-side with visual barriers
   virtual: Interaction via a virtual divide or environment
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 interaction manipulation:
   shared physical IM and verbal IM: Shared physical objects and verbal interaction
@@ -59,16 +68,19 @@ interaction manipulation:
   separate digital IM and verbal IM: Separate digital interface with verbal interaction
   shared digital IM w/out verbal IM: Shared digital interface, no verbal interaction
   separate digital IM w/out verbal IM: Separate digital interface, no verbal interaction
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 type of communication:
   goal-driven: Clearly defined goal or competition
   mixed: Combination of open-ended and goal-driven tasks
   open-ended: No defined goal; free interaction
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 transfer of information:
   analog: Non-digital forms of communication
   mixed: Both analog and digital communication
   digital: Information shared digitally
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 paradigm:
   cooperation/competition tasks: Participants either collaborate toward a shared goal or compete against one another.
@@ -77,11 +89,12 @@ paradigm:
   economic exchange tasks: Participants exchange a type of currency (either real or artificially constructed for the experiment).
   eye-contact/gaze-based tasks: Participants look at each other and/or follow the gaze of another.
   imitation tasks: Participants imitate the other’s movement or behavior.
-  not applicable: Paradigm not specified
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 task symmetry:
   high: Participants have same tasks/skills
   low: Participants have different tasks/skills
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 analysis method:
   connectivity effective: Causal influence of one signal on another
@@ -93,6 +106,7 @@ analysis method:
   machine learning supervised: Labeled data used to classify outcomes
   machine learning unsupervised: Unlabeled data used to detect patterns
   other: Other analytical approaches
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 cognitive function:
   attention: Attention and focus
@@ -103,3 +117,4 @@ cognitive function:
   other: Other cognitive functions
   social cognition: Understanding social behavior
   visuospatial cognition: Spatial reasoning and perception
+  n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
