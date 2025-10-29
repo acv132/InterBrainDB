@@ -102,7 +102,7 @@ with col1:
         st.error("Invalid DOI. Please ensure it is in the correct format and exists.")
 
     year = st.number_input(
-        "Year", min_value=1900, max_value=datetime.now().year, value=st.session_state.year, step=1, key='year'
+        "Year", min_value=1900, max_value=datetime.now().year, step=1, key='year'
         )
     authors = st.text_area(
         "Authors",
