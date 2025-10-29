@@ -324,15 +324,6 @@ with col2:
                     st.session_state["title_input"] = ""
                     st.session_state["authors_input"] = ""
 
-                    # If you have optional_inputs bound with session_state keys, reset them too:
-                    for key in optional_inputs.keys():
-                        if key in st.session_state and not key in ['sample_size']:
-                            st.session_state[key] = ""
-                            optional_inputs[key] = []
-                        if key in ['sample_size']:
-                            optional_inputs[key] = []
-                            st.session_state[key] = None
-
         except Exception as e:
             st.error(f"Error during submission: {e}")
 footer()
