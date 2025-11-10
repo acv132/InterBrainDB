@@ -95,7 +95,7 @@ with col1:
     st.markdown("Fill in the fields below to suggest a new article for inclusion in the database.")
 
     doi = st.text_input(
-        "DOI", value=st.session_state.doi, placeholder="10.1234/example.doi", key='doi'
+        "DOI", placeholder="10.1234/example.doi", key='doi'
         )
 
     if not validate_doi(doi) and doi != "":
