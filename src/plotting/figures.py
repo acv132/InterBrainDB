@@ -639,7 +639,6 @@ def plot_publications_over_time(
     # -- Resolve container --
     if container is None:
         try:
-            import streamlit as st
             container = st
         except Exception:
             class _Null:
