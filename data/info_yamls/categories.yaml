@@ -1,8 +1,8 @@
 measurement modality:
   EEG: Electroencephalography
   fNIRS: Functional Near-Infrared Spectroscopy
-  ECG: Electrocardiography
   Eye-tracking: Measurement of eye movement and gaze
+  ECG: Electrocardiography
   EDA: Electrodermal Activity
   EMG: Electromyography
   PPG: Photoplethysmography
