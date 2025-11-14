@@ -399,13 +399,13 @@ with (data_plots_tab):
                 st.markdown(
                     f"""
                 *Note*. The cross-sectional distribution of all {condition_count} hyperscanning conditions of 
-                {number_studies} studies across interaction manipulation and interaction scenario axes. The 
-                numbers provide the counted occurrences of the combination of an interaction manipulation and 
-                scenario (n = {connection_df['count'].sum()} simultaneous condition occurences). The colors 
-                represent the measurement modalities reported for a cross-section of conditions. The connection 
-                lines indicate reported cross-condition occurrences separated per axis. Studies involving a digital 
-                component either through a digital manipulation or virtual interaction scenario are marked through 
-                a gray shaded area. 
+                {number_studies} studies across interaction medium and interaction scenario axes. The 
+                numbers provide the counted occurrences of the combination of an interaction medium and 
+                scenario. The colors represent the measurement modalities reported for a cross-section of conditions. 
+                The connection lines indicate reported cross-condition occurrences separated per axis 
+                (n = {connection_df['count'].sum()} simultaneous condition occurrences, see also table below). 
+                Studies involving a digital component either through a digital medium or virtual interaction scenario 
+                are marked through a gray shaded area. 
                 """
                     )
                 with st.expander("Show dataframe of connection lines"):
