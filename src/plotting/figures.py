@@ -175,7 +175,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
 
     if not non_default_rows.empty:
         tab.warning(
-            f"⚠️ Some studies contain non-default entries in interaction scenario, manipulation, or modality. These studies are excluded from the figure. (DOIs: {', '.join(non_default_rows['doi'].unique())})"
+            f"⚠️ Some studies contain non-default entries in interaction scenario, medium, or modality. These studies are excluded from the figure. (DOIs: {', '.join(non_default_rows['doi'].unique())})"
             )
         df_work = df_raw.drop(non_default_rows.index)
     else:
