@@ -136,7 +136,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
         categories = yaml.safe_load(f)
 
     default_scenario_order = list(categories["interaction scenario"].keys())
-    default_manipulation_order = list(categories["interaction manipulation"].keys())
+    default_medium_order = list(categories["interaction medium"].keys())
     default_modalities_order = list(categories["measurement modality"].keys())
 
     row_spacing = 1.5
