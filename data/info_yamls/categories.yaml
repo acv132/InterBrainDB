@@ -59,7 +59,7 @@ interaction scenario:
   virtual: Interaction via a virtual divide or environment
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
-interaction manipulation:
+interaction medium:
   shared physical IM and verbal IM: Shared physical objects and verbal interaction
   physical IM w/out verbal IM: Non-verbal interaction with physical objects
   verbal IM: Verbal interaction only
