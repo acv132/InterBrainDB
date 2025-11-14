@@ -72,19 +72,19 @@ interaction medium:
 
 type of communication:
   goal-driven: Clearly defined goal or competition
-  mixed: Combination of open-ended and goal-driven tasks
   open-ended: No defined goal; free interaction
+  mixed: Combination of open-ended and goal-driven tasks
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 transfer of information:
   analog: Non-digital forms of communication
-  mixed: Both analog and digital communication
   digital: Information shared digitally
+  mixed: Both analog and digital communication
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 paradigm:
-  cooperation/competition tasks: Participants either collaborate toward a shared goal or compete against one another.
   coordination tasks: Participants perform a task that requires actions to be coordinated in time across partners.
+  cooperation/competition tasks: Participants either collaborate toward a shared goal or compete against one another.
   ecologically valid setting: Participants are placed in real-world interaction contexts.
   economic exchange tasks: Participants exchange a type of currency (either real or artificially constructed for the experiment).
   eye-contact/gaze-based tasks: Participants look at each other and/or follow the gaze of another.
@@ -97,24 +97,24 @@ task symmetry:
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 analysis method:
-  connectivity effective: Causal influence of one signal on another
   connectivity functional: Measures correlation of two signals
+  connectivity effective: Causal influence of one signal on another
+  temporal domain time: Changes in signals over time
+  temporal domain frequency: Frequency-based components of signals
   spatial domain sensor: Sensor-level analysis
   spatial domain source: Source-localized analysis
-  temporal domain frequency: Frequency-based components of signals
-  temporal domain time: Changes in signals over time
   machine learning supervised: Labeled data used to classify outcomes
   machine learning unsupervised: Unlabeled data used to detect patterns
   other: Other analytical approaches
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
 cognitive function:
-  attention: Attention and focus
+  social cognition: Understanding social behavior
   executive function: Higher-order cognitive processes
+  attention: Attention and focus
   language: Language-related tasks
+  visuospatial cognition: Spatial reasoning and perception
   memory: Short and long-term memory
   motor: Motor coordination
   other: Other cognitive functions
-  social cognition: Understanding social behavior
-  visuospatial cognition: Spatial reasoning and perception
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
