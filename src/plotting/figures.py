@@ -550,7 +550,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
             ax,
             handles=list(filtered_style_handles.values()),
             labels=list(filtered_style_handles.keys()),
-            title="comparisons",
+            title="cross-condition occurence",
             bbox_to_anchor=(legend_x, y_mid),
             **legend_args
             )
