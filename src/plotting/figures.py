@@ -189,7 +189,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
     number_studies = len(df)
 
     scenario_columns = [c for c in df.columns if c.startswith(f"interaction scenario{prefix}")]
-    manipulation_columns = [c for c in df.columns if c.startswith(f"interaction manipulation{prefix}")]
+    medium_columns = [c for c in df.columns if c.startswith(f"interaction medium{prefix}")]
     modality_columns = [c for c in df.columns if c.startswith(f"measurement modality{prefix}")]
 
     ####################
