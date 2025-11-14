@@ -46,9 +46,6 @@ relationship pair:
   unfamiliar: Participants do not know each other
   instructor-student: Instructor and student relationship
   parent-child: Parent and child relationship
-  instructor-student: Instructor and student relationship
-  familiar: Participants are familiar with each other
-  unfamiliar: Participants do not know each other
   n/s: not specified
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
