@@ -203,8 +203,8 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
         mediums = ensure_list(orig_row['interaction medium'])
 
         for modality in modalities:
-            if len(scenarios) == len(manipulations) and len(scenarios) > 1:
-                for s, m in zip(scenarios, manipulations):
+            if len(scenarios) == len(mediums) and len(scenarios) > 1:
+                for s, m in zip(scenarios, mediums):
                     condition_rows.append([modality, s, m, doi])
             elif len(scenarios) == 1:
                 for m in manipulations:
