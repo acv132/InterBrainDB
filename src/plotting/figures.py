@@ -200,7 +200,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
         orig_row = df_orig[df_orig['doi'] == doi].iloc[0]
         modalities = ensure_list(orig_row['measurement modality'])
         scenarios = ensure_list(orig_row['interaction scenario'])
-        manipulations = ensure_list(orig_row['interaction manipulation'])
+        mediums = ensure_list(orig_row['interaction medium'])
 
         for modality in modalities:
             if len(scenarios) == len(manipulations) and len(scenarios) > 1:
