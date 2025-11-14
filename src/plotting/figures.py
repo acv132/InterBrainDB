@@ -170,7 +170,7 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
 
     non_default_rows = df_raw[
         ~df_raw['interaction scenario'].apply(lambda x: valid_values(x, default_scenario_order)) | ~df_raw[
-            'interaction manipulation'].apply(lambda x: valid_values(x, default_manipulation_order)) | ~df_raw[
+            'interaction medium'].apply(lambda x: valid_values(x, default_medium_order)) | ~df_raw[
             'measurement modality'].apply(lambda x: valid_values(x, default_modalities_order))]
 
     if not non_default_rows.empty:
