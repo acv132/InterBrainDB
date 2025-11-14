@@ -94,9 +94,9 @@ def generate_category_counts_figure(df, tab):
                             }
                         )
                     bar_chart = alt.Chart(chart_df).mark_bar(color=st.get_option('theme.primaryColor')).encode(
-                        x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort=category_definitions[cat].keys(),
-                                                                   title=""),
-                        # Sort by count descending
+                        x=alt.X("count:Q", title="Count"), y=alt.Y(
+                            "label:N", sort=category_definitions[cat].keys(), title=""
+                            ),  # Sort by count descending
                         # x=alt.X("count:Q", title="Count"), y=alt.Y("label:N", sort="-x", title=""),
                         tooltip=["label", "count"]
                         ).properties(
