@@ -183,21 +183,21 @@ with col1:
     other_separator = ','
     other_labels = st.text_area(
         "Other Labels",
-        key='other_labels',
+        key='other labels',
         help=f"Add any other relevant labels that do not fit "
              f"into the "
              "categories above. Separate multiple labels with a comma "
              f"({other_separator}).",
         placeholder=f"label1{other_separator} label2{other_separator} ... (optional)", )
 
-    optional_inputs['other_labels'] = [item for item in other_labels.split(other_separator) if item.strip()]
+    optional_inputs['other labels'] = [item for item in other_labels.split(other_separator) if item.strip()]
     if "fNIRS_channel_number" in optional_inputs:
-        optional_inputs["other_labels"] = [f"fNIRS channel number: {optional_inputs['fNIRS_channel_number']}"] + \
-                                          optional_inputs["other_labels"]
+        optional_inputs["other labels"] = [f"fNIRS channel number: {optional_inputs['fNIRS_channel_number']}"] + \
+                                          optional_inputs["other labels"]
         optional_inputs.pop("fNIRS_channel_number", None)
     if "EEG_electrode_number" in optional_inputs:
-        optional_inputs["other_labels"] = [f"EEG electrode number: {optional_inputs['EEG_electrode_number']}"] + \
-                                          optional_inputs["other_labels"]
+        optional_inputs["other labels"] = [f"EEG electrode number: {optional_inputs['EEG_electrode_number']}"] + \
+                                          optional_inputs["other labels"]
         optional_inputs.pop("EEG_electrode_number", None)
 
 # ========================
