@@ -49,34 +49,6 @@ def generate_bibtex_content(df: pd.DataFrame) -> str:
     return output.getvalue()
 
 
-# def extract_unique_tags(series):
-#     """Split comma-separated strings into a flat unique list."""
-#     tags = set()
-#     for entry in series.dropna():
-#         if isinstance(entry, str):
-#             if entry.startswith("[") and entry.endswith("]"):
-#                 # Handle lists stored as strings like "['EEG', 'ECG']"
-#                 entry = ast.literal_eval(entry)
-#             else:
-#                 entry = [tag.strip() for tag in entry.split(",")]
-#             tags.update(entry)
-#     return sorted(tags)
-
-
-# def matches_any_tag(row_val, selected):
-#     """Returns True if any selected tag is in the row's list of tags."""
-#     if pd.isna(row_val):
-#         return False
-#     if isinstance(row_val, str):
-#         if row_val.startswith("[") and row_val.endswith("]"):
-#             tags = ast.literal_eval(row_val)
-#         else:
-#             tags = [t.strip() for t in row_val.split(",")]
-#     else:
-#         tags = [row_val]
-#     return any(tag in tags for tag in selected)
-
-
 def generate_apa7_latex_table(df):
     return tabulate.tabulate(df, headers="keys", tablefmt="latex_booktabs", showindex=False)
 
@@ -145,71 +117,6 @@ def flatten_cell(x):
         except (ValueError, SyntaxError):
             pass
     return x
-
-
-# def hedges_g_between(groups, apply_correction=True):
-#     """
-#     Compute Hedges' g from any number of groups.
-#
-#     Parameters:
-#     - groups: list of tuples (mean, std, n)
-#     - apply_correction: whether to apply small sample correction (default: True)
-#
-#     Returns:
-#     - g: Hedges' g (standardized mean difference between first two groups)
-#     - s_pooled: pooled standard deviation
-#     """
-#
-#     if len(groups) < 2:
-#         raise ValueError("At least two groups are needed to compute Hedges' g.")
-#
-#     # Extract values
-#     means = [m for m, s, n in groups]
-#     variances = [(n - 1) * (s ** 2) for m, s, n in groups]
-#     total_df = sum(n - 1 for _, _, n in groups)
-#
-#     # Compute pooled standard deviation
-#     s_pooled = np.sqrt(sum(variances) / total_df)
-#
-#     # Difference between first two means
-#     mean_diff = means[0] - means[1]
-#
-#     # Raw Hedges' g
-#     g = mean_diff / s_pooled
-#
-#     if apply_correction:
-#         N_total = sum(n for _, _, n in groups)
-#         correction = 1 - (3 / (4 * N_total - 9)) if N_total > 9 else 1
-#         g *= correction
-#
-#     return g, s_pooled
-
-
-# def hedges_g_within(subject_diffs, apply_correction=True):
-#     """
-#     Computes Hedges' g for within-subjects (paired) designs.
-#
-#     Parameters:
-#     - subject_diffs: array-like of difference scores (Condition A - Condition B)
-#     - apply_correction: apply small-sample correction (default True)
-#
-#     Returns:
-#     - g_z: bias-corrected standardized mean difference
-#     - d_z: raw effect size (Cohen's d_z)
-#     """
-#     diffs = np.asarray(subject_diffs)
-#     M_D = np.mean(diffs)
-#     SD_D = np.std(diffs, ddof=1)
-#     d_z = M_D / SD_D
-#
-#     n = len(diffs)
-#     if apply_correction:
-#         correction = 1 - (3 / (4 * n - 1))
-#         g_z = d_z * correction
-#     else:
-#         g_z = d_z
-#
-#     return g_z, d_z
 
 
 def create_tab_header(df, display_df):
@@ -410,17 +317,54 @@ def generate_bibtexid(
         return ids
 
 
-def custom_column_picker(available_cols) -> list:
-    custom_key = "custom_column_selection"
-    # Preselect previously chosen columns or default to all
-    preselected = st.session_state.get(custom_key, available_cols)
+def custom_column_picker(available_cols, custom_key=None, default_select="all") -> list:
+    """
+    A reusable Streamlit column picker with persistent session state and 'select all' button.
+
+    Parameters
+    ----------
+    available_cols : list
+        The list of available column names.
+    custom_key : str, optional
+        A unique key identifying this picker (for Streamlit session state).
+    default_select : str, optional
+        "all" → preselect all columns initially.
+        "none" → start with no columns selected.
+
+    Returns
+    -------
+    list
+        Ordered list of selected columns.
+    """
+    if custom_key in st.session_state:
+        preselected = st.session_state[custom_key]
+
+    else:
+        # --- handle explicit list defaults ---
+        if isinstance(default_select, list):
+            # keep only those that exist in available_cols
+            preselected = [c for c in default_select if c in available_cols]
+
+        # --- handle 'none' ---
+        elif isinstance(default_select, str) and default_select.lower() == "none":
+            preselected = []
+
+        # --- handle 'all' (default) ---
+        else:
+            preselected = available_cols
+
+        st.session_state[custom_key] = preselected
 
     # Small helper row
-    col_1, col_2 = st.columns([1, 19, ], vertical_alignment="center")
+    col_1, col_2 = st.columns([1, 19], vertical_alignment="center")
     with col_1:
-        if st.button("", icon=":material/checklist_rtl:"):
+        select_all_key = f"{custom_key}_select_all"
+        if st.button("", icon=":material/checklist_rtl:", key=select_all_key):
             st.session_state[custom_key] = available_cols
             custom_cols = available_cols
+        else:
+            custom_cols = preselected
+
     with col_2:
         custom_cols = st.multiselect(
             "Choose columns to display (order is preserved by selection):",
@@ -428,10 +372,16 @@ def custom_column_picker(available_cols) -> list:
             default=[c for c in preselected if c in available_cols],
             key=custom_key,
             placeholder="Select columns…", )
+
     # Fallback if user clears everything
     if not custom_cols:
-        st.info("No columns selected. Showing all columns for now.")
-        column_order = available_cols
+        if default_select.lower() == "none":
+            st.info("No columns selected.")
+            column_order = []
+        else:
+            st.info("No columns selected. Showing all columns for now.")
+            column_order = available_cols
     else:
         column_order = custom_cols
+
     return column_order
