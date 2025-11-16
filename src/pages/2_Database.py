@@ -3,9 +3,9 @@
 # ========================
 import ast
 import io
-import traceback
 
 import pandas as pd
+import plotly.io as pio
 import streamlit as st
 import yaml
 
@@ -15,6 +15,10 @@ try:
     alt.data_transformers.disable_max_rows()  # prevent silent failures on larger data
 except Exception:
     pass
+try:
+    import plotly.graph_objects as go
+except Exception as _:
+    go = None
 
 from src.utils.config import file, data_dir
 from src.utils.data_loader import (load_database, create_article_handle, generate_bibtex_content,
@@ -22,8 +26,8 @@ from src.utils.data_loader import (load_database, create_article_handle, generat
                                    create_tab_header, generate_bibtexid, generate_csv_table, custom_column_picker)
 from src.utils.app_utils import footer, set_mypage_config
 from src.plotting.figures import (generate_interaction_figure, generate_category_counts_figure,
-                                  plot_publications_over_time)
-from src.plotting.plot_utils import export_all_category_counts
+                                  plot_publications_over_time, generate_heatmap_figure, generate_alluvial_plot)
+from src.plotting.plot_utils import export_all_category_counts, _slug
 
 # ========================
 # 💅 UI Configuration
@@ -247,7 +251,7 @@ with data_overview_tab:
                     'pairing configuration', 'paradigm', 'cognitive function'],
         "Participants": ['article', 'DOI Link', 'sample size', 'sample', 'pairing configuration', 'pairing setup',
                          'relationship pair'],
-        "Paradigm": ['article', 'DOI Link', 'condition design', 'interaction scenario', 'interaction manipulation',
+        "Paradigm": ['article', 'DOI Link', 'condition design', 'interaction scenario', 'interaction medium',
                      'transfer of information', 'type of communication', 'paradigm', 'task symmetry'],
         "Measurement & Analysis": ['article', 'DOI Link', 'measurement modality', 'analysis method',
                                    'cognitive function'],
@@ -255,7 +259,7 @@ with data_overview_tab:
         }
     # Custom column picker (preserve selection in session_state)
     if view_option == "Custom":
-        column_order = custom_column_picker(available_cols)
+        column_order = custom_column_picker(available_cols, default_select=["DOI Link", 'other labels'])
     else:
         column_order = view_configs.get(view_option, view_configs["Default"])
 
@@ -303,14 +307,12 @@ with data_overview_tab:
 # ========================
 # 📈 Data Plots Tab
 # ========================
-with (data_plots_tab):
+with data_plots_tab:
     create_tab_header(df, display_df)
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
         try:
-
             # > Publication Year figure
             st.subheader("Publications over Time")
-
             col1, col2 = st.columns([1, 1], gap="medium")
             with col1:
                 # Select category for line splitting
@@ -318,43 +320,24 @@ with (data_plots_tab):
                 category_options = list(label_tooltips.keys())
                 selected_category = st.selectbox(
                     "Choose a category to display as stacked bars:", options=['None'] + category_options, )
-                if selected_category is None or selected_category == 'None':
-                    year_counts = display_df["year"].value_counts().sort_index()
-                    year_df = pd.DataFrame({"Publications": year_counts})
-                    year_df.index = year_df.index.astype(str)
-                    chart = (alt.Chart(year_df.reset_index()).mark_line(point=True).encode(
-                        x=alt.X("year:N", title="Year"),
-                        y=alt.Y("Publications:Q", title="Number of Publications"),
-                        tooltip=["year:N", "Publications:Q"], ).properties(height=380))
-
-                    st.altair_chart(chart, use_container_width=True)
-
-                else:
-                    # Group by year and selected category, count publications
-                    comps = plot_publications_over_time(
-                        display_df,
-                        selected_category,
-                        label_tooltips=label_tooltips,
-                        container=st,
-                        count_mode="auto",
-                        return_components=True
-                        )
-                    if comps and comps["chart"] is not None:
-                        st.altair_chart(comps["chart"], use_container_width=True)
-
-                st.markdown(
-                    """
-                    💡 **Tip:** Sometimes this plot takes a while to render completely, even though the figure is 
-                    already generated.
-                    """
+                # Group by year and selected category, count publications
+                comps = plot_publications_over_time(
+                    display_df,
+                    selected_category,
+                    label_tooltips=label_tooltips,
+                    container=st,
+                    count_mode="auto",
+                    return_components=True if selected_category not in [None, 'None'] else False
                     )
+                if comps and comps["chart"] is not None:
+                    st.altair_chart(comps["chart"], use_container_width=True)
             with col2:
                 if selected_category not in (None, "None") and comps and comps["legend_chart"] is not None:
                     st.altair_chart(comps["legend_chart"], use_container_width=True)
                 st.markdown(
                     """
-                    💡 **Tip:** To save the figure, 
-                    simply **right-click** on the chart and choose **"Save image as..."**  
+                    💡 **Tip:** To save the figure,
+                    simply **right-click** on the chart and choose **"Save image as..."**
                     *(wording may vary slightly depending on your browser)*
                     """
                     )
@@ -390,26 +373,31 @@ with (data_plots_tab):
                 if result is None:
                     st.warning("No figure was generated for interaction conditions.")
                 else:
-                    fig1, condition_count, number_studies, connection_df = result
-                    buf = io.BytesIO()
-                    fig1.savefig(buf, format="png", bbox_inches="tight", transparent=True, dpi=600)
-                    buf.seek(0)
+                    fig1, condition_count, number_studies, connection_df, summary_stats = result
 
-                    st.image(buf, use_container_width=True)
-                st.markdown(
-                    f"""
-                *Note*. The cross-sectional distribution of all {condition_count} hyperscanning conditions of 
-                {number_studies} studies across interaction medium and interaction scenario axes. The 
-                numbers provide the counted occurrences of the combination of an interaction medium and 
-                scenario. The colors represent the measurement modalities reported for a cross-section of conditions. 
-                The connection lines indicate reported cross-condition occurrences separated per axis 
-                (n = {connection_df['count'].sum()} simultaneous condition occurrences, see also table below). 
-                Studies involving a digital component either through a digital medium or virtual interaction scenario 
-                are marked through a gray shaded area. 
-                """
-                    )
-                with st.expander("Show dataframe of connection lines"):
-                    st.dataframe(connection_df[["modality", "condition1", "condition2", "count"]], hide_index=True)
+                    # --- PNG render ---
+                    png_buf = io.BytesIO()
+                    fig1.savefig(png_buf, format="png", bbox_inches="tight", transparent=True, dpi=300)
+                    png_buf.seek(0)
+                    # --- SVG export ---
+                    svg_buf = io.BytesIO()
+                    fig1.savefig(svg_buf, format="svg", bbox_inches="tight", transparent=True)
+                    svg_buf.seek(0)
+
+                    st.image(png_buf, use_container_width=True)
+
+                    st.markdown(
+                        f"""
+                    *Note*. The cross-sectional distribution of all hyperscanning conditions of 
+                    {number_studies} studies across interaction medium and interaction scenario axes. The 
+                    numbers provide the counted occurrences (n = {condition_count} conditions across modalities) of the 
+                    combination of an interaction medium and scenario. The colors represent the measurement 
+                    modalities reported for a cross-section of conditions. The connection lines indicate reported 
+                    cross-condition occurrences separated per axis (n = {summary_stats['cross-condition occurrences']} 
+                    simultaneous condition occurrences). Studies involving a digital component either through a digital 
+                    medium or virtual interaction scenario are marked through a gray shaded area. 
+                    """
+                        )
             with col4:
                 st.markdown(
                     """
@@ -418,11 +406,173 @@ with (data_plots_tab):
                     """
                     )
                 st.download_button(
-                    "📥 Download Interaction Figure (JPG)",
-                    data=buf.getvalue(),
-                    file_name="interaction_figure.jpg",
-                    mime="image/jpg"
+                    "📥 Download Interaction Figure (PNG)",
+                    data=png_buf.getvalue(),
+                    file_name="interaction_figure.png",
+                    mime="image/png"
                     )
+
+                st.download_button(
+                    "📥 Download Interaction Figure (SVG)",
+                    data=svg_buf.getvalue(),
+                    file_name="interaction_figure.svg",
+                    mime="image/svg+xml"
+                    )
+
+                with st.expander("Show dataframe of connection lines"):
+                    st.dataframe(connection_df[["modality", "condition1", "condition2", "count"]], hide_index=True)
+                with st.expander("Summary of interaction-condition comparisons"):
+                    summary_df = pd.DataFrame([summary_stats])
+                    st.dataframe(summary_df, hide_index=True)
+
         except Exception as e:
             st.error(f"❌ Could not generate figures.")
+
+        try:
+            st.subheader("Alluvial Plot")
+
+            if go is None:
+                st.error("Plotly is required for this chart but could not be imported.")
+            else:
+                # ---------- selection UI (uses your custom picker) ----------
+                available_parset_cols = [c for c in label_tooltips.keys() if c in display_df.columns]
+
+                st.markdown("It is recommended to choose 2–5 categories to visualize the flow.")
+                # Use your app’s custom picker so selection is preserved & ordered:
+                chosen_parset_cols = custom_column_picker(
+                    available_parset_cols,
+                    custom_key="def_parset_cols",
+                    default_select=['measurement modality', 'analysis method', 'cognitive function']
+                    )
+                if len(chosen_parset_cols) < 2:
+                    st.info("Select at least two categories to draw the flow.")
+                else:
+                    # 1) Precompute max link count (no filtering)
+                    _fig_probe, _link_count_probe, _node_count_probe, _links_df_probe, diag_md_probe = generate_alluvial_plot(
+                        display_df=display_df, chosen_parset_cols=chosen_parset_cols, color_by=None, )
+
+                    max_count = int(_links_df_probe["count"].max()) if not _links_df_probe.empty else 1
+
+                    def_color_by = 'measurement modality'
+                    color_by = st.selectbox(
+                        "Color links by (optional)",
+                        options=['(none)'] + available_parset_cols,
+                        index=(['(none)'] + available_parset_cols).index(def_color_by),
+                        help="Pick one category to color the link flows. Leave as '(none)' to color by source stage."
+                        )
+                    color_by = None if color_by == '(none)' else color_by
+
+                    # 2) Slider
+                    min_count = st.slider(
+                        "Minimum link count",
+                        min_value=1,
+                        max_value=max_count,
+                        value=min(1, max_count),
+                        help="Hide thin links to declutter.",
+                        key="parset_min_link_count", )
+
+                    # # 3) Build the actual figure
+                    fig, link_count, node_count, links_df, diag_md = generate_alluvial_plot(
+                        display_df=display_df,
+                        chosen_parset_cols=chosen_parset_cols,
+                        min_count=min_count,
+                        color_by=color_by, )
+
+                    sankey_key = "sankey_" + _slug(
+                        "_".join(chosen_parset_cols)
+                        ) + f"_{min_count}_{link_count}_{color_by or 'stage'}"
+
+                    st.plotly_chart(fig, use_container_width=True, key=sankey_key, render_mode="svg")
+
+                    # Figure caption
+                    st.caption("Link thickness = label count, expanded across multi-label cells.")
+                    color_by_desc = f" Colors indicate {color_by}." if color_by else ''
+                    st.markdown(
+                        f"Alluvial (Sankey) graph of hyperscanning studies across the categorical dimensions "
+                        f"{chosen_parset_cols}. Nodes represent the number of studies assigned to each category, "
+                        f"and link thickness reflects the number of rows that share adjacent category combinations "
+                        f"after expanding multi-label cells.{color_by_desc}"
+                        )
+                    # --- Build an HTML page with a "Download SVG" button ---
+                    try:
+                        # Create the figure HTML fragment with a known div id
+                        fig_html = pio.to_html(
+                            fig, include_plotlyjs="cdn",
+                            full_html=False, div_id="alluvial-fig",
+                            )
+                        # Wrap it into a full HTML page with a download button
+                        html_page = f"""
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="utf-8">
+                            <title>Alluvial Plot</title>
+                        </head>
+                        <body style="font-family: sans-serif;">
+
+                            <h2>Alluvial Plot</h2>
+
+                            {fig_html}
+
+                            <div style="margin-top: 20px;">
+                                <button id="download-svg-btn" style="padding: 8px 16px; margin-right: 10px;">
+                                    Download SVG
+                                </button>
+
+                                <button id="download-png-btn" style="padding: 8px 16px;">
+                                    Download PNG
+                                </button>
+                            </div>
+
+                            <script>
+                            // SVG Export
+                            document.getElementById('download-svg-btn').addEventListener('click', function() {{
+                                var gd = document.getElementById('alluvial-fig');
+                                Plotly.downloadImage(gd, {{
+                                    format: 'svg',
+                                    filename: 'alluvial_plot',
+                                    height: 563,
+                                    width: 1000,
+                                    scale: 1
+                                }});
+                            }});
+
+                            // PNG Export
+                            document.getElementById('download-png-btn').addEventListener('click', function() {{
+                                var gd = document.getElementById('alluvial-fig');
+                                Plotly.downloadImage(gd, {{
+                                    format: 'png',
+                                    filename: 'alluvial_plot',
+                                    height: 563,
+                                    width: 1000,
+                                    scale: 1     
+                                }});
+                            }});
+                            </script>
+
+                        </body>
+                        </html>
+                        """
+                        st.download_button(
+                            label="📥 Download Interactive HTML (with SVG export)",
+                            data=html_page.encode("utf-8"),
+                            file_name="alluvial_plot.html",
+                            mime="text/html",
+                            key="alluvial_html_download", )
+
+                    except Exception as e:
+                        st.warning(
+                            "Could not create HTML download for the alluvial plot. "
+                            f"Technical details: {e}"
+                            )
+
+        except Exception as e:
+            st.error(f"❌ Could not generate figure: {e}")
+
+        try:
+            st.subheader("Heatmap of Categories")
+            generate_heatmap_figure(display_df, data_plots_tab)
+        except Exception as e:
+            st.error(f"❌ Could not generate figure: {e}")
+
 footer()
