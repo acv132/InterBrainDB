@@ -1,5 +1,3 @@
-from src.plotting.plot_utils import _norm_list_safe_str, _rgba
-
 try:
     import altair as alt
 
@@ -11,7 +9,7 @@ import itertools
 from collections import defaultdict, Counter
 from itertools import combinations
 from threading import RLock
-from typing import Tuple, List
+from typing import List, Tuple, Sequence, Optional
 
 import matplotlib.patches as mpatches
 import pandas as pd
@@ -23,6 +21,7 @@ from matplotlib.patches import Rectangle, PathPatch
 from matplotlib.path import Path
 
 from src.plotting.plot_utils import *
+from src.plotting.plot_utils import _norm_list_safe_str, _rgba
 from src.utils.config import ColorMap
 
 _lock = RLock()
@@ -903,28 +902,50 @@ def generate_alluvial_plot(
         chosen_parset_cols: List[str],
         *,
         min_count: int = 1,
-        color_by: str | None = None, ) -> Tuple["go.Figure", int, int, pd.DataFrame, str]:
+        color_by: str | None = None,
+        value_mode: str = "count",
+        combine_multilabel_cols: Optional[Sequence[str]] = None, ) -> Tuple["go.Figure", int, int, pd.DataFrame, str]:
     """
     Build a Plotly Sankey (parallel sets) figure.
 
     Parameters
     ----------
     display_df : pd.DataFrame
-        Source data.
+        Source data. Columns may contain scalars or lists of labels.
     chosen_parset_cols : list of str
-        Ordered stages (left to right).
+        Ordered stages (left to right) to be shown in the Sankey diagram.
     min_count : int, optional
-        Minimum link count to retain.
+        Minimum link count to retain (based on number of studies / rows).
     color_by : str or None, optional
-        Column name used to color links.
+        Column name used to color links (and, if it is a stage, nodes in that stage).
+    value_mode : {"count", "source_frac"}, optional
+        How to scale the link widths:
+        - "count": raw study counts (default; current behavior).
+        - "source_frac": each link value is the fraction of its source node's
+          outgoing count (sums to 1 within each source node).
+        The hover text always shows the integer count; percentages are added
+        as extra information.
+    combine_multilabel_cols : sequence of str or None, optional
+        If provided, any of these columns that contain multiple labels in a
+        row will be collapsed into a single combined label
+        (e.g., ["EEG", "eye-tracking"] -> "EEG + eye-tracking").
+        This makes multimodal / multi-label categories explicit nodes,
+        which is particularly useful for visualizing multimodal designs.
 
     Returns
     -------
     fig : go.Figure
     link_count : int
+        Number of links after filtering by `min_count`.
     node_count : int
+        Total number of nodes in the diagram.
     links_df : pd.DataFrame
+        Table of links with columns:
+        ["source_stage", "source_value", "target_stage", "target_value",
+         "count", (optional) "color_by_stage", "color_by_value"].
     diag_markdown : str
+        Diagnostic markdown comparing first-stage category counts and their
+        outgoing Sankey sums.
     """
     try:
         import plotly.graph_objects as go
@@ -945,17 +966,17 @@ def generate_alluvial_plot(
         color_by = color_by[0]
 
     # Theme defaults
-    ColorMap = ["#ADE1DC", "#C5C2E4", "#F28C8C", "#9FCBE1", "#F8BC63", "#CBEA7B", "#F5C6DA", "#BFD8B8", "#F9D9B6"]
+    colormap = ColorMap
 
-    color_palette = ["#ADE1DC", "#C5C2E4", "#F28C8C", "#9FCBE1", "#F8BC63", "#CBEA7B", "#F5C6DA", "#BFD8B8", "#F9D9B6"]
+    color_palette = ColorMap
 
     try:
         figure_background_color = st.get_option("theme.backgroundColor") or "#FFFFFF"
         font_color = "#FFFFFF" if is_dark_color(figure_background_color) else "#000000"
         primary_color = st.get_option("theme.primaryColor") or "#2C7BE5"
     except Exception:
-        figure_background_color = figure_background_color or "#FFFFFF"
-        primary_color = primary_color or "#2C7BE5"
+        figure_background_color = "#FFFFFF"
+        primary_color = "#2C7BE5"
         font_color = "#000000"
 
     # Basic validation
@@ -968,6 +989,10 @@ def generate_alluvial_plot(
             "(it does not need to be in chosen_parset_cols)."
             )
 
+    value_mode = value_mode.lower()
+    if value_mode not in {"count", "source_frac"}:
+        raise ValueError("value_mode must be one of {'count', 'source_frac'}.")
+
     # Normalize selected columns to list[str] per cell
     norm_cols = list(chosen_parset_cols)
     if color_by is not None and color_by not in norm_cols:
@@ -977,7 +1002,25 @@ def generate_alluvial_plot(
     for col in norm_cols:
         norm_df[col] = norm_df[col].apply(_norm_list_safe_str)
 
-    # Per-stage category counts (for node diagnostics)
+    # Optionally collapse multi-label cells into explicit combination categories
+    if combine_multilabel_cols:
+        for col in combine_multilabel_cols:
+            if col not in norm_df.columns:
+                continue
+
+            def _combine_labels(labels: list[str]) -> list[str]:
+                if not labels:
+                    return []
+                if len(labels) == 1:
+                    return labels
+                combo = " + ".join(sorted(map(str, labels)))
+                return [combo]
+
+            norm_df[col] = norm_df[col].apply(_combine_labels)
+
+    total_rows = len(norm_df)
+
+    # Per-stage category counts (for node diagnostics, based on per-row presence)
     cat_counts: dict[str, Counter] = {col: Counter() for col in chosen_parset_cols}
     for _, row in norm_df[chosen_parset_cols].iterrows():
         for col in chosen_parset_cols:
@@ -1027,7 +1070,7 @@ def generate_alluvial_plot(
                         key = (s, t)
                         if key not in seen_pairs:
                             seen_pairs.add(key)
-                            pair_counter[key] += 1
+                            pair_counter[key] += 1  # count = number of studies
 
             for (left, right), count in pair_counter.items():
                 link_rows.append(
@@ -1090,7 +1133,7 @@ def generate_alluvial_plot(
 
     if not mask.any():
         # Empty plot with nodes only
-        stage_colors = [ColorMap[i % len(ColorMap)] for i in range(len(chosen_parset_cols))]
+        stage_colors = [colormap[i % len(colormap)] for i in range(len(chosen_parset_cols))]
         node_colors = []
         for stage_idx, labels_this_stage in enumerate(stage_labels_full):
             node_colors.extend([stage_colors[stage_idx]] * len(labels_this_stage))
@@ -1131,7 +1174,7 @@ def generate_alluvial_plot(
 
     links_df = links_df.loc[mask].copy()
 
-    # Incoming/outgoing flow per node (for diagnostics)
+    # Incoming/outgoing flow per node (for diagnostics; based on Sankey links)
     incoming_flow = {col: Counter() for col in chosen_parset_cols}
     outgoing_flow = {col: Counter() for col in chosen_parset_cols}
 
@@ -1140,7 +1183,7 @@ def generate_alluvial_plot(
         t_col = r["target_stage"]
         s_val = r["source_value"]
         t_val = r["target_value"]
-        cnt = r["count"]
+        cnt = int(r["count"])
 
         outgoing_flow[s_col][s_val] += cnt
         incoming_flow[t_col][t_val] += cnt
@@ -1154,29 +1197,34 @@ def generate_alluvial_plot(
             out = outgoing_flow[col].get(lab, 0)
             node_hover_texts.append(
                 f"<b>{col}</b>: {lab}<br>"
-                f"outgoing flow: {out:.2f}<br>"
-                f"incoming flow: {inc:.2f}<br>"
-                f"category count: {count}"
+                f"outgoing flow (links): {out}<br>"
+                f"incoming flow (links): {inc}<br>"
+                f"category count (studies with this label): {count}<br>"
+                f"total studies in dataset: {total_rows}"
                 )
 
     # Node & link colors
-    stage_colors = [ColorMap[i % len(ColorMap)] for i in range(len(chosen_parset_cols))]
+    stage_colors = [colormap[i % len(colormap)] for i in range(len(chosen_parset_cols))]
 
-    node_colors: list[str] = []
+    # Track which stage each node belongs to
     stage_index_per_node: list[int] = []
     for stage_idx, labels_this_stage in enumerate(stage_labels_full):
         stage_index_per_node.extend([stage_idx] * len(labels_this_stage))
 
+    # Base node colors
     if color_by is None:
         # Nodes colored by stage, neutral links
+        node_colors: list[str] = []
         for stage_idx, labels_this_stage in enumerate(stage_labels_full):
             node_colors.extend([stage_colors[stage_idx]] * len(labels_this_stage))
     else:
-        # Links colored by color_by; nodes in neutral gray
+        # Default: all nodes neutral gray
         neutral_node_color = "#43454a" if is_dark_color(figure_background_color) else "#e9e9e9"
         node_colors = [neutral_node_color] * len(node_labels_full)
 
-    value_to_color, legend_items = {}, []
+    # Build color map for color_by values (used for links and, optionally, nodes)
+    value_to_color: dict[str, str] = {}
+    legend_items: list[tuple[str, str]] = []
     if color_by is not None:
         unique_vals = list({str(v) for v in links_df["color_by_value"].unique()})
         yaml_order = list(category_definitions.get(color_by, {}).keys())
@@ -1188,6 +1236,19 @@ def generate_alluvial_plot(
             value_to_color[v] = color_palette[i % len(color_palette)]
         legend_items = [(v, value_to_color[v]) for v in ordered_vals]
 
+        # If color_by is also one of the node stages, color those nodes
+        # according to the same color map as the links.
+        if color_in_stages:
+            color_by_stage_idx = chosen_parset_cols.index(color_by)
+            for node_idx, stage_idx in enumerate(stage_index_per_node):
+                if stage_idx == color_by_stage_idx:
+                    val_label = node_labels_display[node_idx]
+                    node_colors[node_idx] = value_to_color.get(val_label, node_colors[node_idx])
+
+    # Precompute totals for percentage-based hover and value_mode
+    total_link_count = int(links_df["count"].sum())
+    src_totals = (links_df.groupby(["source_stage", "source_value"])["count"].sum().to_dict())
+
     # Links in node-index space
     fs, ft, fv, fcolors, hovertext = [], [], [], [], []
     for _, r in links_df.iterrows():
@@ -1196,9 +1257,22 @@ def generate_alluvial_plot(
         s_idx = node_index[src_full]
         t_idx = node_index[tgt_full]
 
+        count_val = int(r["count"])
+        src_key = (r["source_stage"], r["source_value"])
+        src_total = int(src_totals.get(src_key, 0))
+        pct_source = 100.0 * count_val / src_total if src_total else 0.0
+        pct_global = 100.0 * count_val / total_link_count if total_link_count else 0.0
+
+        # Value for Sankey width
+        value = None
+        if value_mode == "count":
+            value = count_val
+        elif value_mode == "source_frac":
+            value = count_val / src_total if src_total else 0.0
+
         fs.append(s_idx)
         ft.append(t_idx)
-        fv.append(int(r["count"]))
+        fv.append(value)
 
         if color_by is None:
             s_stage_idx = stage_index_per_node[s_idx]
@@ -1211,7 +1285,9 @@ def generate_alluvial_plot(
         hovertext.append(
             f"<b>{r['source_stage']}</b>: {r['source_value']} → "
             f"<b>{r['target_stage']}</b>: {r['target_value']}<br>"
-            f"count: {r['count']}"
+            f"count (expanded label combinations): {count_val}<br>"
+            f"{pct_source:.1f}% of all links from this source node<br>"
+            f"{pct_global:.1f}% of all links in the diagram"
             )
 
     # Build figure
@@ -1261,7 +1337,11 @@ def generate_alluvial_plot(
     fig.update_traces(textfont=dict(color=font_color, size=12, family="Arial"))
 
     # Legend for link colors when color_by is set
-    if color_by is not None and legend_items:
+    # Legend for link colors when color_by is set and NOT also a node stage
+    show_legend = (color_by is not None and legend_items and color_by not in chosen_parset_cols  # <-- NEW LOGIC
+                   )
+
+    if show_legend:
         for name, colhex in legend_items:
             fig.add_trace(
                 go.Scatter(
@@ -1297,7 +1377,7 @@ def generate_alluvial_plot(
             sankey_counter[r["source_value"]] += int(r["count"])
 
     lines = [f"**Diagnostic: counts for first stage (`{first_stage}`)**", "",
-             "| Label | Category-count style (per row) | Sankey outgoing sum |", "| --- | ---: | ---: |", ]
+        "| Label | Category-count style (per row) | Sankey outgoing sum |", "| --- | ---: | ---: |", ]
     for lab in sorted(cat_counter.keys(), key=str):
         lines.append(
             f"| {lab} | {cat_counter[lab]} | {sankey_counter.get(lab, 0)} |"
@@ -1505,6 +1585,26 @@ def generate_heatmap_figure(df, tab):
         ).properties(
         height=400, width=800
         ))
+
+    # temporary:
+    # if x-axis is "measurement modality", replace label "eye-tracking" with "eye" and label "camera-based tracking" with "camera"
+    if cat_b == "measurement modality":
+        chart = chart.encode(
+            x=alt.X(
+                "B:N", title=cat_b, sort=None, scale=alt.Scale(domain=b_order), axis=alt.Axis(
+                    labelLimit=0,
+                    labelAngle=315,
+                    labelAlign="right",
+                    labelBaseline="top",
+                    labelOverlap=False,
+                    labelColor=font_color,
+                    labelExpr="""
+                    datum.value == 'eye-tracking' ? 'eye' :
+                    datum.value == 'camera-based tracking' ? 'camera' :
+                    datum.value
+                    """, ), )
+            )
+
     # --- Render in Streamlit ---
     tab.altair_chart(chart, use_container_width=True)
 

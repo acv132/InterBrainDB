@@ -442,65 +442,117 @@ with data_plots_tab:
                 chosen_parset_cols = custom_column_picker(
                     available_parset_cols,
                     custom_key="def_parset_cols",
-                    default_select=['measurement modality', 'analysis method', 'cognitive function']
-                    )
+                    default_select=['measurement modality', 'analysis method', 'cognitive function'], )
+
                 if len(chosen_parset_cols) < 2:
                     st.info("Select at least two categories to draw the flow.")
                 else:
-                    # 1) Precompute max link count (no filtering)
-                    _fig_probe, _link_count_probe, _node_count_probe, _links_df_probe, diag_md_probe = generate_alluvial_plot(
-                        display_df=display_df, chosen_parset_cols=chosen_parset_cols, color_by=None, )
+                    # ---------- 1) value_mode selection ----------
+                    value_mode_label = st.selectbox(
+                        "Scale link thickness by",
+                        options=["Raw counts (studies)", "Share of source node (%)", ],
+                        index=0,
+                        help=("**Raw counts (studies):** Link width reflects the absolute number of studies "
+                              "showing a specific transition between categories. This is the most direct measure "
+                              "of how often each combination appears in the dataset. "
 
-                    max_count = int(_links_df_probe["count"].max()) if not _links_df_probe.empty else 1
+                              "**Share of source node (%):** Each node’s outgoing links are normalized to 100%. "
+                              "Link width reflects the *percentage* of studies that move from a given source "
+                              "category to each next category. This highlights how each category distributes its "
+                              "studies, independent of how common that category is overall."), )
+                    value_mode_map = {
+                        "Raw counts (studies)": "count", "Share of source node (%)": "source_frac",
+                        }
+                    value_mode = value_mode_map[value_mode_label]
 
+                    # ---------- 2) which dimensions to combine multi-labels for ----------
+                    combine_default = ['measurement modality'] if 'measurement modality' in chosen_parset_cols else []
+                    combine_multilabel_cols = st.multiselect(
+                        "Collapse multi-label combinations into single nodes for these dimensions "
+                        "(e.g., 'EEG + eye-tracking').",
+                        options=chosen_parset_cols,
+                        default=combine_default,
+                        help=("If a study has multiple labels in these columns, they will be combined into a single "
+                              "category (e.g., 'EEG + eye-tracking'), making multimodal designs explicit."), )
+
+                    # ---------- 3) color_by selection (before probe!) ----------
                     def_color_by = 'measurement modality'
                     color_by = st.selectbox(
                         "Color links by (optional)",
                         options=['(none)'] + available_parset_cols,
                         index=(['(none)'] + available_parset_cols).index(def_color_by),
-                        help="Pick one category to color the link flows. Leave as '(none)' to color by source stage."
-                        )
+                        help="Pick one category to color the link flows. Leave as '(none)' to color by source stage.", )
                     color_by = None if color_by == '(none)' else color_by
 
-                    # 2) Slider
+                    # ---------- 4) PROBE call to get max_count with SAME grouping logic ----------
+                    _fig_probe, _link_count_probe, _node_count_probe, _links_df_probe, diag_md_probe = generate_alluvial_plot(
+                        display_df=display_df, chosen_parset_cols=chosen_parset_cols, min_count=1,
+                        # no filtering → true raw counts for this grouping
+                        color_by=color_by,  # SAME color_by as real plot
+                        value_mode="count",  # slider is based on raw counts, not fractions
+                        combine_multilabel_cols=combine_multilabel_cols,  # SAME combination logic
+                        )
+
+                    if _links_df_probe.empty:
+                        # No links at all for this configuration; fall back gracefully
+                        max_count = 1
+                    else:
+                        max_count = int(_links_df_probe["count"].max())
+
+                    # ---------- 5) Slider based on probe counts ----------
                     min_count = st.slider(
-                        "Minimum link count",
+                        "Minimum link count (expanded label combinations)",
                         min_value=1,
                         max_value=max_count,
                         value=min(1, max_count),
-                        help="Hide thin links to declutter.",
+                        help=("Hide links that are supported by only a few expanded label combinations. "
+                              "Counts are based on the current color and node grouping: each study with "
+                              "multiple labels can contribute to multiple combinations."),
                         key="parset_min_link_count", )
 
-                    # # 3) Build the actual figure
+                    # ---------- 6) REAL call using user-selected min_count & value_mode ----------
                     fig, link_count, node_count, links_df, diag_md = generate_alluvial_plot(
                         display_df=display_df,
                         chosen_parset_cols=chosen_parset_cols,
                         min_count=min_count,
-                        color_by=color_by, )
+                        color_by=color_by,
+                        value_mode=value_mode,
+                        combine_multilabel_cols=combine_multilabel_cols, )
 
                     sankey_key = "sankey_" + _slug(
                         "_".join(chosen_parset_cols)
-                        ) + f"_{min_count}_{link_count}_{color_by or 'stage'}"
+                        ) + f"_{min_count}_{link_count}_{color_by or 'stage'}_{value_mode}"
 
                     st.plotly_chart(fig, use_container_width=True, key=sankey_key, render_mode="svg")
 
-                    # Figure caption
-                    st.caption("Link thickness = label count, expanded across multi-label cells.")
-                    color_by_desc = f" Colors indicate {color_by}." if color_by else ''
+                    # --------- Caption & description ----------
+                    if value_mode == "count":
+                        thickness_desc = "Link thickness = expanded-combination count (see tooltip for details)."
+                    else:  # "source_frac"
+                        thickness_desc = ("Link thickness = proportion of all outgoing links from the source node, "
+                                          "within the currently displayed links.")
+
+                    st.caption(thickness_desc)
+
+                    color_by_desc = f" Colors indicate {color_by}." if color_by else " Colors indicate the source stage."
+                    combine_desc = ""
+                    if combine_multilabel_cols:
+                        combine_desc = (
+                            " Multi-label studies in the following dimensions are collapsed into explicit combination "
+                            f"nodes (e.g., 'EEG + eye-tracking'): {', '.join(combine_multilabel_cols)}.")
+
                     st.markdown(
                         f"Alluvial (Sankey) graph of hyperscanning studies across the categorical dimensions "
-                        f"{chosen_parset_cols}. Nodes represent the number of studies assigned to each category, "
-                        f"and link thickness reflects the number of rows that share adjacent category combinations "
-                        f"after expanding multi-label cells.{color_by_desc}"
+                        f"{chosen_parset_cols}. Nodes represent the number of studies assigned to each category "
+                        f"(including multimodal combinations where specified), and link thickness reflects transitions "
+                        f"between adjacent categories according to the selected scaling scheme. "
+                        f"{color_by_desc}{combine_desc}"
                         )
+
                     # --- Build an HTML page with a "Download SVG" button ---
                     try:
-                        # Create the figure HTML fragment with a known div id
                         fig_html = pio.to_html(
-                            fig, include_plotlyjs="cdn",
-                            full_html=False, div_id="alluvial-fig",
-                            )
-                        # Wrap it into a full HTML page with a download button
+                            fig, include_plotlyjs="cdn", full_html=False, div_id="alluvial-fig", )
                         html_page = f"""
                         <!DOCTYPE html>
                         <html lang="en">
@@ -545,7 +597,7 @@ with data_plots_tab:
                                     filename: 'alluvial_plot',
                                     height: 563,
                                     width: 1000,
-                                    scale: 1     
+                                    scale: 1
                                 }});
                             }});
                             </script>
