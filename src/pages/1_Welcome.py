@@ -62,12 +62,14 @@ st.subheader("Paper")
 st.markdown(
     f"""
 Read the original literature review here:
-[Link Button](tbd)
+<span style="color: grey; text-decoration: none; cursor: not-allowed;">
+⌛ Publication in progress - link not yet available
+</span>
 ```
 [citation with doi]
 ```
 If you use this resource, please consider citing our paper. 
-"""
+""", unsafe_allow_html=True
     )
 
 st.subheader("Code")
@@ -93,8 +95,7 @@ st.markdown(
     The app is maintained by the Applied Neurocognitive Systems Team, Department of Human-Computer Interaction, 
     University of Stuttgart & Fraunhofer IAO.
     
-    Contact: Anna Vorreuther [anna.vorreuther@iat.uni-stuttgart.de](mailto:anna.vorreuther@iat.uni-stuttgart.de,
-    "Subject: InterBrainDB Contact Request")
+    Contact: Anna Vorreuther [anna.vorreuther@iat.uni-stuttgart.de](mailto:anna.vorreuther@iat.uni-stuttgart.de?subject=InterBrainDB%20Contact%20Request)
     """
     )
 
