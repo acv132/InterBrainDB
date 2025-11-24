@@ -48,6 +48,18 @@ st.markdown(
 # ========================
 # 🗂️ Tabs
 # ========================
+st.markdown(
+    """
+    <style>
+    /* Increase tab label text size */
+    .stTabs [data-baseweb="tab"] p {
+        font-size: 1.2rem;      /* increase number to make bigger */
+        font-weight: 600;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 data_overview_tab, data_plots_tab = st.tabs(
     ["📋 Data Overview", "📈 Plots", ]
     )
@@ -307,6 +319,26 @@ with data_overview_tab:
 # ========================
 # 📈 Data Plots Tab
 # ========================
+st.markdown(
+    """
+    <style>
+    /* Spinner container styling */
+    .stSpinner {
+        border: 2px solid #ffa040 !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        background-color: rgba(255, 160, 64, 0.07);
+    }
+
+    /* Spinner icon color */
+    .stSpinner > div {
+        border-top-color: #ffa040 !important;
+        border-left-color: #ffa040 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 with data_plots_tab:
     create_tab_header(df, display_df)
     with st.spinner("The generation of figures may take a few seconds, please be patient...", show_time=False):
