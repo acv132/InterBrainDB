@@ -511,9 +511,23 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
                                 for label, color in modality_colors.items()}
 
             # Get only modalities actually used
-            used_modalities = connection_df['modality'].unique()
-            filtered_modality_handles = {label: handle for label, handle in modality_handles.items() if
-                                         label in used_modalities}
+            # Modalities used anywhere in the plot (pies and/or connections)
+            used_modalities = set()
+
+            # Modalities present in pies
+            if not cross_section_counts.empty:
+                used_modalities.update(cross_section_counts["measurement modality"].dropna().unique())
+
+            # Modalities present in connection lines
+            if not connection_df.empty and "modality" in connection_df.columns:
+                used_modalities.update(connection_df["modality"].dropna().unique())
+
+            # Preserve default order for legend display
+            used_modalities_ordered = [m for m in default_modalities_order if m in used_modalities]
+
+            filtered_modality_handles = {m: modality_handles[m] for m in used_modalities_ordered if
+                m in modality_handles}
+
         else:
             filtered_modality_handles = {
                 'all modalities combined': plt.Line2D(
