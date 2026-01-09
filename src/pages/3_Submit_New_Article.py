@@ -177,7 +177,7 @@ with col1:
                     help="Specify the number of participants per group if more than a tetrad was formed.",
                     key='n_groups'
                     )
-                optional_inputs['pairing configuration'] = f"more (n group = {n_groups}"
+                optional_inputs['pairing configuration'] = f"more (n group = {n_groups})"
 
     # === Other Labels ===
     other_separator = ','
