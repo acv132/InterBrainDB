@@ -201,27 +201,6 @@ def generate_interaction_figure(df, tab, combine_modalities=False):
     ####################
     # Count conditions #
     ####################
-    # condition_rows = []
-    # for doi, group in df_orig.groupby('doi'):
-    #     orig_row = df_orig[df_orig['doi'] == doi].iloc[0]
-    #     modalities = ensure_list(orig_row['measurement modality'])
-    #     scenarios = ensure_list(orig_row['interaction scenario'])
-    #     mediums = ensure_list(orig_row['interaction medium'])
-    #
-    #     for modality in modalities:
-    #         if len(scenarios) == len(mediums) and len(scenarios) > 1:
-    #             for s, m in zip(scenarios, mediums):
-    #                 condition_rows.append([modality, s, m, doi])
-    #         elif len(scenarios) == 1:
-    #             for m in mediums:
-    #                 condition_rows.append([modality, scenarios[0], m, doi])
-    #         elif len(mediums) == 1:
-    #             for s in scenarios:
-    #                 condition_rows.append([modality, s, mediums[0], doi])
-    #         else:
-    #             for s in scenarios:
-    #                 for m in mediums:
-    #                     condition_rows.append([modality, s, m, doi])
     condition_rows = []
     for doi, group in df_orig.groupby("doi"):
         orig_row = group.iloc[0]
