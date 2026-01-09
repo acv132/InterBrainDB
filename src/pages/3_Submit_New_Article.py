@@ -267,6 +267,11 @@ with col2:
                 # Normalize for comparison
                 new_doi = new_entry["doi"].strip().lower()
 
+                for k, v in list(new_entry.items()):
+                    if isinstance(v, str):
+                        new_entry[k] = (v.replace(";", ",")  # critical because your sep=";"
+                        .replace("\r", " ").replace("\n", " "))
+
                 # === Check if DOI exists in main database or submitted suggestions ===
                 existing_dois = set()
                 if "doi" in df.columns:
