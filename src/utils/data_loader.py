@@ -31,8 +31,6 @@ def load_database(data_dir, file):
     if file.endswith(".csv"):
         df = pd.read_csv(os.path.join(data_dir, file), sep=";", keep_default_na=False)
         return df
-    # elif file.endswith(".xlsx"):
-    #     return pd.read_excel(os.path.join(data_dir, file), keep_default_na=False)
     else:
         raise ValueError("Unsupported file format. Please use .csv.")
 
