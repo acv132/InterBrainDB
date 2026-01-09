@@ -319,10 +319,8 @@ with col2:
 
                     st.success("✅ Article suggestion submitted successfully!")
                     st.balloons()
-                    # Reset input fields
-                    st.session_state["doi_input"] = ""
-                    st.session_state["title_input"] = ""
-                    st.session_state["authors_input"] = ""
+                    st.info("ℹ️ You can suggest another article by filling in the form again. To reset the fields, "
+                            "press Ctrl+F5 (or Cmd+Shift+R on Mac) to hard-refresh the page.")
 
         except Exception as e:
             st.error(f"Error during submission: {e}")
