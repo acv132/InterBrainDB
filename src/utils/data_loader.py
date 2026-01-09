@@ -25,7 +25,7 @@ def create_article_handle(row):
     return handle
 
 
-@st.cache_data
+# @st.cache_data
 def load_database(data_dir, file):
     # load data
     if file.endswith(".csv"):
