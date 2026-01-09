@@ -34,7 +34,7 @@ def load_database(data_dir, file):
     # elif file.endswith(".xlsx"):
     #     return pd.read_excel(os.path.join(data_dir, file), keep_default_na=False)
     else:
-        raise ValueError("Unsupported file format. Please use either .csv.")
+        raise ValueError("Unsupported file format. Please use .csv.")
 
 
 def generate_bibtex_content(df: pd.DataFrame) -> str:
