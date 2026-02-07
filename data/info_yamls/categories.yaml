@@ -105,6 +105,7 @@ analysis method:
   spatial domain source: Source-localized analysis
   machine learning supervised: Labeled data used to classify outcomes
   machine learning unsupervised: Unlabeled data used to detect patterns
+  reinforcement learning: Training an agent through interactions with its environment
   other: Other analytical approaches
   n/a: Not applicable (in case of reviews, toolboxes, datasets, etc.)
 
