@@ -61,8 +61,7 @@ st.page_link(label="Submit New Article", page="src/pages/3_Submit_New_Article.py
 st.subheader("Paper")
 st.markdown(
 """
-Read the original literature review here:  
-<a href="https://www.frontiersin.org/journals/neuroergonomics/articles/10.3389/fnrgo.2026.1756956/full" target="_blank">
+Read the original literature review here: <a href="https://www.frontiersin.org/journals/neuroergonomics/articles/10.3389/fnrgo.2026.1756956/full" target="_blank">
 Frontiers in Neuroergonomics</a>
 
 If you use this resource, please consider citing our paper:
