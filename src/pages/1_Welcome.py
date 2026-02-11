@@ -60,16 +60,36 @@ st.page_link(label="Submit New Article", page="src/pages/3_Submit_New_Article.py
 
 st.subheader("Paper")
 st.markdown(
-    f"""
-Read the original literature review here:
-<span style="color: grey; text-decoration: none; cursor: not-allowed;">
-⌛ Publication in progress - link not yet available
-</span>
+"""
+Read the original literature review here:  
+<a href="https://www.frontiersin.org/journals/neuroergonomics/articles/10.3389/fnrgo.2026.1756956/full" target="_blank">
+Frontiers in Neuroergonomics</a>
+
+If you use this resource, please consider citing our paper:
 ```
-[citation with doi]
-```
-If you use this resource, please consider citing our paper. 
-""", unsafe_allow_html=True
+Vorreuther, A., Brouwer, A. M., & Vukelić, M. Reviewing Digital Collaborative Interactions with Multimodal Hyperscanning Through an Ever-Growing Database. Frontiers in Neuroergonomics, 7, 1756956.
+""",
+unsafe_allow_html=True
+)
+
+with st.expander("📖 Show BibTeX citation", expanded=False):
+
+    st.code(
+"""
+@article{Vorreuther2026Feb,
+  author  = {Vorreuther, Anna and Brouwer, Anne-Marie and Vukelić, Mathias},
+  title   = {Reviewing digital collaborative interactions with multimodal hyperscanning through an ever-growing database},
+  journal = {Front. Neuroergonomics},
+  volume  = {7},
+  pages   = {1756956},
+  year    = {2026},
+  month   = {feb},
+  issn    = {2673-6195},
+  publisher = {Frontiers},
+  doi     = {10.3389/fnrgo.2026.1756956}
+}
+""",
+        language="bibtex"
     )
 
 st.subheader("Code")

@@ -11,16 +11,26 @@ enabling researchers to stay informed about the latest developments in the field
 The code is based on the [streamlit](https://streamlit.io/) library.
 
 ## Living Literature Review Database on Hyperscanning
-Find the server-hosted version of the living review here:
-[Link]()
+Find the server-hosted version of the living review here: [InterBrainDB](https://websites.fraunhofer.de/interbraindb/)
 
 ## Original Paper
 Read the original literature review here:
-[Link Button]()
+[Frontiers in Neuroergonomics](https://www.frontiersin.org/journals/neuroergonomics/articles/10.3389/fnrgo.2026.1756956/full)
+```bibtex
+@article{Vorreuther2026Feb,
+  author  = {Vorreuther, Anna and Brouwer, Anne-Marie and Vukelić, Mathias},
+  title   = {Reviewing digital collaborative interactions with multimodal hyperscanning through an ever-growing database},
+  journal = {Front. Neuroergonomics},
+  volume  = {7},
+  pages   = {1756956},
+  year    = {2026},
+  month   = {feb},
+  issn    = {2673-6195},
+  publisher = {Frontiers},
+  doi     = {10.3389/fnrgo.2026.1756956}
+}
 ```
-[citation with doi]
-```
-If you use this resource, please consider citing our paper. 
+If you use this resource, please consider citing our paper.
 
 ## Hosting the App Locally
 1. Clone the repository
