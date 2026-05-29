@@ -104,7 +104,7 @@ with st.sidebar:
     st.title("🔍 Filters")
 
     # --- Paper Filter ---
-    include_only = st.checkbox("Show only included papers", value=True)
+    include_only = st.checkbox("Show only studies included in review", value=True)
     if include_only:
         filtered_df = display_df[display_df['included in paper review'] == True]
     else:
